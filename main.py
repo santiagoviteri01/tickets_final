@@ -47,7 +47,7 @@ st.set_page_config(
     layout="wide"
 )
 
-conn = st.connection("gsheets", type=GSheetsConnection)
+#conn = st.connection("gsheets", type=GSheetsConnection)
 
 
 # Configuración de usuarios y contraseñas
