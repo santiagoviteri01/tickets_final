@@ -173,7 +173,7 @@ def manejar_tickets():
                         ultimo_ticket = 0
                     
                     nuevo_numero = ultimo_ticket + 1
-                    nuevo_numero=nuevo_numero.astype('int')  # Para asegurarse de que sea una cadena
+                   
 
                     # Crear registro
                     fecha_creacion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -192,17 +192,14 @@ def manejar_tickets():
                     
                     # Guardar en Google Sheetssheet.append_row(list(nuevo_ticket.values()))
 
-                    #sheet = auth_google_sheets()
-                    #sheet.append_row(list(nuevo_ticket.values()))
-                    #nuevo_ticket_serializable = {key: int(value) if isinstance(value, pd.Timestamp) else value for key, value in nuevo_ticket.items()}
-                    nuevo_ticket_serializable = {key: int(value) if isinstance(value, pd.Timestamp) or isinstance(value, pd.Int64Dtype) else value 
-                            for key, value in nuevo_ticket.items()}
+                    nuevo_ticket_serializable = {
+                        key: (int(value) if isinstance(value, (pd.Int64Dtype, int, float)) else value)
+                        for key, value in nuevo_ticket.items()
+                    }
 
-# Append the serializable values to the sheet
+                    # Guardar en Google Sheets
+                    # Aquí asumo que `sheet` es una instancia de tu hoja de Google Sheets autenticada
                     sheet.append_row(list(nuevo_ticket_serializable.values()))
-                    # Then append it to the sheet
-                    #sheet.append_row(list(nuevo_ticket_serializable.values()))
-                    st.success(f"Ticket #{nuevo_numero} creado exitosamente!")
     
     else:  # Modificar ticket
         with st.form("buscar_ticket"):
