@@ -173,7 +173,8 @@ def manejar_tickets():
                         ultimo_ticket = 0
                     
                     nuevo_numero = ultimo_ticket + 1
-                    
+                    nuevo_numero=nuevo_numero.astype('int')  # Para asegurarse de que sea una cadena
+
                     # Crear registro
                     fecha_creacion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     nuevo_ticket = {
