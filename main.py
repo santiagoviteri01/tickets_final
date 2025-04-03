@@ -196,6 +196,8 @@ def manejar_tickets():
                         key: (int(value) if isinstance(value, (pd.Int64Dtype, int, float)) else value)
                         for key, value in nuevo_ticket.items()
                     }
+                    nuevo_ticket_serializable['Fecha_Creación'] = str(nuevo_ticket_serializable['Fecha_Creación'])
+                    nuevo_ticket_serializable['Fecha_Modificación'] = str(nuevo_ticket_serializable['Fecha_Modificación'])
 
                     # Guardar en Google Sheets
                     # Aquí asumo que `sheet` es una instancia de tu hoja de Google Sheets autenticada
