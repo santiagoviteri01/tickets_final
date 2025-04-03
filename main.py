@@ -203,6 +203,7 @@ def manejar_tickets():
                     # Guardar en Google Sheets
                     # Aquí asumo que `sheet` es una instancia de tu hoja de Google Sheets autenticada
                     sheet.append_row(list(nuevo_ticket_serializable.values()))
+                    st.success("Ticket creado correctamente!")
     
     else:  # Modificar ticket
         with st.form("buscar_ticket"):
