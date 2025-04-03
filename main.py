@@ -194,10 +194,14 @@ def manejar_tickets():
 
                     #sheet = auth_google_sheets()
                     #sheet.append_row(list(nuevo_ticket.values()))
-                    nuevo_ticket_serializable = {key: int(value) if isinstance(value, pd.Timestamp) else value for key, value in nuevo_ticket.items()}
+                    #nuevo_ticket_serializable = {key: int(value) if isinstance(value, pd.Timestamp) else value for key, value in nuevo_ticket.items()}
+                    nuevo_ticket_serializable = {key: int(value) if isinstance(value, pd.Timestamp) or isinstance(value, pd.Int64Dtype) else value 
+                            for key, value in nuevo_ticket.items()}
 
-                    # Then append it to the sheet
+# Append the serializable values to the sheet
                     sheet.append_row(list(nuevo_ticket_serializable.values()))
+                    # Then append it to the sheet
+                    #sheet.append_row(list(nuevo_ticket_serializable.values()))
                     st.success(f"Ticket #{nuevo_numero} creado exitosamente!")
     
     else:  # Modificar ticket
