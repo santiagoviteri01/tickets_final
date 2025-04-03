@@ -7,6 +7,8 @@ from io import BytesIO
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
+from oauth2client.service_account import ServiceAccountCredentials
+
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 # Definir el alcance
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets"]
