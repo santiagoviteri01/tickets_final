@@ -6,4 +6,5 @@ seaborn
 openpyxl
 gspread
 oauth2client
-streamlit-gsheets
+gspread
+google-auth
