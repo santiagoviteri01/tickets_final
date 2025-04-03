@@ -10,7 +10,7 @@ from google.oauth2.service_account import Credentials
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 # Autenticación con la cuenta de servicio
-creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=SCOPES)
+creds = Credentials.from_service_account_info(st.secrets["general"], scopes=SCOPES)
 client = gspread.authorize(creds)
 
 spreadsheet = client.open_by_key("13hY8la9Xke5-wu3vmdB-tNKtY5D6ud4FZrJG2_HtKd8")
