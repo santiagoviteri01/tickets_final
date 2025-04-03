@@ -172,7 +172,8 @@ def manejar_tickets():
                     else:
                         ultimo_ticket = 0
                     
-                    nuevo_numero = 1
+                    nuevo_numero = ultimo_ticket+1
+                    nuevo_numero =nuevo_numero.astype("float")
                    
 
                     # Crear registro
