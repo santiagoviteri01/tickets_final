@@ -8,10 +8,31 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+# Definir el alcance
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets"]
 
-# Autenticación con la cuenta de servicio
-creds = Credentials.from_service_account_info(st.secrets["general"], scopes=SCOPES)
+# Cargar las credenciales de Google desde los secretos de Streamlit
+creds_dict = {
+    "type": "service_account",
+    "project_id": "tidy-arena-453718-r8",
+    "private_key_id": st.secrets["general"]["private_key_id"],
+    "private_key": st.secrets["general"]["private_key"],  # Aquí es donde Streamlit toma el secreto
+    "client_email": st.secrets["general"]["client_email"],
+    "client_id": st.secrets["general"]["client_id"],
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/insura2%40tidy-arena-453718-r8.iam.gserviceaccount.com"
+}
+
+# Convertir las credenciales a un formato JSON
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+
+# Autenticarse con Google
 client = gspread.authorize(creds)
+# Autenticación con la cuenta de servicio
+#creds = Credentials.from_service_account_info(st.secrets["general"], scopes=SCOPES)
+#client = gspread.authorize(creds)
 
 spreadsheet = client.open_by_key("13hY8la9Xke5-wu3vmdB-tNKtY5D6ud4FZrJG2_HtKd8")
 sheet = spreadsheet.sheet1
