@@ -173,7 +173,6 @@ def visualizar_tickets():
             st.bar_chart(df['Estado'].value_counts())
         st.subheader("Tiempo por Estado")
         df_resultados = procesar_tiempos_estado(df['Tiempo_Cambio'])
-        st.write(df_resultados)
         if not df_resultados.empty:
             st.bar_chart(df_resultados.set_index('Estado'))
         else:
