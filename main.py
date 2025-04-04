@@ -35,7 +35,14 @@ client = gspread.authorize(creds)
 # Autenticación con la cuenta de servicio
 #creds = Credentials.from_service_account_info(st.secrets["general"], scopes=SCOPES)
 #client = gspread.authorize(creds)
-
+hide_github_icon = """
+<style>
+    .viewerBadge_container__1QSob {
+        display: none !important;
+    }
+</style>
+"""
+st.markdown(hide_github_icon, unsafe_allow_html=True)
 spreadsheet = client.open_by_key("13hY8la9Xke5-wu3vmdB-tNKtY5D6ud4FZrJG2_HtKd8")
 sheet = spreadsheet.sheet1
 #sheet.update([["Columna1", "Columna2"], ["Dato1", "Dato2"]])  # Solo un ejemplo para verificar la escritura
