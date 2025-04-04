@@ -88,6 +88,34 @@ def cargar_datos():
     except Exception as e:
         st.error(f"Error cargando datos: {str(e)}")
         return pd.DataFrame()
+        
+def procesar_tiempos_estado(tiempos_cambio):
+    """
+    Procesa una lista de registros de tiempo de cambio de estado y devuelve un DataFrame
+    con el tiempo acumulado por estado de origen.
+    
+    Args:
+        tiempos_cambio (list): Lista de strings con formato "Xd (estado1 -> estado2)" 
+        
+    Returns:
+        pd.DataFrame: DataFrame con columnas ['Estado', 'Tiempo_Cambio']
+    """
+    tiempos_estado = {}
+    
+    for entry in tiempos_cambio:
+        if '(' in entry and '->' in entry:
+            # Separar componentes
+            time_part, transition_part = entry.split(' (', 1)
+            time_str = time_part.replace('d', '').strip()
+            time = int(time_str) if time_str.isdigit() else 0
+            
+            # Extraer estado de origen
+            source_state = transition_part.split('->')[0].split(')')[0].strip()
+            
+            # Acumular tiempo
+            tiempos_estado[source_state] = tiempos_estado.get(source_state, 0) + time
+            
+    return pd.DataFrame(list(tiempos_estado.items()), columns=['Estado', 'Tiempo_Cambio'])
 
 # Función para visualizar tickets
 def visualizar_tickets():
@@ -143,6 +171,23 @@ def visualizar_tickets():
             st.bar_chart(df['Área'].value_counts())
         with col2:
             st.bar_chart(df['Estado'].value_counts())
+        st.subheader("Tiempo por Estado")
+        df_resultados = procesar_tiempos_estado(df['Tiempo_Cambio'])
+        st.write(df_resultados)
+        if not df_resultados.empty:
+            st.bar_chart(df_resultados.set_index('Estado'))
+        else:
+            st.warning("No hay datos de tiempo por estado")
+        st.subheader("Actividad por Usuario")
+        col1, col2 = st.columns(2)
+        with col1:
+            creados = df['Usuario_Creación'].value_counts()
+            st.bar_chart(creados, use_container_width=True)
+            st.caption("Tickets creados por usuario")
+        with col2:
+            modificados = df['Usuario_Modificacion'].value_counts()
+            st.bar_chart(modificados, use_container_width=True)
+            st.caption("Tickets modificados por usuario")
     else:
         st.warning("No se encontraron tickets")
 
