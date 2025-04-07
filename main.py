@@ -173,6 +173,8 @@ def portal_cliente():
                     df = cargar_datos()
                     ultimo_ticket = df['Número'].max() if not df.empty else 0
                     nuevo_numero = ultimo_ticket + 1
+                    nuevo_numero =nuevo_numero.astype("float")
+
                     
                     nuevo_ticket = {
                         'Número': nuevo_numero,
