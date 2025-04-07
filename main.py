@@ -37,7 +37,7 @@ client = gspread.authorize(creds)
 #client = gspread.authorize(creds)
 spreadsheet = client.open_by_key("13hY8la9Xke5-wu3vmdB-tNKtY5D6ud4FZrJG2_HtKd8")
 sheet = spreadsheet.sheet1
-asegurados = spreadsheet.sheet2
+asegurados = spreadsheet.asegurados
 
 # Configuración inicial de la página
 st.set_page_config(
