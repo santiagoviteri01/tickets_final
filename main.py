@@ -37,7 +37,7 @@ client = gspread.authorize(creds)
 #client = gspread.authorize(creds)
 spreadsheet = client.open_by_key("13hY8la9Xke5-wu3vmdB-tNKtY5D6ud4FZrJG2_HtKd8")
 sheet = spreadsheet.sheet1
-#sheet.update([["Columna1", "Columna2"], ["Dato1", "Dato2"]])  # Solo un ejemplo para verificar la escritura
+asegurados = spreadsheet.sheet2
 
 # Configuración inicial de la página
 st.set_page_config(
@@ -53,10 +53,17 @@ st.set_page_config(
 USUARIOS = {
     "cliente1": {"password": "pass1", "rol": "cliente"},
     "cliente2": {"password": "pass2", "rol": "cliente"},
-    "admin": {"password": "admin123", "rol": "admin"},
-    "dany": {"password": "futbol123", "rol": "admin"}
+    "carlosserrano": {"password": "crediprime2", "rol": "admin"},
+    "mauriciodavila": {"password": "insuratlan1", "rol": "admin"},
+    "santiagoviteri": {"password": "insuratlan2", "rol": "admin"},
 }
-
+for _, row in asegurados.iterrows():
+    client_id = row["id"]
+    USUARIOS[client_id] = {
+        "password": client_id,  # Contraseña = ID en texto plano
+        "rol": "cliente"
+    }
+    
 def autenticacion():
     if 'autenticado' not in st.session_state:
         st.session_state.autenticado = False
