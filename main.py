@@ -51,12 +51,11 @@ st.set_page_config(
 
 # Configuración de usuarios y contraseñas
 USUARIOS = {
-    "wiga": "contraseña_secreta123",
-    "admin": "admin123",
-    "dany": "futbol123"
-}
+    "cliente1": {"password": "pass1", "rol": "cliente"},
+    "cliente2": {"password": "pass2", "rol": "cliente"},
+    "admin": {"password": "admin123", "rol": "admin"},
+    "dany": {"password": "futbol123", "rol": "admin"}
 
-# Función de autenticación mejorada
 def autenticacion():
     if 'autenticado' not in st.session_state:
         st.session_state.autenticado = False
@@ -68,14 +67,165 @@ def autenticacion():
             contraseña = st.text_input("Contraseña", type="password")
             
             if st.button("Ingresar"):
-                if USUARIOS.get(usuario) == contraseña:
+                user_data = USUARIOS.get(usuario)
+                if user_data and user_data['password'] == contraseña:
                     st.session_state.autenticado = True
                     st.session_state.usuario_actual = usuario
+                    st.session_state.rol = user_data['rol']
                     st.rerun()
                 else:
                     st.error("❌ Credenciales incorrectas")
         return False
     return True
+
+# Portal del Cliente
+def portal_cliente():
+    st.title(f"👤 Portal del Cliente - {st.session_state.usuario_actual}")
+        # Botón de cerrar sesión en el sidebar
+    st.sidebar.title("Menú Cliente")
+    if st.sidebar.button("Cerrar Sesión"):
+        st.session_state.autenticado = False
+        st.success("Sesión cerrada exitosamente")
+        time.sleep(1)
+        st.rerun()
+    
+    tab1, tab2 = st.tabs(["Mis Tickets", "Nuevo Reclamo"])
+    
+    with tab1:
+        st.header("Mis Tickets")
+        df = cargar_datos()
+        
+        if not df.empty:
+            # Filtrar tickets del cliente
+            mis_tickets = df[df['Cliente'] == st.session_state.usuario_actual]
+            
+            # Filtro por estado
+            estado_filtro = st.selectbox("Filtrar por estado:", 
+                                        ["Todos", "Abiertos", "Cerrados"])
+            
+            if estado_filtro == "Abiertos":
+                mis_tickets = mis_tickets[mis_tickets['Estado'] != 'cerrado']
+            elif estado_filtro == "Cerrados":
+                mis_tickets = mis_tickets[mis_tickets['Estado'] == 'cerrado']
+            
+            if not mis_tickets.empty:
+                # Mostrar resumen de estados
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Tickets Abiertos", 
+                             len(mis_tickets[mis_tickets['Estado'] != 'cerrado']))
+                with col2:
+                    st.metric("Tickets Cerrados", 
+                             len(mis_tickets[mis_tickets['Estado'] == 'cerrado']))
+                with col3:
+                    ultimo_ticket = mis_tickets.iloc[-1]
+                    st.metric("Último Estado", ultimo_ticket['Estado'])
+                
+                # Mostrar tickets con detalles
+                for _, ticket in mis_tickets.iterrows():
+                    with st.expander(f"Ticket #{ticket['Número']} - {ticket['Título']}"):
+                        col_left, col_right = st.columns([1, 3])
+                        
+                        with col_left:
+                            # Icono y color según estado
+                            estado = ticket['Estado'].lower()
+                            color_map = {
+                                'nuevo': '🔵',
+                                'en proceso': '🟡',
+                                'resuelto': '🟢',
+                                'cerrado': '✅',
+                                'documentacion pendiente': '🟠'
+                            }
+                            icono = color_map.get(estado, '⚫')
+                            st.markdown(f"**Estado:** {icono} {ticket['Estado'].capitalize()}")
+                            
+                            st.write(f"**Fecha creación:** {ticket['Fecha_Creación']}")
+                            if pd.notna(ticket['Fecha_Modificacion']):
+                                st.write(f"**Última actualización:** {ticket['Fecha_Modificacion']}")
+                        
+                        with col_right:
+                            st.write(f"**Descripción:**")
+                            st.write(ticket['Descripción'])
+                            
+                            if pd.notna(ticket['Tiempo_Cambio']):
+                                st.write("**Historial de cambios:**")
+                                cambios = ticket['Tiempo_Cambio'].split(';')
+                                for cambio in cambios:
+                                    st.write(f"- {cambio.strip()}")
+            else:
+                st.info("No se encontraron tickets con los filtros seleccionados")
+        else:
+            st.warning("No hay tickets registrados")
+
+    with tab2:
+        st.header("Nuevo Reclamo")
+        with st.form("nuevo_reclamo"):
+            titulo = st.text_input("Título del Reclamo*")
+            descripcion = st.text_area("Descripción detallada*")
+            st.subheader("Filtros")
+            area = st.selectbox("Área", ["Todas"] + list(df['Área'].unique()))
+        # Aplicar filtros
+            if st.form_submit_button("Enviar Reclamo"):
+                if not all([titulo, descripcion]):
+                    st.error("Todos los campos marcados con * son obligatorios")
+                else:
+                    df = cargar_datos()
+                    ultimo_ticket = df['Número'].max() if not df.empty else 0
+                    nuevo_numero = ultimo_ticket + 1
+                    
+                    nuevo_ticket = {
+                        'Número': nuevo_numero,
+                        'Título': titulo,
+                        'Área': area,
+                        'Estado': 'creado por usuario',
+                        'Descripción': descripcion,
+                        'Fecha_Creación': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        'Usuario_Creación': st.session_state.usuario_actual,
+                        'Fecha_Modificacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        'Usuario_Modificacion': 'cliente',
+                        'Tiempo_Cambio': '0d',
+                        'Cliente': st.session_state.usuario_actual
+                    }
+                    
+                    sheet.append_row(list(nuevo_ticket.values()))
+                    st.success(f"Reclamo #{nuevo_numero} creado exitosamente!")
+
+# Portal de Administración (Usuarios)
+def portal_administracion():
+    st.sidebar.title("Menú Admin")
+    opcion = st.sidebar.radio("Opciones", [
+        "Inicio", 
+        "Gestión de Tickets", 
+        "Análisis", 
+        "Descargar Datos",
+        "Cerrar Sesión"
+    ])
+
+    if opcion == "Inicio":
+        st.title("🏠 Panel de Administración")
+        st.markdown("""
+        **Bienvenido al panel de administración**
+        Selecciona una opción del menú lateral para comenzar.
+        """)
+
+    elif opcion == "Gestión de Tickets":
+        st.title("📋 Gestión de Tickets")
+        manejar_tickets()
+        visualizar_tickets()
+
+    elif opcion == "Análisis":
+        st.title("📈 Análisis de Datos")
+        visualizar_tickets()
+
+    elif opcion == "Descargar Datos":
+        st.title("⬇️ Descargar Datos")
+        descargar_tickets()
+
+    elif opcion == "Cerrar Sesión":
+        st.session_state.autenticado = False
+        st.success("Sesión cerrada exitosamente")
+        time.sleep(1)
+        st.rerun()
 
 def cargar_datos():
     try:
@@ -195,8 +345,49 @@ def manejar_tickets():
     df = cargar_datos()  # Cargar tickets existentes desde Google Sheets
     
     # Mostrar opciones
-    opcion_ticket = st.radio("Seleccione una acción:", ["Crear nuevo ticket", "Modificar ticket existente"])
+        # Mostrar opciones
+    opcion_ticket = st.radio("Seleccione una acción:", ["Ver tickets en cola","Crear nuevo ticket", "Modificar ticket existente"])
     
+    if opcion_ticket == "Ver tickets en cola":
+        st.subheader("🔍 Ver tickets en cola")
+        df = cargar_datos()
+        
+        if not df.empty:
+            ultimos_registros = df.sort_values('Fecha_Modificacion').groupby('Número').last().reset_index()
+            
+            # Filtrar tickets donde el último en modificar fue cliente y no están cerrados
+            tickets_cola = ultimos_registros[
+                (ultimos_registros['Usuario_Modificacion'] == 'cliente') &
+                (ultimos_registros['Estado'] != 'cerrado')
+            ]
+            
+            if not tickets_cola.empty:
+                st.metric("Tickets Pendientes", len(tickets_cola))
+                
+                # Mostrar tabla detallada
+                st.dataframe(
+                    tickets_cola[[
+                        'Número', 'Título', 'Cliente', 'Estado', 
+                        'Fecha_Modificacion', 'Usuario_Modificacion'
+                    ]].sort_values('Fecha_Modificacion', ascending=False),
+                    use_container_width=True,
+                    height=400
+                )
+                
+                # Botón para tomar ticket
+                selected_ticket = st.number_input("Seleccionar Número de Ticket para gestionar:", min_value=min(tickets_cola['Número']))
+                
+                if st.button("Tomar Ticket"):
+                    if selected_ticket in tickets_cola['Número'].values:
+                        st.session_state.ticket_actual = tickets_cola[tickets_cola['Número'] == selected_ticket].iloc[0].to_dict()
+                        st.success(f"Ticket #{selected_ticket} asignado para gestión")
+                    else:
+                        st.error("Número de ticket inválido")
+            else:
+                st.info("No hay tickets pendientes de clientes")
+        else:
+            st.warning("No se encontraron tickets")
+        
     if opcion_ticket == "Crear nuevo ticket":
         with st.form("nuevo_ticket"):
             st.subheader("📝 Nuevo Ticket")
@@ -248,7 +439,7 @@ def manejar_tickets():
                     sheet.append_row(list(nuevo_ticket_serializable.values()))
                     st.success("Ticket creado correctamente!")
     
-    else:  # Modificar ticket
+    elif opcion_ticket == "Modificar ticket existente":
         with st.form("buscar_ticket"):
             st.subheader("🔍 Buscar Ticket")
             ticket_id = st.number_input("Ingrese el número de ticket:", min_value=1, step=1)
@@ -273,7 +464,7 @@ def manejar_tickets():
                 nuevo_estado = st.selectbox(
                     "Nuevo estado:",
                     ["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion", "cerrado"],
-                    index=["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion", "cerrado"]
+                    index=["creado por usuario","inicial", "documentacion pendiente", "documentacion enviada", "en reparacion", "cerrado"]
                         .index(st.session_state.ticket_actual['Estado'])
                 )
                 
@@ -305,8 +496,10 @@ def manejar_tickets():
                         'Fecha_Creación': st.session_state.ticket_actual['Fecha_Creación'],
                         'Usuario_Creación': st.session_state.ticket_actual['Usuario_Creación'],
                         'Fecha Modificación': fecha_modificacion.strftime('%Y-%m-%d %H:%M:%S'),
-                        'Usuario Modificación': st.session_state.usuario_actual,
-                        'Tiempo_Cambio': registro_dias
+                        'Usuario_Modificacion': st.session_state.usuario_actual,
+                        'Tiempo_Cambio': registro_dias,
+                        'Cliente': st.session_state.ticket_actual['Cliente']
+                        
                     }
                     
                     # Actualizar en Google Sheets
@@ -341,37 +534,9 @@ def descargar_tickets():
 if not autenticacion():
     st.stop()
 
-st.sidebar.title("Menú")
-opcion = st.sidebar.radio("Opciones", [
-    "Inicio", 
-    "Gestión de Tickets", 
-    "Análisis", 
-    "Descargar Datos",
-    "Cerrar Sesión"
-])
+if st.session_state.rol == 'cliente':
+    portal_cliente()
+else:
+    portal_administracion()
 
-if opcion == "Inicio":
-    st.title("🏠 Sistema de Gestión de Tickets")
-    st.markdown("""
-    **Bienvenido** a la plataforma de gestión de tickets.
-    Selecciona una opción del menú lateral para comenzar.
-    """)
 
-elif opcion == "Gestión de Tickets":
-    st.title("📋 Gestión de Tickets")
-    manejar_tickets()
-    visualizar_tickets()
-
-elif opcion == "Análisis":
-    st.title("📈 Análisis de Datos")
-    visualizar_tickets()
-
-elif opcion == "Descargar Datos":
-    st.title("⬇️ Descargar Datos")
-    descargar_tickets()
-
-elif opcion == "Cerrar Sesión":
-    st.session_state.autenticado = False
-    st.success("Sesión cerrada exitosamente")
-    time.sleep(1)
-    st.rerun()
