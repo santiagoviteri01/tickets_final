@@ -36,9 +36,14 @@ client = gspread.authorize(creds)
 #creds = Credentials.from_service_account_info(st.secrets["general"], scopes=SCOPES)
 #client = gspread.authorize(creds)
 spreadsheet = client.open_by_key("13hY8la9Xke5-wu3vmdB-tNKtY5D6ud4FZrJG2_HtKd8")
-sheet = spreadsheet.sheet1
-asegurados = spreadsheet.asegurados
+sheet = spreadsheet.worksheet("hoja")      
+asegurados = spreadsheet.worksheet("asegurados")
+#sheet1 = spreadsheet.worksheet("sheet")        # Reemplaza "sheet" por el nombre real si es distinto
+#sheet2 = spreadsheet.worksheet("asegurados")
 
+# Obtén los datos de ambas hojas (opcional)
+datos_sheet1 = sheet1.get_all_records()
+datos_sheet2 = sheet2.get_all_records()
 # Configuración inicial de la página
 st.set_page_config(
     page_title="Sistema de Tickets y Análisis",
