@@ -70,7 +70,7 @@ for _, row in asegurados_df.iterrows():
         "rol": "cliente"
     }
 
-st.autenticacion():
+def autenticacion():
     if 'autenticado' not in st.session_state:
         st.session_state.autenticado = False
     
