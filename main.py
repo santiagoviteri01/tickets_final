@@ -40,12 +40,9 @@ sheet = spreadsheet.worksheet("hoja")
 asegurados = spreadsheet.worksheet("asegurados")
 #sheet1 = spreadsheet.worksheet("sheet")        # Reemplaza "sheet" por el nombre real si es distinto
 #sheet2 = spreadsheet.worksheet(asegurados)
-st.write("Hojas disponibles:", asegurados)
 # Obtén los datos de ambas hojas (opcional)
 #datos_sheet1 = sheet1.get_all_records()
 asegurados = asegurados.get_all_records()
-st.write("Hojas disponibles:", asegurados)
-
 # Configuración inicial de la página
 st.set_page_config(
     page_title="Sistema de Tickets y Análisis",
