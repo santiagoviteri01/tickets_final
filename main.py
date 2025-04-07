@@ -55,6 +55,7 @@ USUARIOS = {
     "cliente2": {"password": "pass2", "rol": "cliente"},
     "admin": {"password": "admin123", "rol": "admin"},
     "dany": {"password": "futbol123", "rol": "admin"}
+}
 
 def autenticacion():
     if 'autenticado' not in st.session_state:
