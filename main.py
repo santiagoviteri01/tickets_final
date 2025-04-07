@@ -538,5 +538,3 @@ if st.session_state.rol == 'cliente':
     portal_cliente()
 else:
     portal_administracion()
-
-
