@@ -66,11 +66,11 @@ asegurados_df = pd.DataFrame(asegurados)
 for _, row in asegurados_df.iterrows():
     client_id = row["id"]
     USUARIOS[client_id] = {
-        "password": client_id,  # Contraseña = ID en texto plano
+        "password": "client_id",  # Contraseña = ID en texto plano
         "rol": "cliente"
     }
-    
-def autenticacion():
+
+st. autenticacion():
     if 'autenticado' not in st.session_state:
         st.session_state.autenticado = False
     
