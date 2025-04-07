@@ -61,7 +61,9 @@ USUARIOS = {
     "mauriciodavila": {"password": "insuratlan1", "rol": "admin"},
     "santiagoviteri": {"password": "insuratlan2", "rol": "admin"},
 }
-for _, row in asegurados.iterrows():
+asegurados_df = pd.DataFrame(asegurados)
+
+for _, row in asegurados_df.iterrows():
     client_id = row["id"]
     USUARIOS[client_id] = {
         "password": client_id,  # Contraseña = ID en texto plano
