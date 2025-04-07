@@ -40,7 +40,7 @@ sheet = spreadsheet.worksheet("hoja")
 asegurados = spreadsheet.worksheet("asegurados")
 #sheet1 = spreadsheet.worksheet("sheet")        # Reemplaza "sheet" por el nombre real si es distinto
 #sheet2 = spreadsheet.worksheet(asegurados)
-st.write("Hojas disponibles:", hojas_disponibles)
+st.write("Hojas disponibles:", asegurados)
 # Obtén los datos de ambas hojas (opcional)
 #datos_sheet1 = sheet1.get_all_records()
 #datos_sheet2 = sheet2.get_all_records()
