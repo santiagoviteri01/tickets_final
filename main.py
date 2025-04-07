@@ -44,6 +44,8 @@ st.write("Hojas disponibles:", asegurados)
 # Obtén los datos de ambas hojas (opcional)
 #datos_sheet1 = sheet1.get_all_records()
 asegurados = asegurados.get_all_records()
+st.write("Hojas disponibles:", asegurados)
+
 # Configuración inicial de la página
 st.set_page_config(
     page_title="Sistema de Tickets y Análisis",
