@@ -42,8 +42,8 @@ asegurados = spreadsheet.worksheet("asegurados")
 #sheet2 = spreadsheet.worksheet("asegurados")
 
 # Obtén los datos de ambas hojas (opcional)
-datos_sheet1 = sheet1.get_all_records()
-datos_sheet2 = sheet2.get_all_records()
+#datos_sheet1 = sheet1.get_all_records()
+#datos_sheet2 = sheet2.get_all_records()
 # Configuración inicial de la página
 st.set_page_config(
     page_title="Sistema de Tickets y Análisis",
