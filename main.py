@@ -39,8 +39,8 @@ spreadsheet = client.open_by_key("13hY8la9Xke5-wu3vmdB-tNKtY5D6ud4FZrJG2_HtKd8")
 sheet = spreadsheet.worksheet("hoja")      
 asegurados = spreadsheet.worksheet("asegurados")
 #sheet1 = spreadsheet.worksheet("sheet")        # Reemplaza "sheet" por el nombre real si es distinto
-#sheet2 = spreadsheet.worksheet("asegurados")
-
+#sheet2 = spreadsheet.worksheet(asegurados)
+st.write("Hojas disponibles:", hojas_disponibles)
 # Obtén los datos de ambas hojas (opcional)
 #datos_sheet1 = sheet1.get_all_records()
 #datos_sheet2 = sheet2.get_all_records()
