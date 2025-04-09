@@ -29,20 +29,20 @@ SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets"]
 
 # Cargar las credenciales de Google desde los secretos de Streamlit
-'''
-creds_dict = {
-    "type": "service_account",
-    "project_id": "tidy-arena-453718-r8",
-    "private_key_id": st.secrets["general"]["private_key_id"],
-    "private_key": st.secrets["general"]["private_key"],  # Aquí es donde Streamlit toma el secreto
-    "client_email": st.secrets["general"]["client_email"],
-    "client_id": st.secrets["general"]["client_id"],
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/insura2%40tidy-arena-453718-r8.iam.gserviceaccount.com"
-}
-'''
+
+#creds_dict = {
+#    "type": "service_account",
+#    "project_id": "tidy-arena-453718-r8",
+#    "private_key_id": st.secrets["general"]["private_key_id"],
+#    "private_key": st.secrets["general"]["private_key"],  # Aquí es donde Streamlit toma el secreto
+#    "client_email": st.secrets["general"]["client_email"],
+#    "client_id": st.secrets["general"]["client_id"],
+#    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+#    "token_uri": "https://oauth2.googleapis.com/token",
+#    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+#    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/insura2%40tidy-arena-453718-r8.iam.gserviceaccount.com"
+#}
+
 
 # Cargar credenciales desde variables de entorno (Render) o secrets.toml (local)
 creds_dict = {
