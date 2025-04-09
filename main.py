@@ -11,6 +11,12 @@ from oauth2client.service_account import ServiceAccountCredentials
 import os
 import json
 from pathlib import Path
+
+st.set_page_config(
+    page_title="Sistema de Tickets y Análisis",
+    page_icon="📊",
+    layout="wide"
+)
 st.markdown(
     """
     <link rel="manifest" href="/manifest.json">
@@ -32,11 +38,6 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 # O Método 2: Archivo secreto
 creds_path = Path('/etc/secrets/google-creds.json')
 creds_dict = json.loads(creds_path.read_text())
-st.set_page_config(
-    page_title="Sistema de Tickets y Análisis",
-    page_icon="📊",
-    layout="wide"
-)
 
 # Verificación
 if not all([creds_dict["private_key"], creds_dict["client_email"]]):
