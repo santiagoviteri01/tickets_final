@@ -149,7 +149,7 @@ def portal_cliente():
                 col1, col2, col3 = st.columns(3)
                 with col1:
                     st.metric("Tickets Abiertos", 
-                             len(mis_tickets[mis_tickets['Estado'] != 'cerrado']['Número'].unique())
+                             len(mis_tickets[mis_tickets['Estado'] != 'cerrado']['Número'].unique()))
                 with col2:
                     st.metric("Tickets Cerrados", 
                              len(mis_tickets[mis_tickets['Estado'] == 'cerrado']['Número'].unique()))
