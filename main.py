@@ -9,6 +9,19 @@ import gspread
 from google.oauth2.service_account import Credentials
 from oauth2client.service_account import ServiceAccountCredentials
 
+st.markdown(
+    """
+    <link rel="manifest" href="/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('Service Worker registrado', reg))
+                .catch(err => console.log('Error al registrar Service Worker', err));
+        }
+    </script>
+    """,
+    unsafe_allow_html=True
+)
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 # Definir el alcance
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets"]
