@@ -8,6 +8,8 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 from oauth2client.service_account import ServiceAccountCredentials
+import os
+import json
 
 st.markdown(
     """
@@ -27,6 +29,7 @@ SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets"]
 
 # Cargar las credenciales de Google desde los secretos de Streamlit
+'''
 creds_dict = {
     "type": "service_account",
     "project_id": "tidy-arena-453718-r8",
@@ -39,6 +42,29 @@ creds_dict = {
     "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
     "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/insura2%40tidy-arena-453718-r8.iam.gserviceaccount.com"
 }
+'''
+
+# Cargar credenciales desde variables de entorno (Render) o secrets.toml (local)
+creds_dict = {
+    "type": "service_account",
+    "project_id": "tidy-arena-453718-r8",
+    "private_key_id": os.getenv("PRIVATE_KEY_ID") or st.secrets.get("general", {}).get("private_key_id"),
+    "private_key": os.getenv("PRIVATE_KEY") or st.secrets.get("general", {}).get("private_key"),
+    "client_email": os.getenv("CLIENT_EMAIL") or st.secrets.get("general", {}).get("client_email"),
+    "client_id": os.getenv("CLIENT_ID") or st.secrets.get("general", {}).get("client_id"),
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/insura2%40tidy-arena-453718-r8.iam.gserviceaccount.com"
+}
+
+# Verificar que todas las credenciales estén presentes
+required_keys = ["private_key_id", "private_key", "client_email", "client_id"]
+missing_keys = [key for key in required_keys if not creds_dict.get(key)]
+
+if missing_keys:
+    st.error(f"❌ Faltan credenciales: {', '.join(missing_keys)}")
+    st.stop()
 
 # Convertir las credenciales a un formato JSON
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
