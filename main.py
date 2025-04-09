@@ -29,34 +29,15 @@ SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets"]
 
 # Cargar las credenciales de Google desde los secretos de Streamlit
+# O Método 2: Archivo secreto
+creds_path = Path('/etc/secrets/google-creds.json')
+creds_dict = json.loads(creds_path.read_text())
 
-#creds_dict = {
-#    "type": "service_account",
-#    "project_id": "tidy-arena-453718-r8",
-#    "private_key_id": st.secrets["general"]["private_key_id"],
-#    "private_key": st.secrets["general"]["private_key"],  # Aquí es donde Streamlit toma el secreto
-#    "client_email": st.secrets["general"]["client_email"],
-#    "client_id": st.secrets["general"]["client_id"],
-#    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-#    "token_uri": "https://oauth2.googleapis.com/token",
-#    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-#    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/insura2%40tidy-arena-453718-r8.iam.gserviceaccount.com"
-#}
+# Verificación
+if not all([creds_dict["private_key"], creds_dict["client_email"]]):
+    st.error("❌ Faltan credenciales. Configúralas en Render.")
+    st.stop()
 
-
-# Cargar credenciales desde variables de entorno (Render) o secrets.toml (local)
-creds_dict = {
-    "type": "service_account",
-    "project_id": "tidy-arena-453718-r8",
-    "private_key_id": os.getenv("PRIVATE_KEY_ID") or st.secrets.get("general", {}).get("private_key_id"),
-    "private_key": os.getenv("PRIVATE_KEY") or st.secrets.get("general", {}).get("private_key"),
-    "client_email": os.getenv("CLIENT_EMAIL") or st.secrets.get("general", {}).get("client_email"),
-    "client_id": os.getenv("CLIENT_ID") or st.secrets.get("general", {}).get("client_id"),
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/insura2%40tidy-arena-453718-r8.iam.gserviceaccount.com"
-}
 
 # Verificar que todas las credenciales estén presentes
 required_keys = ["private_key_id", "private_key", "client_email", "client_id"]
