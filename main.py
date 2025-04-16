@@ -137,76 +137,73 @@ def portal_cliente():
     
     tab1, tab2, tab3 = st.tabs(["Mis Datos y Coberturas", "Nuevo Reclamo", "Mis Tickets"])
     with tab1:
-    st.header("🧾 Mis Datos Personales y del Vehículo")
-
-    cliente_id = st.session_state.usuario_actual
-    cliente_data = asegurados_df[asegurados_df["NOMBRE COMPLETO"].astype(str) == cliente_id]
-
-    if not cliente_data.empty:
-        datos = cliente_data.iloc[0]
-
-        # Mostrar en columnas
-        st.subheader("Información Personal")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write(f"**Nombre Completo:** {datos['NOMBRE COMPLETO']}")
-            st.write(f"**Género:** {datos['GENERO']}")
-            st.write(f"**Estado Civil:** {datos['ESTADO CIVIL']}")
-            st.write(f"**Ciudad:** {datos['CIUDAD']}")
-            st.write(f"**Fecha de Nacimiento:** {datos['FECHA NACIMIENTO']}")
-            st.write(f"**Correo:** {datos['CORREO ELECTRÓNICO']}")
-
-        with col2:
-            st.write(f"**Dirección Oficina:** {datos['DIRECCIÓN OFICINA']}")
-            st.write(f"**Teléfono Oficina:** {datos['TELÉFONO OFICINA']}")
-            st.write(f"**Dirección Domicilio:** {datos['DIRECCIÓN DOMICILIO']}")
-            st.write(f"**Teléfono Domicilio:** {datos['TELÉFONO DOMICILIO']}")
-
-        st.subheader("Información de la Póliza")
-        st.write(f"**Póliza Maestra:** {datos['POLIZA MAESTRA']}")
-        st.write(f"**Número Certificado:** {datos['NÚMERO CERTIFICADO']}")
-        st.write(f"**Fecha Vigencia:** {datos['FECHA VIGENCIA']}")
-        st.write(f"**Fecha Expiración:** {datos['FECHA EXPIRACIÓN']}")
-        st.write(f"**Aseguradora:** {datos['ASEGURADORA']}")
-        st.write(f"**Plan:** {datos['PLAN']}")
-
-        st.subheader("Información del Vehículo")
-        col3, col4 = st.columns(2)
-        with col3:
-            st.write(f"**Marca:** {datos['MARCA']}")
-            st.write(f"**Modelo:** {datos['MODELO']}")
-            st.write(f"**Año:** {datos['AÑO']}")
-            st.write(f"**Clase (Tipo):** {datos['CLASE (TIPO)']}")
-        with col4:
-            st.write(f"**Motor:** {datos['MOTOR']}")
-            st.write(f"**Chasis:** {datos['CHASIS']}")
-            st.write(f"**Color:** {datos['COLOR']}")
-            st.write(f"**Tipo Placa:** {datos['TIPO PLACA']}")
-            st.write(f"**Placa:** {datos['PLACA']}")
-
-        st.write(f"**Accesorios:** {datos['ACCESORIOS']}")
-        st.write(f"**Valor Asegurado:** {datos['VALOR ASEGURADO']}")
-
-        # Mostrar coberturas según aseguradora
-        aseguradora = datos["ASEGURADORA"].strip().upper()
-
-        st.subheader("📋 Ver Coberturas")
-        if aseguradora == "ZURICH":
-            st.info("Coberturas ZURICH")
-            # Aquí puedes poner más detalles si los tienes
-        elif aseguradora == "MAPFRE":
-            st.info("Coberturas MAPFRE")
-        elif aseguradora == "AIG":
-            st.info("Coberturas AIG")
-        else:
-            st.warning("No se encontró aseguradora válida o soportada.")
-    else:
-        st.error("No se encontró información para tu cuenta.")
-
-
-
+        st.header("🧾 Mis Datos Personales y del Vehículo")
     
-    with tab1:
+        cliente_id = st.session_state.usuario_actual
+        cliente_data = asegurados_df[asegurados_df["NOMBRE COMPLETO"].astype(str) == cliente_id]
+    
+        if not cliente_data.empty:
+            datos = cliente_data.iloc[0]
+    
+            # Mostrar en columnas
+            st.subheader("Información Personal")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write(f"**Nombre Completo:** {datos['NOMBRE COMPLETO']}")
+                st.write(f"**Género:** {datos['GENERO']}")
+                st.write(f"**Estado Civil:** {datos['ESTADO CIVIL']}")
+                st.write(f"**Ciudad:** {datos['CIUDAD']}")
+                st.write(f"**Fecha de Nacimiento:** {datos['FECHA NACIMIENTO']}")
+                st.write(f"**Correo:** {datos['CORREO ELECTRÓNICO']}")
+    
+            with col2:
+                st.write(f"**Dirección Oficina:** {datos['DIRECCIÓN OFICINA']}")
+                st.write(f"**Teléfono Oficina:** {datos['TELÉFONO OFICINA']}")
+                st.write(f"**Dirección Domicilio:** {datos['DIRECCIÓN DOMICILIO']}")
+                st.write(f"**Teléfono Domicilio:** {datos['TELÉFONO DOMICILIO']}")
+    
+            st.subheader("Información de la Póliza")
+            st.write(f"**Póliza Maestra:** {datos['POLIZA MAESTRA']}")
+            st.write(f"**Número Certificado:** {datos['NÚMERO CERTIFICADO']}")
+            st.write(f"**Fecha Vigencia:** {datos['FECHA VIGENCIA']}")
+            st.write(f"**Fecha Expiración:** {datos['FECHA EXPIRACIÓN']}")
+            st.write(f"**Aseguradora:** {datos['ASEGURADORA']}")
+            st.write(f"**Plan:** {datos['PLAN']}")
+    
+            st.subheader("Información del Vehículo")
+            col3, col4 = st.columns(2)
+            with col3:
+                st.write(f"**Marca:** {datos['MARCA']}")
+                st.write(f"**Modelo:** {datos['MODELO']}")
+                st.write(f"**Año:** {datos['AÑO']}")
+                st.write(f"**Clase (Tipo):** {datos['CLASE (TIPO)']}")
+            with col4:
+                st.write(f"**Motor:** {datos['MOTOR']}")
+                st.write(f"**Chasis:** {datos['CHASIS']}")
+                st.write(f"**Color:** {datos['COLOR']}")
+                st.write(f"**Tipo Placa:** {datos['TIPO PLACA']}")
+                st.write(f"**Placa:** {datos['PLACA']}")
+    
+            st.write(f"**Accesorios:** {datos['ACCESORIOS']}")
+            st.write(f"**Valor Asegurado:** {datos['VALOR ASEGURADO']}")
+    
+            # Mostrar coberturas según aseguradora
+            aseguradora = datos["ASEGURADORA"].strip().upper()
+    
+            st.subheader("📋 Ver Coberturas")
+            if aseguradora == "ZURICH":
+                st.info("Coberturas ZURICH")
+                # Aquí puedes poner más detalles si los tienes
+            elif aseguradora == "MAPFRE":
+                st.info("Coberturas MAPFRE")
+            elif aseguradora == "AIG":
+                st.info("Coberturas AIG")
+            else:
+                st.warning("No se encontró aseguradora válida o soportada.")
+        else:
+            st.error("No se encontró información para tu cuenta.")
+
+    with tab2:
         st.header("Mis Tickets")
         df = cargar_datos()
         
@@ -272,7 +269,7 @@ def portal_cliente():
         else:
             st.warning("No hay tickets registrados")
 
-    with tab2:
+    with tab3:
         st.header("Nuevo Reclamo")
         with st.form("nuevo_reclamo"):
             titulo = st.text_input("Título del Reclamo*")
