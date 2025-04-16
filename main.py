@@ -113,47 +113,117 @@ def landing_page():
                 background: linear-gradient(to right, #f8f9fb, #f1f4f8);
                 font-family: 'Segoe UI', sans-serif;
             }
-            .centered {
+
+            .top-bar {
                 display: flex;
-                flex-direction: column;
+                justify-content: space-between;
                 align-items: center;
-                justify-content: center;
-                height: 100vh;
-                text-align: center;
+                padding: 1rem 2rem;
+                background-color: white;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+                position: sticky;
+                top: 0;
+                z-index: 999;
             }
-            .title {
-                font-size: 3.2rem;
+
+            .logo {
+                display: flex;
+                align-items: center;
+                font-size: 1.5rem;
+                font-weight: bold;
                 color: #ff0083;
-                margin-bottom: 1rem;
             }
-            .subtitle {
-                font-size: 1.2rem;
-                max-width: 600px;
-                margin-bottom: 2rem;
+
+            .logo img {
+                height: 32px;
+                margin-right: 10px;
             }
-            .button {
+
+            .top-bar button {
                 background-color: #ff0083;
                 color: white;
                 border: none;
-                padding: 1rem 2rem;
+                padding: 0.6rem 1.2rem;
                 font-size: 1rem;
                 border-radius: 8px;
                 cursor: pointer;
                 transition: background-color 0.3s ease;
             }
-            .button:hover {
+
+            .top-bar button:hover {
                 background-color: #e60074;
             }
+
+            .hero {
+                height: 90vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                padding: 2rem;
+            }
+
+            .hero h1 {
+                font-size: 3.5rem;
+                color: #ff0083;
+                margin-bottom: 1rem;
+            }
+
+            .hero p {
+                font-size: 1.2rem;
+                max-width: 600px;
+                margin-bottom: 2rem;
+                color: #444;
+            }
+
+            .hero .cotizar {
+                background-color: #00c49a;
+                color: white;
+                border: none;
+                padding: 1rem 2.5rem;
+                font-size: 1.2rem;
+                border-radius: 12px;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            }
+
+            .hero .cotizar:hover {
+                background-color: #00a17d;
+            }
         </style>
-        <div class="centered">
-            <div class="title">Bienvenido a InsurApp</div>
-            <div class="subtitle">Tu sistema inteligente de gestión de seguros y reclamos. Rápido, seguro y accesible desde cualquier lugar.</div>
+
+        <div class="top-bar">
+            <div class="logo">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Insurance_icon.svg/1200px-Insurance_icon.svg.png" alt="logo" />
+                InsurApp
+            </div>
+            <form action="#" method="post">
+                <button type="submit" name="mi_cuenta">Mi Cuenta</button>
+            </form>
+        </div>
+
+        <div class="hero">
+            <h1>Bienvenido a InsurApp</h1>
+            <p>Tu sistema inteligente de gestión de seguros y reclamos. Rápido, seguro y accesible desde cualquier lugar.</p>
+            <form action="#" method="post">
+                <button class="cotizar" name="cotiza">Cotiza con Nosotros</button>
+            </form>
+        </div>
         """,
         unsafe_allow_html=True
     )
-    if st.button("Mi Cuenta", key="mi_cuenta"):
+
+    # Acciones basadas en botones
+    if st.session_state.get("mi_cuenta_click", False):
         st.session_state.mostrar_login = True
-    st.markdown("</div>", unsafe_allow_html=True)
+
+    if st.button("👤 Entrar a Mi Cuenta", key="mi_cuenta_fake", help="Botón simulado de HTML"):
+        st.session_state.mostrar_login = True
+
+    if st.button("🧮 Cotiza con Nosotros", key="cotizar_fake", help="Botón simulado para cotizador"):
+        st.info("Aquí podrías redirigir a un cotizador o formulario externo.")
+
 
         
 def autenticacion():
