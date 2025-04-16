@@ -152,7 +152,7 @@ def portal_cliente():
                 st.write(f"**Nombre Completo:** {datos['NOMBRE COMPLETO']}")
                 st.write(f"**Género:** {datos['GENERO']}")
                 st.write(f"**Estado Civil:** {datos['ESTADO CIVIL']}")
-                st.write(f"**Ciudad:** {datos['CIUDAD']}")
+                st.write(f"**Ciudad:** {datos['CIUDAD CLIENTE']}")
                 st.write(f"**Fecha de Nacimiento:** {datos['FECHA NACIMIENTO']}")
                 st.write(f"**Correo:** {datos['CORREO ELECTRÓNICO']}")
     
