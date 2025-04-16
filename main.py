@@ -108,16 +108,22 @@ def formulario_cotizacion():
     correo = st.text_input("Correo electrónico")
     telefono = st.text_input("Número de teléfono")
 
-    if st.button("Enviar solicitud de cotización"):
-        if not all([tipo_seguro, nombre, apellidos, correo, telefono]):
-            st.warning("Por favor completa todos los campos.")
-        else:
-            # Guardar en hoja 'cotizaciones'
-            hoja_cotizaciones = spreadsheet.worksheet("cotizaciones")
-            nueva_fila = [datetime.now().strftime("%Y-%m-%d %H:%M:%S"), tipo_seguro, nombre, apellidos, correo, telefono]
-            hoja_cotizaciones.append_row(nueva_fila)
-            st.success("🎉 Tu solicitud ha sido enviada exitosamente. Pronto nos contactaremos contigo.")
-            time.sleep(1.5)  # opcional: una pausa para que el usuario vea el mensaje
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        if st.button("Enviar solicitud de cotización"):
+            if not all([tipo_seguro, nombre, apellidos, correo, telefono]):
+                st.warning("Por favor completa todos los campos.")
+            else:
+                hoja_cotizaciones = spreadsheet.worksheet("cotizaciones")
+                nueva_fila = [datetime.now().strftime("%Y-%m-%d %H:%M:%S"), tipo_seguro, nombre, apellidos, correo, telefono]
+                hoja_cotizaciones.append_row(nueva_fila)
+                st.success("🎉 Tu solicitud ha sido enviada exitosamente. Pronto nos contactaremos contigo.")
+                time.sleep(1.5)
+                st.session_state.mostrar_formulario_cotizacion = False
+                st.rerun()
+
+    with col2:
+        if st.button("⬅️ Volver"):
             st.session_state.mostrar_formulario_cotizacion = False
             st.rerun()
 
@@ -205,27 +211,32 @@ def landing_page():
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-
-        
+       
 def autenticacion():
     if 'autenticado' not in st.session_state:
         st.session_state.autenticado = False
-    
+
     if not st.session_state.autenticado:
         with st.container():
             st.title("🔒 Inicio de Sesión")
             usuario = st.text_input("Usuario")
             contraseña = st.text_input("Contraseña", type="password")
-            
-            if st.button("Ingresar"):
-                user_data = USUARIOS.get(usuario)
-                if user_data and user_data['password'] == contraseña:
-                    st.session_state.autenticado = True
-                    st.session_state.usuario_actual = usuario
-                    st.session_state.rol = user_data['rol']
+
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                if st.button("Ingresar"):
+                    user_data = USUARIOS.get(usuario)
+                    if user_data and user_data['password'] == contraseña:
+                        st.session_state.autenticado = True
+                        st.session_state.usuario_actual = usuario
+                        st.session_state.rol = user_data['rol']
+                        st.rerun()
+                    else:
+                        st.error("❌ Credenciales incorrectas")
+            with col2:
+                if st.button("⬅️ Volver"):
+                    st.session_state.mostrar_login = False
                     st.rerun()
-                else:
-                    st.error("❌ Credenciales incorrectas")
         return False
     return True
 
@@ -742,7 +753,6 @@ def descargar_tickets():
         st.dataframe(df.tail())
     else:
         st.warning("No hay datos para descargar")
-
 
 
 
