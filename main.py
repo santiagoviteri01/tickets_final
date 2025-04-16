@@ -106,6 +106,13 @@ def landing_page():
     st.markdown(
         """
         <style>
+            html, body, [data-testid="stApp"] {
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                background: linear-gradient(to right, #f8f9fb, #f1f4f8);
+                font-family: 'Segoe UI', sans-serif;
+            }
             .centered {
                 display: flex;
                 flex-direction: column;
@@ -113,10 +120,9 @@ def landing_page():
                 justify-content: center;
                 height: 100vh;
                 text-align: center;
-                font-family: 'Segoe UI', sans-serif;
             }
             .title {
-                font-size: 3.5rem;
+                font-size: 3.2rem;
                 color: #ff0083;
                 margin-bottom: 1rem;
             }
@@ -148,6 +154,7 @@ def landing_page():
     if st.button("Mi Cuenta", key="mi_cuenta"):
         st.session_state.mostrar_login = True
     st.markdown("</div>", unsafe_allow_html=True)
+
         
 def autenticacion():
     if 'autenticado' not in st.session_state:
