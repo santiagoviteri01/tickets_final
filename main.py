@@ -101,6 +101,53 @@ def cargar_datos():
     except Exception as e:
         st.error(f"Error cargando datos: {str(e)}")
         return pd.DataFrame()
+
+def landing_page():
+    st.markdown(
+        """
+        <style>
+            .centered {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                text-align: center;
+                font-family: 'Segoe UI', sans-serif;
+            }
+            .title {
+                font-size: 3.5rem;
+                color: #ff0083;
+                margin-bottom: 1rem;
+            }
+            .subtitle {
+                font-size: 1.2rem;
+                max-width: 600px;
+                margin-bottom: 2rem;
+            }
+            .button {
+                background-color: #ff0083;
+                color: white;
+                border: none;
+                padding: 1rem 2rem;
+                font-size: 1rem;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            }
+            .button:hover {
+                background-color: #e60074;
+            }
+        </style>
+        <div class="centered">
+            <div class="title">Bienvenido a InsurApp</div>
+            <div class="subtitle">Tu sistema inteligente de gestión de seguros y reclamos. Rápido, seguro y accesible desde cualquier lugar.</div>
+        """,
+        unsafe_allow_html=True
+    )
+    if st.button("Mi Cuenta", key="mi_cuenta"):
+        st.session_state.mostrar_login = True
+    st.markdown("</div>", unsafe_allow_html=True)
         
 def autenticacion():
     if 'autenticado' not in st.session_state:
@@ -636,9 +683,22 @@ def descargar_tickets():
     else:
         st.warning("No hay datos para descargar")
 
+
+
+
 # Flujo principal de la aplicación
-if not autenticacion():
-    st.stop()
+if 'autenticado' not in st.session_state:
+    st.session_state.autenticado = False
+if 'mostrar_login' not in st.session_state:
+    st.session_state.mostrar_login = False
+
+if not st.session_state.autenticado:
+    if not st.session_state.mostrar_login:
+        landing_page()
+        st.stop()
+    else:
+        if not autenticacion():
+            st.stop()
 
 if st.session_state.rol == 'cliente':
     portal_cliente()
