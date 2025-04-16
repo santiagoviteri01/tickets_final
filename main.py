@@ -154,12 +154,14 @@ def landing_page():
                 font-size: 3rem;
                 color: #ff0083;
                 margin-bottom: 1rem;
+                text-align: center;
             }
             .hero-subtitle {
                 font-size: 1.2rem;
                 color: #444;
                 max-width: 700px;
                 margin: 0 auto 2rem auto;
+                text-align: center;
             }
             .hero-buttons button {
                 margin: 0 1rem;
