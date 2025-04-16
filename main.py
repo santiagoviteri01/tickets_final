@@ -102,8 +102,27 @@ def cargar_datos():
         st.error(f"Error cargando datos: {str(e)}")
         return pd.DataFrame()
 
+def formulario_cotizacion():
+    st.header("📝 Cotizador de Seguros")
+
+    tipo_seguro = st.selectbox("¿Qué seguro deseas cotizar?", ["Vida", "Auto", "Accidentes Personales"])
+    nombre = st.text_input("Nombres")
+    apellidos = st.text_input("Apellidos")
+    correo = st.text_input("Correo electrónico")
+    telefono = st.text_input("Número de teléfono")
+
+    if st.button("Enviar solicitud de cotización"):
+        if not all([tipo_seguro, nombre, apellidos, correo, telefono]):
+            st.warning("Por favor completa todos los campos.")
+        else:
+            # Guardar en hoja 'cotizaciones'
+            hoja_cotizaciones = spreadsheet.worksheet("cotizaciones")
+            nueva_fila = [datetime.now().strftime("%Y-%m-%d %H:%M:%S"), tipo_seguro, nombre, apellidos, correo, telefono]
+            hoja_cotizaciones.append_row(nueva_fila)
+            st.success("🎉 Tu solicitud ha sido enviada exitosamente. Pronto nos contactaremos contigo.")
+
+
 def landing_page():
-    # CSS y estructura visual
     st.markdown(
         """
         <style>
@@ -185,11 +204,6 @@ def landing_page():
             .btn-secondary:hover {
                 background-color: #00a17d;
             }
-
-            .hidden-btn {
-                height: 0;
-                visibility: hidden;
-            }
         </style>
 
         <div class="top-bar">
@@ -211,14 +225,18 @@ def landing_page():
 
     # Botones invisibles que Streamlit sí detecta
     col1, col2 = st.columns([1, 1])
+
     with col1:
         if st.button("🔐 Iniciar sesión", key="real_mi_cuenta"):
             st.session_state.mostrar_login = True
+            st.session_state.mostrar_formulario_cotizacion = False
             st.experimental_rerun()
 
     with col2:
         if st.button("📄 Ir al Cotizador", key="real_cotizar"):
-            st.info("Aquí iría el formulario de cotización... (puedes personalizarlo).")
+            st.session_state.mostrar_login = False
+            st.session_state.mostrar_formulario_cotizacion = True
+            st.experimental_rerun()
 
 
 
@@ -762,22 +780,19 @@ def descargar_tickets():
 
 
 
-# Flujo principal de la aplicación
 if 'autenticado' not in st.session_state:
     st.session_state.autenticado = False
-
 if 'mostrar_login' not in st.session_state:
     st.session_state.mostrar_login = False
+if 'mostrar_formulario_cotizacion' not in st.session_state:
+    st.session_state.mostrar_formulario_cotizacion = False
 
 if not st.session_state.autenticado:
-    if not st.session_state.mostrar_login:
+    if st.session_state.mostrar_formulario_cotizacion:
+        formulario_cotizacion()
+    elif not st.session_state.mostrar_login:
         landing_page()
         st.stop()
     else:
         if not autenticacion():
             st.stop()
-
-if st.session_state.rol == 'cliente':
-    portal_cliente()
-else:
-    portal_administracion()
