@@ -69,9 +69,6 @@ asegurados = spreadsheet.worksheet("asegurados")
 # Obtén los datos de ambas hojas (opcional)
 # Configuración inicial de la página
 
-
-
-
 # Configuración de usuarios y contraseñas
 USUARIOS = {
     "cliente1": {"password": "pass1", "rol": "cliente"},
@@ -230,13 +227,13 @@ def landing_page():
         if st.button("🔐 Iniciar sesión", key="real_mi_cuenta"):
             st.session_state.mostrar_login = True
             st.session_state.mostrar_formulario_cotizacion = False
-            st.experimental_rerun()
-
+            st.rerun()
+    
     with col2:
         if st.button("📄 Ir al Cotizador", key="real_cotizar"):
             st.session_state.mostrar_login = False
             st.session_state.mostrar_formulario_cotizacion = True
-            st.experimental_rerun()
+            st.rerun()
 
 
 
