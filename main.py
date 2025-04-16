@@ -13,8 +13,8 @@ import json
 from pathlib import Path
 
 st.set_page_config(
-    page_title="Sistema de Tickets y Análisis",
-    page_icon="📊",
+    page_title="Insurapp",
+    page_icon="",
     layout="wide"
 )
 st.markdown(
