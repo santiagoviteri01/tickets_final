@@ -117,123 +117,93 @@ def formulario_cotizacion():
             nueva_fila = [datetime.now().strftime("%Y-%m-%d %H:%M:%S"), tipo_seguro, nombre, apellidos, correo, telefono]
             hoja_cotizaciones.append_row(nueva_fila)
             st.success("🎉 Tu solicitud ha sido enviada exitosamente. Pronto nos contactaremos contigo.")
+            time.sleep(1.5)  # opcional: una pausa para que el usuario vea el mensaje
+            st.session_state.mostrar_formulario_cotizacion = False
+            st.rerun()
 
 
 def landing_page():
-    st.markdown(
-        """
+    st.set_page_config(page_title="InsurApp", layout="wide")
+
+    st.markdown("""
         <style>
-            html, body, [data-testid="stApp"] {
-                height: 100%;
-                margin: 0;
-                padding: 0;
-                background: linear-gradient(to right, #f8f9fb, #f1f4f8);
+            .main-container {
+                padding: 2rem;
+                text-align: center;
                 font-family: 'Segoe UI', sans-serif;
             }
-
-            .top-bar {
+            .logo-bar {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 padding: 1rem 2rem;
                 background-color: white;
                 box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-                position: sticky;
-                top: 0;
-                z-index: 999;
+                margin-bottom: 2rem;
             }
-
-            .logo {
-                display: flex;
-                align-items: center;
-                font-size: 1.5rem;
+            .logo-text {
+                font-size: 1.8rem;
                 font-weight: bold;
                 color: #ff0083;
+                display: flex;
+                align-items: center;
             }
-
-            .logo img {
+            .logo-text img {
                 height: 32px;
                 margin-right: 10px;
             }
-
-            .hero {
-                height: 90vh;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                text-align: center;
-                padding: 2rem;
-            }
-
-            .hero h1 {
-                font-size: 3.5rem;
+            .hero-title {
+                font-size: 3rem;
                 color: #ff0083;
                 margin-bottom: 1rem;
             }
-
-            .hero p {
+            .hero-subtitle {
                 font-size: 1.2rem;
-                max-width: 600px;
-                margin-bottom: 2rem;
                 color: #444;
+                max-width: 700px;
+                margin: 0 auto 2rem auto;
             }
-
-            .btn-primary, .btn-secondary {
-                background-color: #ff0083;
-                color: white;
-                border: none;
+            .hero-buttons button {
+                margin: 0 1rem;
                 padding: 0.8rem 2rem;
                 font-size: 1rem;
+                border: none;
                 border-radius: 8px;
                 cursor: pointer;
-                transition: background-color 0.3s ease;
-            }
-
-            .btn-secondary {
-                background-color: #00c49a;
-            }
-
-            .btn-primary:hover {
-                background-color: #e60074;
-            }
-
-            .btn-secondary:hover {
-                background-color: #00a17d;
             }
         </style>
+    """, unsafe_allow_html=True)
 
-        <div class="top-bar">
-            <div class="logo">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Insurance_icon.svg/1200px-Insurance_icon.svg.png" alt="logo" />
-                InsurApp
-            </div>
-            <button onclick="document.getElementById('real_mi_cuenta').click()" class="btn-primary">Mi Cuenta</button>
+    # Barra superior con logo y botón de cuenta
+    st.markdown("""
+    <div class="logo-bar">
+        <div class="logo-text">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Insurance_icon.svg/1200px-Insurance_icon.svg.png" />
+            InsurApp
         </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-        <div class="hero">
-            <h1>Bienvenido a InsurApp</h1>
-            <p>Tu sistema inteligente de gestión de seguros y reclamos. Rápido, seguro y accesible desde cualquier lugar.</p>
-            <button onclick="document.getElementById('real_cotizar').click()" class="btn-secondary">Cotiza con Nosotros</button>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # Contenido principal
+    st.markdown("<div class='main-container'>", unsafe_allow_html=True)
 
-    # Botones invisibles que Streamlit sí detecta
-    login_btn = st.empty()
-    cotizar_btn = st.empty()
-    
-    if login_btn.button("🔐 Iniciar sesión", key="real_mi_cuenta"):
-        st.session_state.mostrar_login = True
-        st.session_state.mostrar_formulario_cotizacion = False
-        st.rerun()
-    
-    if cotizar_btn.button("📄 Ir al Cotizador", key="real_cotizar"):
-        st.session_state.mostrar_login = False
-        st.session_state.mostrar_formulario_cotizacion = True
-        st.rerun()
+    st.markdown("<div class='hero-title'>Bienvenido a InsurApp</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hero-subtitle'>Tu sistema inteligente de gestión de seguros y reclamos. Rápido, seguro y accesible desde cualquier lugar.</div>", unsafe_allow_html=True)
 
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button("🔐 Mi Cuenta", use_container_width=True):
+            st.session_state.mostrar_login = True
+            st.session_state.mostrar_formulario_cotizacion = False
+            st.rerun()
+
+    with col2:
+        if st.button("📄 Cotiza con Nosotros", use_container_width=True):
+            st.session_state.mostrar_login = False
+            st.session_state.mostrar_formulario_cotizacion = True
+            st.rerun()
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
         
@@ -271,7 +241,7 @@ def portal_cliente():
         time.sleep(1)
         st.rerun()
     
-    tab1, tab2, tab3 = st.tabs(["Mis Datos y Coberturas", "Nuevo Reclamo", "Mis Tickets"])
+    tab1, tab2, tab3 = st.tabs(["Mis Datos y Coberturas", "Mis Tickets", "Nuevo Reclamo"])
     with tab1:
         st.header("🧾 Mis Datos Personales y del Vehículo")
     
