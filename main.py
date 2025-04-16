@@ -103,6 +103,7 @@ def cargar_datos():
         return pd.DataFrame()
 
 def landing_page():
+    # CSS y estructura visual
     st.markdown(
         """
         <style>
@@ -139,21 +140,6 @@ def landing_page():
                 margin-right: 10px;
             }
 
-            .top-bar button {
-                background-color: #ff0083;
-                color: white;
-                border: none;
-                padding: 0.6rem 1.2rem;
-                font-size: 1rem;
-                border-radius: 8px;
-                cursor: pointer;
-                transition: background-color 0.3s ease;
-            }
-
-            .top-bar button:hover {
-                background-color: #e60074;
-            }
-
             .hero {
                 height: 90vh;
                 display: flex;
@@ -177,19 +163,32 @@ def landing_page():
                 color: #444;
             }
 
-            .hero .cotizar {
-                background-color: #00c49a;
+            .btn-primary, .btn-secondary {
+                background-color: #ff0083;
                 color: white;
                 border: none;
-                padding: 1rem 2.5rem;
-                font-size: 1.2rem;
-                border-radius: 12px;
+                padding: 0.8rem 2rem;
+                font-size: 1rem;
+                border-radius: 8px;
                 cursor: pointer;
                 transition: background-color 0.3s ease;
             }
 
-            .hero .cotizar:hover {
+            .btn-secondary {
+                background-color: #00c49a;
+            }
+
+            .btn-primary:hover {
+                background-color: #e60074;
+            }
+
+            .btn-secondary:hover {
                 background-color: #00a17d;
+            }
+
+            .hidden-btn {
+                height: 0;
+                visibility: hidden;
             }
         </style>
 
@@ -198,31 +197,29 @@ def landing_page():
                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Insurance_icon.svg/1200px-Insurance_icon.svg.png" alt="logo" />
                 InsurApp
             </div>
-            <form action="#" method="post">
-                <button type="submit" name="mi_cuenta">Mi Cuenta</button>
-            </form>
+            <button onclick="document.getElementById('real_mi_cuenta').click()" class="btn-primary">Mi Cuenta</button>
         </div>
 
         <div class="hero">
             <h1>Bienvenido a InsurApp</h1>
             <p>Tu sistema inteligente de gestión de seguros y reclamos. Rápido, seguro y accesible desde cualquier lugar.</p>
-            <form action="#" method="post">
-                <button class="cotizar" name="cotiza">Cotiza con Nosotros</button>
-            </form>
+            <button onclick="document.getElementById('real_cotizar').click()" class="btn-secondary">Cotiza con Nosotros</button>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    # Acciones basadas en botones
-    if st.session_state.get("mi_cuenta_click", False):
-        st.session_state.mostrar_login = True
+    # Botones invisibles que Streamlit sí detecta
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button("🔐 Iniciar sesión", key="real_mi_cuenta"):
+            st.session_state.mostrar_login = True
+            st.experimental_rerun()
 
-    if st.button("👤 Entrar a Mi Cuenta", key="mi_cuenta_fake", help="Botón simulado de HTML"):
-        st.session_state.mostrar_login = True
+    with col2:
+        if st.button("📄 Ir al Cotizador", key="real_cotizar"):
+            st.info("Aquí iría el formulario de cotización... (puedes personalizarlo).")
 
-    if st.button("🧮 Cotiza con Nosotros", key="cotizar_fake", help="Botón simulado para cotizador"):
-        st.info("Aquí podrías redirigir a un cotizador o formulario externo.")
 
 
         
