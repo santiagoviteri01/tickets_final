@@ -185,6 +185,7 @@ def portal_cliente():
     st.sidebar.title("Menú Cliente")
     if st.sidebar.button("Cerrar Sesión"):
         st.session_state.autenticado = False
+        st.session_state.mostrar_login = False
         st.success("Sesión cerrada exitosamente")
         time.sleep(1)
         st.rerun()
@@ -394,6 +395,7 @@ def portal_administracion():
 
     elif opcion == "Cerrar Sesión":
         st.session_state.autenticado = False
+        st.session_state.mostrar_login = False
         st.success("Sesión cerrada exitosamente")
         time.sleep(1)
         st.rerun()
@@ -696,6 +698,7 @@ def descargar_tickets():
 # Flujo principal de la aplicación
 if 'autenticado' not in st.session_state:
     st.session_state.autenticado = False
+
 if 'mostrar_login' not in st.session_state:
     st.session_state.mostrar_login = False
 
