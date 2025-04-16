@@ -221,19 +221,18 @@ def landing_page():
     )
 
     # Botones invisibles que Streamlit sí detecta
-    col1, col2 = st.columns([1, 1])
-
-    with col1:
-        if st.button("🔐 Iniciar sesión", key="real_mi_cuenta"):
-            st.session_state.mostrar_login = True
-            st.session_state.mostrar_formulario_cotizacion = False
-            st.rerun()
+    login_btn = st.empty()
+    cotizar_btn = st.empty()
     
-    with col2:
-        if st.button("📄 Ir al Cotizador", key="real_cotizar"):
-            st.session_state.mostrar_login = False
-            st.session_state.mostrar_formulario_cotizacion = True
-            st.rerun()
+    if login_btn.button("🔐 Iniciar sesión", key="real_mi_cuenta"):
+        st.session_state.mostrar_login = True
+        st.session_state.mostrar_formulario_cotizacion = False
+        st.rerun()
+    
+    if cotizar_btn.button("📄 Ir al Cotizador", key="real_cotizar"):
+        st.session_state.mostrar_login = False
+        st.session_state.mostrar_formulario_cotizacion = True
+        st.rerun()
 
 
 
@@ -793,3 +792,8 @@ if not st.session_state.autenticado:
     else:
         if not autenticacion():
             st.stop()
+else:
+    if st.session_state.rol == 'cliente':
+        portal_cliente()
+    else:
+        portal_administracion()
