@@ -193,15 +193,15 @@ def portal_cliente():
             st.subheader("📋 Ver Coberturas")
             if aseguradora == "ZURICH SEGUROS":
                 st.info("Coberturas ZURICH")
-                with open("archivos_coberturas/coberturas_zurich.pdf", "rb") as file:
+                with open("archivos_coberturas/certificado_zurich.pdf", "rb") as file:
                     st.download_button(label="📥 Descargar Coberturas ZURICH", data=file, file_name="Coberturas_ZURICH.pdf", mime="application/pdf")
             elif aseguradora == "MAPFRE":
                 st.info("Coberturas MAPFRE")
-                with open("archivos_coberturas/coberturas_mapfre.pdf", "rb") as file:
+                with open("archivos_coberturas/certificado_mapfre.pdf", "rb") as file:
                     st.download_button(label="📥 Descargar Coberturas MAPFRE", data=file, file_name="Coberturas_MAPFRE.pdf", mime="application/pdf")
             elif aseguradora == "AIG":
                 st.info("Coberturas AIG")
-                with open("archivos_coberturas/coberturas_aig.pdf", "rb") as file:
+                with open("archivos_coberturas/certificado_aig.pdf", "rb") as file:
                     st.download_button(label="📥 Descargar Coberturas AIG", data=file, file_name="Coberturas_AIG.pdf", mime="application/pdf")
         else:
             st.error("No se encontró información para tu cuenta.")
