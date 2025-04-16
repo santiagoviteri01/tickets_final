@@ -115,7 +115,7 @@ def formulario_cotizacion():
                 st.warning("Por favor completa todos los campos.")
             else:
                 hoja_cotizaciones = spreadsheet.worksheet("cotizaciones")
-                nueva_fila = [datetime.now().strftime("%Y-%m-%d %H:%M:%S"), tipo_seguro, nombre, apellidos, correo, telefono]
+                nueva_fila = [datetime.now().strftime("%Y-%m-%d %H:%M:%S"), tipo_seguro, nombre, apellidos, correo, telefono, "no cotizadas"]
                 hoja_cotizaciones.append_row(nueva_fila)
                 st.success("🎉 Tu solicitud ha sido enviada exitosamente. Pronto nos contactaremos contigo.")
                 time.sleep(1.5)
@@ -427,13 +427,19 @@ def portal_cliente():
 # Portal de Administración (Usuarios)
 def portal_administracion():
     st.sidebar.title("Menú Admin")
-    opcion = st.sidebar.radio("Opciones", [
+    opciones = [
         "Inicio", 
         "Gestión de Tickets", 
         "Análisis", 
-        "Descargar Datos",
-        "Cerrar Sesión"
-    ])
+        "Descargar Datos"
+    ]
+    
+    if st.session_state.usuario_actual == "mauriciodavila":
+        opciones.insert(1, "Cotizaciones")
+    
+    opciones.append("Cerrar Sesión")
+    
+    opcion = st.sidebar.radio("Opciones", opciones)
 
     if opcion == "Inicio":
         st.title("🏠 Panel de Administración")
@@ -454,6 +460,32 @@ def portal_administracion():
     elif opcion == "Descargar Datos":
         st.title("⬇️ Descargar Datos")
         descargar_tickets()
+        
+    elif opcion == "Cotizaciones" and st.session_state.usuario_actual == "mauriciodavila":
+        st.title("📋 Cotizaciones de Clientes")
+        hoja_cotizaciones = spreadsheet.worksheet("cotizaciones")
+        datos = hoja_cotizaciones.get_all_records()
+        df = pd.DataFrame(datos)
+    
+        if "Estado" not in df.columns:
+            df["Estado"] = "no cotizadas"
+    
+        pendientes = df[df["Estado"] == "no cotizadas"]
+    
+        if pendientes.empty:
+            st.success("No hay cotizaciones pendientes por revisar.")
+        else:
+            st.dataframe(pendientes, use_container_width=True)
+    
+            seleccion = st.selectbox("Selecciona una cotización:", pendientes.index,
+                                     format_func=lambda x: f"{pendientes.loc[x, 'Nombres']} {pendientes.loc[x, 'Apellidos']} ({pendientes.loc[x, 'Tipo de seguro']})")
+    
+            nuevo_estado = st.radio("Nuevo estado", ["en proceso", "rechazada"])
+    
+            if st.button("Actualizar estado"):
+                hoja_cotizaciones.update_cell(seleccion + 2, 7, nuevo_estado)  # columna 7 = "Estado"
+                st.success(f"Cotización actualizada a '{nuevo_estado}'")
+                st.rerun()
 
     elif opcion == "Cerrar Sesión":
         st.session_state.autenticado = False
