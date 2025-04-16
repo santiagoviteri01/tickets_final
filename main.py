@@ -67,12 +67,9 @@ asegurados = spreadsheet.worksheet("asegurados")
 #sheet1 = spreadsheet.worksheet("sheet")        # Reemplaza "sheet" por el nombre real si es distinto
 #sheet2 = spreadsheet.worksheet(asegurados)
 # Obtén los datos de ambas hojas (opcional)
-#datos_sheet1 = sheet1.get_all_records()
-#asegurados = asegurados.get_all_records()
 # Configuración inicial de la página
 
 
-#conn = st.connection("gsheets", type=GSheetsConnection)
 
 
 # Configuración de usuarios y contraseñas
@@ -83,6 +80,7 @@ USUARIOS = {
     "mauriciodavila": {"password": "insuratlan1", "rol": "admin"},
     "santiagoviteri": {"password": "insuratlan2", "rol": "admin"},
 }
+asegurados = asegurados.get_all_records()
 asegurados_df = pd.DataFrame(asegurados)
 
 for _, row in asegurados_df.iterrows():
@@ -91,7 +89,19 @@ for _, row in asegurados_df.iterrows():
         "password": client_id,  # Contraseña = ID en texto plano
         "rol": "cliente"
     }
-
+    
+def cargar_datos():
+    try:
+        # Convertir los datos de la hoja a un DataFrame
+        data = sheet.get_all_records()  # Obtiene todos los registros (como una lista de diccionarios)
+        df = pd.DataFrame(data)  # Convertirlo en un DataFrame de pandas
+        
+        # Mostrar el DataFrame
+        return df
+    except Exception as e:
+        st.error(f"Error cargando datos: {str(e)}")
+        return pd.DataFrame()
+        
 def autenticacion():
     if 'autenticado' not in st.session_state:
         st.session_state.autenticado = False
@@ -265,18 +275,7 @@ def portal_administracion():
         time.sleep(1)
         st.rerun()
 
-def cargar_datos():
-    try:
-        # Convertir los datos de la hoja a un DataFrame
-        data = sheet.get_all_records()  # Obtiene todos los registros (como una lista de diccionarios)
-        df = pd.DataFrame(data)  # Convertirlo en un DataFrame de pandas
-        
-        # Mostrar el DataFrame
-        return df
-    except Exception as e:
-        st.error(f"Error cargando datos: {str(e)}")
-        return pd.DataFrame()
-        
+
 def procesar_tiempos_estado(tiempos_cambio):
     """
     Procesa una lista de registros de tiempo de cambio de estado y devuelve un DataFrame
