@@ -123,8 +123,6 @@ def formulario_cotizacion():
 
 
 def landing_page():
-    st.set_page_config(page_title="InsurApp", layout="wide")
-
     st.markdown("""
         <style>
             .main-container {
