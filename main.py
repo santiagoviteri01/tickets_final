@@ -415,7 +415,7 @@ def portal_cliente():
             st.subheader("Información sobre el Siniestro")
         
             # 4️⃣ Ahora, preguntar si es un siniestro vehicular
-            siniestro_vehicular = st.selectbos("¿Fue un siniestro vehicular?", ["No", "Sí"])
+            siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
         
             # 5️⃣ Si dice "Sí", mostrar el uploader de foto
             foto_siniestro = None
