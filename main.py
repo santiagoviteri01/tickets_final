@@ -388,15 +388,34 @@ def portal_cliente():
                 st.info("No se encontraron tickets con los filtros seleccionados")
         else:
             st.warning("No hay tickets registrados")
-
+    UPLOAD_DIR = "uploads"
+    if not os.path.exists(UPLOAD_DIR):
+        os.makedirs(UPLOAD_DIR)
+    
     with tab3:
         st.header("Nuevo Reclamo")
         with st.form("nuevo_reclamo"):
             titulo = st.text_input("Título del Reclamo*")
             descripcion = st.text_area("Descripción detallada*")
-            st.subheader("Filtros")
             area = st.selectbox("Área", ["Todas"] + list(df['Área'].unique()))
-        # Aplicar filtros
+    
+            # 🚗 Nuevas preguntas de Asistencia
+            necesita_grua = st.radio("¿¿Necesitas grúa?", ["No", "Sí"], index=0)
+            asistencia_legal = st.radio("¿Necesitas asistencia legal en el punto?", ["No", "Sí"], index=0)
+            
+            # 🗺️ Pregunta por ubicación si necesita grúa o asistencia legal
+            ubicacion_actual = None
+            if necesita_grua == "Sí" or asistencia_legal == "Sí":
+                ubicacion_actual = st.text_input("📍 Comparte tu ubicación actual (link de Google Maps):")
+            
+            # 🚗❓ Preguntar si es un siniestro vehicular
+            siniestro_vehicular = st.radio("¿Tu reclamo es por un siniestro vehicular?", ["No", "Sí"], index=0)
+            
+            # 📸 Si responde que sí, permitir subir foto
+            subir_foto = None
+            if siniestro_vehicular == "Sí":
+                subir_foto = st.file_uploader("📸 Sube una foto del siniestro", type=["jpg", "jpeg", "png"])
+    
             if st.form_submit_button("Enviar Reclamo"):
                 if not all([titulo, descripcion]):
                     st.error("Todos los campos marcados con * son obligatorios")
@@ -404,9 +423,16 @@ def portal_cliente():
                     df = cargar_datos()
                     ultimo_ticket = df['Número'].max() if not df.empty else 0
                     nuevo_numero = ultimo_ticket + 1
-                    nuevo_numero =nuevo_numero.astype("float")
-
-                    
+    
+                    # Si subieron foto, guardarla
+                    foto_path = None
+                    if subir_foto:
+                        filename = f"{nuevo_numero}_{subir_foto.name}"
+                        foto_path = os.path.join(UPLOAD_DIR, filename)
+                        with open(foto_path, "wb") as f:
+                            f.write(subir_foto.read())
+    
+                    # Armar reclamo
                     nuevo_ticket = {
                         'Número': nuevo_numero,
                         'Título': titulo,
@@ -418,11 +444,18 @@ def portal_cliente():
                         'Fecha_Modificacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         'Usuario_Modificacion': 'cliente',
                         'Tiempo_Cambio': '0d',
-                        'Cliente': st.session_state.usuario_actual
+                        'Cliente': st.session_state.usuario_actual,
+                        'Necesita Grua': necesita_grua,
+                        'Asistencia Legal': asistencia_legal,
+                        'Ubicación': ubicacion_actual or "No proporcionada",
+                        'Foto Siniestro': foto_path if foto_path else "No adjunta"
                     }
-                    
+    
+                    # Guardarlo en tu Google Sheets
                     sheet.append_row(list(nuevo_ticket.values()))
-                    st.success(f"Reclamo #{nuevo_numero} creado exitosamente!")
+                    st.success(f"🎉 Reclamo #{nuevo_numero} creado exitosamente!")
+    
+
 
 def modulo_cotizaciones_mauricio():
     st.title("📋 Gestión de Cotizaciones")
@@ -724,6 +757,7 @@ def manejar_tickets():
                         'Usuario_Modificación': st.session_state.usuario_actual,
                         'Tiempo_Cambio': '0d'  # Sin cambios al principio
                     }
+
                     
                     # Guardar en Google Sheetssheet.append_row(list(nuevo_ticket.values()))
 
