@@ -528,7 +528,7 @@ def portal_administracion():
         st.title("⬇️ Descargar Datos")
         descargar_tickets()
         
-    elif opcion == "Cotizaciones" and st.session_state.usuario_actual == "mauriciodavila":
+    elif opcion == "Gestión de Cotizaciones" and st.session_state.usuario_actual == "mauriciodavila":
         modulo_cotizaciones_mauricio()
         
     elif opcion == "Cerrar Sesión":
