@@ -403,6 +403,7 @@ def portal_cliente():
             st.subheader("Asistencia Adicional")
             necesita_grua = st.selectbox("¿Necesitas grúa?", ["No", "Sí"])
             asistencia_legal = st.selectbox("¿Necesitas asistencia legal en el punto?", ["No", "Sí"])
+            enviar_asistencias = st.form_submit_button("Enviar Asistencias")
     
             ubicacion_actual = None
             if necesita_grua == "Sí" or asistencia_legal == "Sí":
@@ -410,7 +411,8 @@ def portal_cliente():
     
             st.subheader("Información sobre el Siniestro")
             siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
-    
+            enviar_vehiculos = st.form_submit_button("Enviar Foto")
+
             foto_siniestro = None
             ruta_foto = None
             if siniestro_vehicular == "Sí":
