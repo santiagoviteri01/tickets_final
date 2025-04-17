@@ -399,41 +399,43 @@ def portal_cliente():
             titulo = st.text_input("Título del Reclamo*")
             descripcion = st.text_area("Descripción detallada*")
             area = st.selectbox("Área*", ["Todas", "Vehicular", "Vida", "Salud"])
-        
+    
             st.subheader("Asistencia Adicional")
-            # 1️⃣ Primero pregunta si necesita grúa
+    
+            # --- Secciones dinámicas ---
             necesita_grua = st.selectbox("¿Necesitas grúa?", ["No", "Sí"])
-        
-            # 2️⃣ Luego pregunta si necesita asistencia legal
             asistencia_legal = st.selectbox("¿Necesitas asistencia legal en el punto?", ["No", "Sí"])
-        
-            # 3️⃣ Si respondió "Sí" en cualquiera, ahora muestra el campo para compartir ubicación
-            ubicacion_actual = None
+    
+            # Espacio para mostrar campo ubicación si aplica
+            ubicacion_placeholder = st.empty()
+    
             if necesita_grua == "Sí" or asistencia_legal == "Sí":
-                ubicacion_actual = st.text_input("📍 Pega aquí tu ubicación de Google Maps:")
-        
+                ubicacion_actual = ubicacion_placeholder.text_input("📍 Pega aquí tu ubicación de Google Maps:")
+            else:
+                ubicacion_actual = None
+    
             st.subheader("Información sobre el Siniestro")
-        
-            # 4️⃣ Ahora, preguntar si es un siniestro vehicular
+    
             siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
-        
-            # 5️⃣ Si dice "Sí", mostrar el uploader de foto
-            foto_siniestro = None
+    
+            # Espacio para mostrar uploader de foto si aplica
+            foto_placeholder = st.empty()
+    
             if siniestro_vehicular == "Sí":
-                foto_siniestro = st.file_uploader("📸 Sube una foto del siniestro (opcional)", type=["jpg", "jpeg", "png"])
-        
-            # Botón de enviar reclamo
-            enviar_reclamo = st.form_submit_button("Enviar Reclamo")
-        
+                foto_siniestro = foto_placeholder.file_uploader("📸 Sube una foto del siniestro", type=["jpg", "jpeg", "png"])
+            else:
+                foto_siniestro = None
+    
+            enviar_reclamo = st.form_submit_button("🚀 Enviar Reclamo")
+    
             if enviar_reclamo:
                 if not all([titulo, descripcion]):
-                    st.error("❌ Por favor completa todos los campos obligatorios.")
+                    st.error("❌ Por favor completa los campos obligatorios.")
                 else:
-                    # Guardar el reclamo
                     df = cargar_datos()
                     ultimo_ticket = df['Número'].max() if not df.empty else 0
                     nuevo_numero = int(ultimo_ticket) + 1
-        
+    
                     nuevo_ticket = {
                         'Número': nuevo_numero,
                         'Título': titulo,
@@ -448,14 +450,14 @@ def portal_cliente():
                         'Cliente': st.session_state.usuario_actual,
                         'Grua': necesita_grua,
                         'Asistencia_Legal': asistencia_legal,
-                        'Ubicacion': ubicacion_actual,
-                        'Foto': foto_siniestro.name if foto_siniestro else None
+                        'Ubicacion': ubicacion_actual if ubicacion_actual else "",
+                        'Siniestro_Vehicular': siniestro_vehicular,
+                        'Foto': foto_siniestro.name if foto_siniestro else ""
                     }
-        
-                    # Convertir tipos raros a tipos nativos antes de guardar
-                    nuevo_ticket_serializable = {k: int(v) if isinstance(v, (int, np.integer)) else v for k, v in nuevo_ticket.items()}
-                    sheet.append_row(list(nuevo_ticket_serializable.values()))
-                    st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente 🚀")
+    
+                    # Convertir todo a texto simple antes de guardar (evitar problemas de serialización)
+                    sheet.append_row([str(v) for v in nuevo_ticket.values()])
+                    st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente 🚗🛠️")
     
 
 
