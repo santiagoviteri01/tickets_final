@@ -397,42 +397,43 @@ def portal_cliente():
         with st.form("nuevo_reclamo"):
             titulo = st.text_input("Título del Reclamo*")
             descripcion = st.text_area("Descripción detallada*")
-            area = st.selectbox("Área", ["Todas"] + list(df['Área'].unique()))
-    
-            # 🚗 Nuevas preguntas de Asistencia
-            necesita_grua = st.radio("¿¿Necesitas grúa?", ["No", "Sí"], index=0)
+            area = st.selectbox("Área*", ["Todas", "Vehicular", "Vida", "Salud"])
+        
+            st.subheader("Asistencia Adicional")
+        
+            # 1️⃣ Primero pregunta si necesita grúa
+            necesita_grua = st.radio("¿Necesitas grúa?", ["No", "Sí"], index=0)
+        
+            # 2️⃣ Luego pregunta si necesita asistencia legal
             asistencia_legal = st.radio("¿Necesitas asistencia legal en el punto?", ["No", "Sí"], index=0)
-            
-            # 🗺️ Pregunta por ubicación si necesita grúa o asistencia legal
+        
+            # 3️⃣ Si respondió "Sí" en cualquiera, ahora muestra el campo para compartir ubicación
             ubicacion_actual = None
             if necesita_grua == "Sí" or asistencia_legal == "Sí":
-                ubicacion_actual = st.text_input("📍 Comparte tu ubicación actual (link de Google Maps):")
-            
-            # 🚗❓ Preguntar si es un siniestro vehicular
-            siniestro_vehicular = st.radio("¿Tu reclamo es por un siniestro vehicular?", ["No", "Sí"], index=0)
-            
-            # 📸 Si responde que sí, permitir subir foto
-            subir_foto = None
+                ubicacion_actual = st.text_input("📍 Pega aquí tu ubicación de Google Maps:")
+        
+            st.subheader("Información sobre el Siniestro")
+        
+            # 4️⃣ Ahora, preguntar si es un siniestro vehicular
+            siniestro_vehicular = st.radio("¿Fue un siniestro vehicular?", ["No", "Sí"], index=0)
+        
+            # 5️⃣ Si dice "Sí", mostrar el uploader de foto
+            foto_siniestro = None
             if siniestro_vehicular == "Sí":
-                subir_foto = st.file_uploader("📸 Sube una foto del siniestro", type=["jpg", "jpeg", "png"])
-    
-            if st.form_submit_button("Enviar Reclamo"):
+                foto_siniestro = st.file_uploader("📸 Sube una foto del siniestro (opcional)", type=["jpg", "jpeg", "png"])
+        
+            # Botón de enviar reclamo
+            enviar_reclamo = st.form_submit_button("Enviar Reclamo")
+        
+            if enviar_reclamo:
                 if not all([titulo, descripcion]):
-                    st.error("Todos los campos marcados con * son obligatorios")
+                    st.error("❌ Por favor completa todos los campos obligatorios.")
                 else:
+                    # Guardar el reclamo
                     df = cargar_datos()
                     ultimo_ticket = df['Número'].max() if not df.empty else 0
-                    nuevo_numero = ultimo_ticket + 1
-    
-                    # Si subieron foto, guardarla
-                    foto_path = None
-                    if subir_foto:
-                        filename = f"{nuevo_numero}_{subir_foto.name}"
-                        foto_path = os.path.join(UPLOAD_DIR, filename)
-                        with open(foto_path, "wb") as f:
-                            f.write(subir_foto.read())
-    
-                    # Armar reclamo
+                    nuevo_numero = int(ultimo_ticket) + 1
+        
                     nuevo_ticket = {
                         'Número': nuevo_numero,
                         'Título': titulo,
@@ -445,15 +446,16 @@ def portal_cliente():
                         'Usuario_Modificacion': 'cliente',
                         'Tiempo_Cambio': '0d',
                         'Cliente': st.session_state.usuario_actual,
-                        'Necesita Grua': necesita_grua,
-                        'Asistencia Legal': asistencia_legal,
-                        'Ubicación': ubicacion_actual or "No proporcionada",
-                        'Foto Siniestro': foto_path if foto_path else "No adjunta"
+                        'Grua': necesita_grua,
+                        'Asistencia_Legal': asistencia_legal,
+                        'Ubicacion': ubicacion_actual,
+                        'Foto': foto_siniestro.name if foto_siniestro else None
                     }
-    
-                    # Guardarlo en tu Google Sheets
-                    sheet.append_row(list(nuevo_ticket.values()))
-                    st.success(f"🎉 Reclamo #{nuevo_numero} creado exitosamente!")
+        
+                    # Convertir tipos raros a tipos nativos antes de guardar
+                    nuevo_ticket_serializable = {k: int(v) if isinstance(v, (int, np.integer)) else v for k, v in nuevo_ticket.items()}
+                    sheet.append_row(list(nuevo_ticket_serializable.values()))
+                    st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente 🚀")
     
 
 
