@@ -115,7 +115,7 @@ def formulario_cotizacion():
                 st.warning("Por favor completa todos los campos.")
             else:
                 hoja_cotizaciones = spreadsheet.worksheet("cotizaciones")
-                nueva_fila = [datetime.now().strftime("%Y-%m-%d %H:%M:%S"), tipo_seguro, nombre, apellidos, correo, telefono, "no cotizadas"]
+                nueva_fila = [datetime.now().strftime("%Y-%m-%d %H:%M:%S"), tipo_seguro, nombre, apellidos, correo, telefono, "no cotizada"]
                 hoja_cotizaciones.append_row(nueva_fila)
                 st.success("🎉 Tu solicitud ha sido enviada exitosamente. Pronto nos contactaremos contigo.")
                 time.sleep(1.5)
