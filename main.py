@@ -11,6 +11,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import os
 import json
 from pathlib import Path
+import numpy as np
 
 st.set_page_config(
     page_title="Insurapp",
@@ -400,12 +401,11 @@ def portal_cliente():
             area = st.selectbox("Área*", ["Todas", "Vehicular", "Vida", "Salud"])
         
             st.subheader("Asistencia Adicional")
-        
             # 1️⃣ Primero pregunta si necesita grúa
-            necesita_grua = st.radio("¿Necesitas grúa?", ["No", "Sí"], index=0)
+            necesita_grua = st.selectbox("¿Necesitas grúa?", ["No", "Sí"])
         
             # 2️⃣ Luego pregunta si necesita asistencia legal
-            asistencia_legal = st.radio("¿Necesitas asistencia legal en el punto?", ["No", "Sí"], index=0)
+            asistencia_legal = st.selectbox("¿Necesitas asistencia legal en el punto?", ["No", "Sí"])
         
             # 3️⃣ Si respondió "Sí" en cualquiera, ahora muestra el campo para compartir ubicación
             ubicacion_actual = None
@@ -415,7 +415,7 @@ def portal_cliente():
             st.subheader("Información sobre el Siniestro")
         
             # 4️⃣ Ahora, preguntar si es un siniestro vehicular
-            siniestro_vehicular = st.radio("¿Fue un siniestro vehicular?", ["No", "Sí"], index=0)
+            siniestro_vehicular = st.selectbos("¿Fue un siniestro vehicular?", ["No", "Sí"])
         
             # 5️⃣ Si dice "Sí", mostrar el uploader de foto
             foto_siniestro = None
