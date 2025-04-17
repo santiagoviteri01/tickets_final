@@ -395,64 +395,70 @@ def portal_cliente():
     
     with tab3:
         st.header("Nuevo Reclamo")
+        with st.form("nuevo_reclamo"):
+            titulo = st.text_input("Título del Reclamo*")
+            descripcion = st.text_area("Descripción detallada*")
+            area = st.selectbox("Área*", ["Todas", "Vehicular", "Vida", "Salud"])
     
-        # Primero preguntas normales que no dependen de nada
-        titulo = st.text_input("Título del Reclamo*")
-        descripcion = st.text_area("Descripción detallada*")
-        area = st.selectbox("Área*", ["Todas", "Vehicular", "Vida", "Salud"])
+            st.subheader("Asistencia Adicional")
+            necesita_grua = st.selectbox("¿Necesitas grúa?", ["No", "Sí"])
+            asistencia_legal = st.selectbox("¿Necesitas asistencia legal en el punto?", ["No", "Sí"])
     
-        st.subheader("Asistencia Adicional")
+            ubicacion_actual = None
+            if necesita_grua == "Sí" or asistencia_legal == "Sí":
+                ubicacion_actual = st.text_input("📍 Pega aquí tu ubicación de Google Maps:")
     
-        # Se pregunta y se muestra enseguida
-        necesita_grua = st.selectbox("¿Necesitas grúa?", ["No", "Sí"])
-        asistencia_legal = st.selectbox("¿Necesitas asistencia legal en el punto?", ["No", "Sí"])
+            st.subheader("Información sobre el Siniestro")
+            siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
     
-        ubicacion_actual = None
-        if necesita_grua == "Sí" or asistencia_legal == "Sí":
-            ubicacion_actual = st.text_input("📍 Pega aquí tu ubicación de Google Maps:")
+            foto_siniestro = None
+            ruta_foto = None
+            if siniestro_vehicular == "Sí":
+                foto_siniestro = st.file_uploader("📸 Sube una foto del siniestro (opcional)", type=["jpg", "jpeg", "png"])
     
-        st.subheader("Información sobre el Siniestro")
+            # Botón de enviar reclamo
+            enviar_reclamo = st.form_submit_button("Enviar Reclamo")
     
-        siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
+            if enviar_reclamo:
+                if not all([titulo, descripcion]):
+                    st.error("❌ Por favor completa todos los campos obligatorios.")
+                else:
+                    # Crear carpeta si no existe
+                    if foto_siniestro:
+                        if not os.path.exists('fotos_siniestros'):
+                            os.makedirs('fotos_siniestros')
+                        ruta_foto = f'fotos_siniestros/{foto_siniestro.name}'
+                        with open(ruta_foto, 'wb') as f:
+                            f.write(foto_siniestro.getbuffer())
     
-        foto_siniestro = None
-        if siniestro_vehicular == "Sí":
-            foto_siniestro = st.file_uploader("📸 Sube una foto del siniestro", type=["jpg", "jpeg", "png"])
+                    # Guardar el reclamo
+                    df = cargar_datos()
+                    ultimo_ticket = df['Número'].max() if not df.empty else 0
+                    nuevo_numero = int(ultimo_ticket) + 1
     
-        # Ahora SÍ agrupamos todo para enviar
-        if st.button("🚀 Enviar Reclamo"):
-            if not titulo or not descripcion:
-                st.error("❌ Por favor completa los campos obligatorios.")
-            elif (necesita_grua == "Sí" or asistencia_legal == "Sí") and not ubicacion_actual:
-                st.error("❌ Por favor pega tu ubicación de Google Maps.")
-            else:
-                # Guardar
-                df = cargar_datos()
-                ultimo_ticket = df['Número'].max() if not df.empty else 0
-                nuevo_numero = int(ultimo_ticket) + 1
+                    nuevo_ticket = {
+                        'Número': nuevo_numero,
+                        'Título': titulo,
+                        'Área': area,
+                        'Estado': 'creado por usuario',
+                        'Descripción': descripcion,
+                        'Fecha_Creación': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        'Usuario_Creación': st.session_state.usuario_actual,
+                        'Fecha_Modificacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        'Usuario_Modificacion': 'cliente',
+                        'Tiempo_Cambio': '0d',
+                        'Cliente': st.session_state.usuario_actual,
+                        'Grua': necesita_grua,
+                        'Asistencia_Legal': asistencia_legal,
+                        'Ubicacion': ubicacion_actual,
+                        'Ruta_Foto': ruta_foto if ruta_foto else "No adjuntó foto"
+                    }
     
-                nuevo_ticket = {
-                    'Número': nuevo_numero,
-                    'Título': titulo,
-                    'Área': area,
-                    'Estado': 'creado por usuario',
-                    'Descripción': descripcion,
-                    'Fecha_Creación': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    'Usuario_Creación': st.session_state.usuario_actual,
-                    'Fecha_Modificacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    'Usuario_Modificacion': 'cliente',
-                    'Tiempo_Cambio': '0d',
-                    'Cliente': st.session_state.usuario_actual,
-                    'Grua': necesita_grua,
-                    'Asistencia_Legal': asistencia_legal,
-                    'Ubicacion': ubicacion_actual if ubicacion_actual else "",
-                    'Siniestro_Vehicular': siniestro_vehicular,
-                    'Foto': foto_siniestro.name if foto_siniestro else ""
-                }
+                    # Convertir todo a strings para evitar problemas al guardar en Sheets
+                    nuevo_ticket_serializable = {k: str(v) for k, v in nuevo_ticket.items()}
+                    sheet.append_row(list(nuevo_ticket_serializable.values()))
     
-                # Convertir todo a string simple antes de subir
-                sheet.append_row([str(v) for v in nuevo_ticket.values()])
-                st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente 🚗🛠️")
+                    st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente 🚀")
         
 
 
