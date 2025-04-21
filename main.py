@@ -468,9 +468,11 @@ def portal_cliente():
                             foto_siniestro,
                             bucket_name,
                             unique_filename,
-                            ExtraArgs={'ContentType': foto_siniestro.type}
+                            ExtraArgs={
+                                'ContentType': foto_siniestro.type,
+                                'ACL': 'public-read'  # 👈 SUPER IMPORTANTE
+                            }
                         )
-                    
                         foto_url = f"https://{bucket_name}.s3.us-east-1.amazonaws.com/{unique_filename}"
     
                     # Guardar el reclamo
