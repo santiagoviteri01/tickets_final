@@ -12,6 +12,8 @@ import os
 import json
 from pathlib import Path
 import numpy as np
+import base64
+
 
 st.set_page_config(
     page_title="Insurapp",
@@ -418,22 +420,15 @@ def portal_cliente():
             foto_siniestro = None
             ruta_foto = None
             if siniestro_vehicular == "Sí":
-                foto_siniestro = st.file_uploader("📸 Sube una foto del siniestro (opcional)", type=["jpg", "jpeg", "png"])
+                foto_siniestro = base64.b64encode(foto_siniestro.read()).decode('utf-8')
     
             # Botón de enviar reclamo
             enviar_reclamo = st.form_submit_button("Enviar Reclamo")
     
-            if enviar_reclamo:
-                if not all([titulo, descripcion]):
-                    st.error("❌ Por favor completa todos los campos obligatorios.")
-                else:
-                    # Crear carpeta si no existe
-                    if foto_siniestro:
-                        if not os.path.exists('fotos_siniestros'):
-                            os.makedirs('fotos_siniestros')
-                        ruta_foto = f'fotos_siniestros/{foto_siniestro.name}'
-                        with open(ruta_foto, 'wb') as f:
-                            f.write(foto_siniestro.getbuffer())
+            if foto_siniestro:
+                foto_siniestro_base64 = base64.b64encode(foto_siniestro.read()).decode('utf-8')
+            else:
+                foto_siniestro_base64 = None
     
                     # Guardar el reclamo
                     df = cargar_datos()
@@ -455,7 +450,7 @@ def portal_cliente():
                         'Grua': necesita_grua,
                         'Asistencia_Legal': asistencia_legal,
                         'Ubicacion': ubicacion_actual,
-                        'Ruta_Foto': ruta_foto if ruta_foto else "No adjuntó foto"
+                        'Foto_Base64': foto_siniestro_base64
                     }
     
                     # Convertir todo a strings para evitar problemas al guardar en Sheets
@@ -683,13 +678,13 @@ def visualizar_tickets():
                     st.write("**Descripción:**")
                     st.write(ticket['Descripción'])
 
-                    if 'Ruta_Foto' in ticket and ticket['Ruta_Foto'] and ticket['Ruta_Foto'] != "No adjuntó foto":
+                    if 'Foto_Base64' in ticket and ticket['Foto_Base64']:
                         try:
                             st.subheader("📸 Foto del Siniestro")
-                            with open(ticket['Ruta_Foto'], "rb") as f:
-                                st.image(f.read(), caption="Imagen del siniestro", use_column_width=True)
-                        except FileNotFoundError:
-                            st.warning("⚠️ No se encontró la foto en el servidor.")
+                            image_data = base64.b64decode(ticket['Foto_Base64'])
+                            st.image(image_data, caption="Imagen del siniestro", use_column_width=True)
+                        except Exception as e:
+                            st.warning(f"⚠️ Error mostrando la imagen: {e}")
                     else:
                         st.info("No se adjuntó foto del siniestro.")
 
