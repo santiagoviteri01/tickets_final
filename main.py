@@ -406,7 +406,7 @@ def portal_cliente():
                             if 'Foto_URL' in ticket and ticket['Foto_URL']:
                                 try:
                                     st.subheader("📸 Foto del Siniestro")
-                                    st.image(ticket['Foto_URL'], caption="Imagen del siniestro", use_column_width=True)
+                                    st.image(ticket['Foto_URL'], caption="Imagen del siniestro", use_container_width=True)
                                 except Exception as e:
                                     st.warning(f"⚠️ Error mostrando la imagen: {e}")
                             else:
@@ -718,7 +718,7 @@ def visualizar_tickets():
                     if 'Foto_URL' in ticket and ticket['Foto_URL']:
                         try:
                             st.subheader("📸 Foto del Siniestro")
-                            st.image(ticket['Foto_URL'], caption="Imagen del siniestro", use_column_width=True)
+                            st.image(ticket['Foto_URL'], caption="Imagen del siniestro", use_container_width=True)
                         except Exception as e:
                             st.warning(f"⚠️ Error mostrando la imagen: {e}")
                     else:
