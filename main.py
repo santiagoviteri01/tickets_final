@@ -459,13 +459,19 @@ def portal_cliente():
                             aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
                             region_name='us-east-1'
                         )
-    
-                        bucket_name = 'insurapp-fotos'  # (Tu bucket que ya creaste)
+                    
+                        bucket_name = 'insurapp-fotos'
                         extension = foto_siniestro.name.split('.')[-1]
                         unique_filename = f"reclamos/{str(uuid.uuid4())}.{extension}"
-    
-                        s3.upload_fileobj(foto_siniestro, bucket_name, unique_filename, ExtraArgs={'ContentType': foto_siniestro.type})
-                        foto_url = f"https://{bucket_name}.s3.amazonaws.com/{unique_filename}"
+                    
+                        s3.upload_fileobj(
+                            foto_siniestro,
+                            bucket_name,
+                            unique_filename,
+                            ExtraArgs={'ContentType': foto_siniestro.type}
+                        )
+                    
+                        foto_url = f"https://{bucket_name}.s3.us-east-1.amazonaws.com/{unique_filename}"
     
                     # Guardar el reclamo
                     df = cargar_datos()
