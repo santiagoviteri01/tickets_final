@@ -418,46 +418,48 @@ def portal_cliente():
             enviar_vehiculos = st.form_submit_button("Enviar Foto")
 
             foto_siniestro = None
-            ruta_foto = None
             if siniestro_vehicular == "Sí":
-                foto_siniestro = base64.b64encode(foto_siniestro.read()).decode('utf-8')
+                foto_siniestro = st.file_uploader("📸 Sube una foto del siniestro (opcional)", type=["jpg", "jpeg", "png"])
     
             # Botón de enviar reclamo
             enviar_reclamo = st.form_submit_button("Enviar Reclamo")
-    
-            if foto_siniestro:
-                foto_siniestro_base64 = base64.b64encode(foto_siniestro.read()).decode('utf-8')
-            else:
-                foto_siniestro_base64 = None
-    
-            # Guardar el reclamo
-            df = cargar_datos()
-            ultimo_ticket = df['Número'].max() if not df.empty else 0
-            nuevo_numero = int(ultimo_ticket) + 1
+            if enviar_reclamo:
+                if not titulo or not descripcion:
+                    st.error("❌ Por favor completa todos los campos obligatorios.")
+                else:
+                    # Convertir la imagen si existe
+                    if foto_siniestro:
+                        foto_siniestro_base64 = base64.b64encode(foto_siniestro.read()).decode('utf-8')
+                    else:
+                        foto_siniestro_base64 = None
 
-            nuevo_ticket = {
-                'Número': nuevo_numero,
-                'Título': titulo,
-                'Área': area,
-                'Estado': 'creado por usuario',
-                'Descripción': descripcion,
-                'Fecha_Creación': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                'Usuario_Creación': st.session_state.usuario_actual,
-                'Fecha_Modificacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                'Usuario_Modificacion': 'cliente',
-                'Tiempo_Cambio': '0d',
-                'Cliente': st.session_state.usuario_actual,
-                'Grua': necesita_grua,
-                'Asistencia_Legal': asistencia_legal,
-                'Ubicacion': ubicacion_actual,
-                'Foto_Base64': foto_siniestro_base64
-            }
+                    df = cargar_datos()
+                    ultimo_ticket = df['Número'].max() if not df.empty else 0
+                    nuevo_numero = int(ultimo_ticket) + 1
 
-            # Convertir todo a strings para evitar problemas al guardar en Sheets
-            nuevo_ticket_serializable = {k: str(v) for k, v in nuevo_ticket.items()}
-            sheet.append_row(list(nuevo_ticket_serializable.values()))
+                    nuevo_ticket = {
+                        'Número': nuevo_numero,
+                        'Título': titulo,
+                        'Área': area,
+                        'Estado': 'creado por usuario',
+                        'Descripción': descripcion,
+                        'Fecha_Creación': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        'Usuario_Creación': st.session_state.usuario_actual,
+                        'Fecha_Modificacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        'Usuario_Modificacion': 'cliente',
+                        'Tiempo_Cambio': '0d',
+                        'Cliente': st.session_state.usuario_actual,
+                        'Grua': necesita_grua,
+                        'Asistencia_Legal': asistencia_legal,
+                        'Ubicacion': ubicacion_actual,
+                        'Foto_Base64': foto_siniestro_base64
+                    }
 
-            st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente 🚀")
+                    # Convertir todo a texto
+                    nuevo_ticket_serializable = {k: str(v) for k, v in nuevo_ticket.items()}
+                    sheet.append_row(list(nuevo_ticket_serializable.values()))
+                    st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente 🚀")     
+
         
 
 
