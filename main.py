@@ -430,34 +430,34 @@ def portal_cliente():
             else:
                 foto_siniestro_base64 = None
     
-                    # Guardar el reclamo
-                    df = cargar_datos()
-                    ultimo_ticket = df['Número'].max() if not df.empty else 0
-                    nuevo_numero = int(ultimo_ticket) + 1
-    
-                    nuevo_ticket = {
-                        'Número': nuevo_numero,
-                        'Título': titulo,
-                        'Área': area,
-                        'Estado': 'creado por usuario',
-                        'Descripción': descripcion,
-                        'Fecha_Creación': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        'Usuario_Creación': st.session_state.usuario_actual,
-                        'Fecha_Modificacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        'Usuario_Modificacion': 'cliente',
-                        'Tiempo_Cambio': '0d',
-                        'Cliente': st.session_state.usuario_actual,
-                        'Grua': necesita_grua,
-                        'Asistencia_Legal': asistencia_legal,
-                        'Ubicacion': ubicacion_actual,
-                        'Foto_Base64': foto_siniestro_base64
-                    }
-    
-                    # Convertir todo a strings para evitar problemas al guardar en Sheets
-                    nuevo_ticket_serializable = {k: str(v) for k, v in nuevo_ticket.items()}
-                    sheet.append_row(list(nuevo_ticket_serializable.values()))
-    
-                    st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente 🚀")
+            # Guardar el reclamo
+            df = cargar_datos()
+            ultimo_ticket = df['Número'].max() if not df.empty else 0
+            nuevo_numero = int(ultimo_ticket) + 1
+
+            nuevo_ticket = {
+                'Número': nuevo_numero,
+                'Título': titulo,
+                'Área': area,
+                'Estado': 'creado por usuario',
+                'Descripción': descripcion,
+                'Fecha_Creación': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'Usuario_Creación': st.session_state.usuario_actual,
+                'Fecha_Modificacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'Usuario_Modificacion': 'cliente',
+                'Tiempo_Cambio': '0d',
+                'Cliente': st.session_state.usuario_actual,
+                'Grua': necesita_grua,
+                'Asistencia_Legal': asistencia_legal,
+                'Ubicacion': ubicacion_actual,
+                'Foto_Base64': foto_siniestro_base64
+            }
+
+            # Convertir todo a strings para evitar problemas al guardar en Sheets
+            nuevo_ticket_serializable = {k: str(v) for k, v in nuevo_ticket.items()}
+            sheet.append_row(list(nuevo_ticket_serializable.values()))
+
+            st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente 🚀")
         
 
 
