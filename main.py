@@ -727,42 +727,34 @@ def visualizar_tickets():
 
 # Función para manejar tickets
 def manejar_tickets():
-    # Cargar tickets existentes desde Google Sheets
-    if st.session_state.get("recargar_tickets"):
+    if st.session_state.get('recargar_tickets'):
         df = cargar_datos()
         st.session_state.recargar_tickets = False
     else:
         df = cargar_datos()
-    
-    # Mostrar opciones
+
     opcion_ticket = st.radio("Seleccione una acción:", ["Ver tickets en cola", "Crear nuevo ticket", "Modificar ticket existente"])
-    
+
     if opcion_ticket == "Ver tickets en cola":
         st.subheader("🔍 Ver tickets en cola")
-        
         if not df.empty:
             ultimos_registros = df.sort_values('Fecha_Modificacion').groupby('Número').last().reset_index()
-            
-            # Filtrar tickets donde el último en modificar fue cliente y no están cerrados
             tickets_cola = ultimos_registros[
                 (ultimos_registros['Usuario_Modificacion'] == 'cliente') &
                 (ultimos_registros['Estado'] != 'cerrado')
             ]
-            
+
             if not tickets_cola.empty:
                 st.metric("Tickets Pendientes", len(tickets_cola))
-                
                 st.dataframe(
-                    tickets_cola[[
-                        'Número', 'Título', 'Cliente', 'Estado', 
-                        'Fecha_Modificacion', 'Usuario_Modificacion'
-                    ]].sort_values('Fecha_Modificacion', ascending=False),
+                    tickets_cola[['Número', 'Título', 'Cliente', 'Estado', 'Fecha_Modificacion', 'Usuario_Modificacion']]
+                    .sort_values('Fecha_Modificacion', ascending=False),
                     use_container_width=True,
                     height=400
                 )
-                
+
                 selected_ticket = st.number_input("Seleccionar Número de Ticket para gestionar:", min_value=min(tickets_cola['Número']))
-                
+
                 if st.button("Tomar Ticket"):
                     if selected_ticket in tickets_cola['Número'].values:
                         st.session_state.ticket_actual = tickets_cola[tickets_cola['Número'] == selected_ticket].iloc[0].to_dict()
@@ -773,21 +765,21 @@ def manejar_tickets():
                 st.info("No hay tickets pendientes de clientes")
         else:
             st.warning("No se encontraron tickets")
-        
-    if opcion_ticket == "Crear nuevo ticket":
+
+    elif opcion_ticket == "Crear nuevo ticket":
         with st.form("nuevo_ticket"):
             st.subheader("📝 Nuevo Ticket")
             titulo = st.text_input("Título del Ticket*")
             area = st.selectbox("Área*", ["crediprime", "generales"])
             estado = st.selectbox("Estado*", ["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion"])
             descripcion = st.text_area("Descripción detallada*")
-            
+
             if st.form_submit_button("Guardar Ticket"):
                 if not all([titulo, area, estado, descripcion]):
                     st.error("Todos los campos marcados con * son obligatorios")
                 else:
                     ultimo_ticket = df['Número'].max() if not df.empty else 0
-                    nuevo_numero = ultimo_ticket + 1
+                    nuevo_numero = int(ultimo_ticket) + 1
 
                     fecha_creacion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     nuevo_ticket = {
@@ -798,67 +790,63 @@ def manejar_tickets():
                         'Descripción': descripcion,
                         'Fecha_Creación': fecha_creacion,
                         'Usuario_Creación': st.session_state.usuario_actual,
-                        'Fecha_Modificación': fecha_creacion,
+                        'Fecha_Modificacion': fecha_creacion,
                         'Usuario_Modificacion': st.session_state.usuario_actual,
                         'Tiempo_Cambio': '0d'
                     }
 
                     nuevo_ticket_serializable = {
-                        key: (int(value) if isinstance(value, (int, float)) else value)
-                        for key, value in nuevo_ticket.items()
+                        k: int(v) if isinstance(v, (int, float)) else v for k, v in nuevo_ticket.items()
                     }
-                    nuevo_ticket_serializable['Fecha_Creación'] = str(nuevo_ticket_serializable['Fecha_Creación'])
-                    nuevo_ticket_serializable['Fecha_Modificación'] = str(nuevo_ticket_serializable['Fecha_Modificación'])
-
                     sheet.append_row(list(nuevo_ticket_serializable.values()))
-                    st.success("✅ Ticket creado correctamente!")
+                    st.success("Ticket creado correctamente ✅")
                     st.session_state.recargar_tickets = True
                     st.rerun()
-    
+
     elif opcion_ticket == "Modificar ticket existente":
         with st.form("buscar_ticket"):
             st.subheader("🔍 Buscar Ticket")
             ticket_id = st.number_input("Ingrese el número de ticket:", min_value=1, step=1)
-            
+
             if st.form_submit_button("Buscar"):
                 ticket_encontrado = df[df['Número'] == ticket_id]
-                
+
                 if not ticket_encontrado.empty:
                     ticket = ticket_encontrado.iloc[-1]
-                    
                     if ticket['Estado'] == "cerrado":
                         st.error("No se puede modificar un ticket cerrado")
                     else:
                         st.session_state.ticket_actual = ticket.to_dict()
                 else:
                     st.error("Ticket no encontrado")
-        
+
         if 'ticket_actual' in st.session_state:
             with st.form("modificar_ticket"):
                 st.subheader(f"✏️ Modificando Ticket #{st.session_state.ticket_actual['Número']}")
-                
+
                 nuevo_estado = st.selectbox(
                     "Nuevo estado:",
                     ["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion", "cerrado"],
-                    index=["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion", "cerrado"]
-                        .index(st.session_state.ticket_actual['Estado'])
+                    index=["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion", "cerrado"].index(
+                        st.session_state.ticket_actual['Estado']
+                    )
                 )
-                
+
                 nueva_descripcion = st.text_area(
                     "Descripción actualizada:",
                     value=st.session_state.ticket_actual['Descripción']
                 )
-                
+
                 if st.form_submit_button("Guardar Cambios"):
                     fecha_modificacion = datetime.now()
                     ultima_fecha = datetime.strptime(st.session_state.ticket_actual['Fecha_Creación'], "%Y-%m-%d %H:%M:%S")
                     dias_transcurridos = (fecha_modificacion - ultima_fecha).days
-                    
+
                     if nuevo_estado != st.session_state.ticket_actual['Estado']:
                         registro_dias = f"{dias_transcurridos}d ({st.session_state.ticket_actual['Estado']} -> {nuevo_estado})"
                     else:
                         registro_dias = "Sin cambio de estado"
-                    
+
                     ticket_actualizado = {
                         'Número': st.session_state.ticket_actual['Número'],
                         'Título': st.session_state.ticket_actual['Título'],
@@ -867,21 +855,22 @@ def manejar_tickets():
                         'Descripción': nueva_descripcion,
                         'Fecha_Creación': st.session_state.ticket_actual['Fecha_Creación'],
                         'Usuario_Creación': st.session_state.ticket_actual['Usuario_Creación'],
-                        'Fecha Modificación': fecha_modificacion.strftime('%Y-%m-%d %H:%M:%S'),
+                        'Fecha_Modificacion': fecha_modificacion.strftime('%Y-%m-%d %H:%M:%S'),
                         'Usuario_Modificacion': st.session_state.usuario_actual,
                         'Tiempo_Cambio': registro_dias,
                         'Cliente': st.session_state.ticket_actual['Cliente']
                     }
-                    
-                    nuevo_ticket_serializable = {
-                        key: (int(value) if isinstance(value, (int, float)) else value)
-                        for key, value in ticket_actualizado.items()
+
+                    ticket_actualizado_serializable = {
+                        k: int(v) if isinstance(v, (int, float)) else v for k, v in ticket_actualizado.items()
                     }
-                    
-                    sheet.append_row(list(nuevo_ticket_serializable.values()))
-                    st.success("✅ Ticket actualizado correctamente!")
+
+                    sheet.append_row(list(ticket_actualizado_serializable.values()))
+                    st.success("Ticket actualizado correctamente ✅")
                     st.session_state.recargar_tickets = True
+                    del st.session_state.ticket_actual
                     st.rerun()
+
 
 # Función para descargar datos
 def descargar_tickets():
