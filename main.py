@@ -827,7 +827,7 @@ def manejar_tickets():
                 nuevo_estado = st.selectbox(
                     "Nuevo estado:",
                     ["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion", "cerrado"],
-                    index=["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion", "cerrado"].index(
+                    index=["creado por usuario","inicial", "documentacion pendiente", "documentacion enviada", "en reparacion", "cerrado"].index(
                         st.session_state.ticket_actual['Estado']
                     )
                 )
