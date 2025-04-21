@@ -13,7 +13,8 @@ import json
 from pathlib import Path
 import numpy as np
 import base64
-
+import boto3
+import uuid
 
 st.set_page_config(
     page_title="Insurapp",
@@ -46,7 +47,25 @@ creds_dict = json.loads(creds_path.read_text())
 if not all([creds_dict["private_key"], creds_dict["client_email"]]):
     st.error("❌ Faltan credenciales. Configúralas en Render.")
     st.stop()
+def upload_to_s3(file):
+    # Inicializar cliente de S3
+    s3 = boto3.client(
+        's3',
+        aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+        aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+        region_name=os.getenv('AWS_DEFAULT_REGION')
+    )
 
+    bucket_name = os.getenv('AWS_BUCKET_NAME')
+    extension = file.name.split('.')[-1]
+    file_key = f"fotos_siniestros/{uuid.uuid4()}.{extension}"  # ruta única
+
+    # Subir a S3
+    s3.upload_fileobj(file, bucket_name, file_key, ExtraArgs={"ACL": "public-read", "ContentType": file.type})
+
+    # URL pública
+    url = f"https://{bucket_name}.s3.amazonaws.com/{file_key}"
+    return url
 
 # Verificar que todas las credenciales estén presentes
 required_keys = ["private_key_id", "private_key", "client_email", "client_id"]
@@ -327,44 +346,43 @@ def portal_cliente():
                     st.download_button(label="📥 Descargar Coberturas AIG", data=file, file_name="Coberturas_AIG.pdf", mime="application/pdf")
         else:
             st.error("No se encontró información para tu cuenta.")
-
+    
     with tab2:
         st.header("Mis Tickets")
         df = cargar_datos()
-        
+    
         if not df.empty:
+            # 🔥 Dejar solo la última versión de cada ticket
+            df = df.sort_values('Fecha_Modificacion').groupby('Número').last().reset_index()
+    
             # Filtrar tickets del cliente
             mis_tickets = df[df['Cliente'] == st.session_state.usuario_actual]
-            
+    
             # Filtro por estado
-            estado_filtro = st.selectbox("Filtrar por estado:", 
-                                        ["Todos", "Abiertos", "Cerrados"])
-            
+            estado_filtro = st.selectbox("Filtrar por estado:", ["Todos", "Abiertos", "Cerrados"])
+    
             if estado_filtro == "Abiertos":
                 mis_tickets = mis_tickets[mis_tickets['Estado'] != 'cerrado']
             elif estado_filtro == "Cerrados":
                 mis_tickets = mis_tickets[mis_tickets['Estado'] == 'cerrado']
-            
+    
             if not mis_tickets.empty:
                 # Mostrar resumen de estados
                 col1, col2, col3 = st.columns(3)
                 with col1:
-                    st.metric("Tickets Abiertos", 
-                             len(mis_tickets[mis_tickets['Estado'] != 'cerrado']['Número'].unique()))
+                    st.metric("Tickets Abiertos", len(mis_tickets[mis_tickets['Estado'] != 'cerrado']['Número'].unique()))
                 with col2:
-                    st.metric("Tickets Cerrados", 
-                             len(mis_tickets[mis_tickets['Estado'] == 'cerrado']['Número'].unique()))
+                    st.metric("Tickets Cerrados", len(mis_tickets[mis_tickets['Estado'] == 'cerrado']['Número'].unique()))
                 with col3:
                     ultimo_ticket = mis_tickets.iloc[-1]
                     st.metric("Último Estado", ultimo_ticket['Estado'])
-                
+    
                 # Mostrar tickets con detalles
                 for _, ticket in mis_tickets.iterrows():
                     with st.expander(f"Ticket #{ticket['Número']} - {ticket['Título']}"):
                         col_left, col_right = st.columns([1, 3])
-                        
+    
                         with col_left:
-                            # Icono y color según estado
                             estado = ticket['Estado'].lower()
                             color_map = {
                                 'nuevo': '🔵',
@@ -375,24 +393,29 @@ def portal_cliente():
                             }
                             icono = color_map.get(estado, '⚫')
                             st.markdown(f"**Estado:** {icono} {ticket['Estado'].capitalize()}")
-                            
+    
                             st.write(f"**Fecha creación:** {ticket['Fecha_Creación']}")
                             if pd.notna(ticket['Fecha_Modificacion']):
                                 st.write(f"**Última actualización:** {ticket['Fecha_Modificacion']}")
-                        
+    
                         with col_right:
-                            st.write(f"**Descripción:**")
+                            st.write("**Descripción:**")
                             st.write(ticket['Descripción'])
-                            
-                            if pd.notna(ticket['Tiempo_Cambio']):
-                                st.write("**Historial de cambios:**")
-                                cambios = ticket['Tiempo_Cambio'].split(';')
-                                for cambio in cambios:
-                                    st.write(f"- {cambio.strip()}")
+    
+                            # Mostrar imagen si existe
+                            if 'Foto_URL' in ticket and ticket['Foto_URL']:
+                                try:
+                                    st.subheader("📸 Foto del Siniestro")
+                                    st.image(ticket['Foto_URL'], caption="Imagen del siniestro", use_column_width=True)
+                                except Exception as e:
+                                    st.warning(f"⚠️ Error mostrando la imagen: {e}")
+                            else:
+                                st.info("No se adjuntó foto del siniestro.")
             else:
-                st.info("No se encontraron tickets con los filtros seleccionados")
+                st.info("No se encontraron tickets con los filtros seleccionados.")
         else:
-            st.warning("No hay tickets registrados")
+            st.warning("No hay tickets registrados.")
+
     UPLOAD_DIR = "uploads"
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
@@ -421,22 +444,34 @@ def portal_cliente():
             if siniestro_vehicular == "Sí":
                 foto_siniestro = st.file_uploader("📸 Sube una foto del siniestro (opcional)", type=["jpg", "jpeg", "png"])
     
-            # Botón de enviar reclamo
             enviar_reclamo = st.form_submit_button("Enviar Reclamo")
+                            
             if enviar_reclamo:
-                if not titulo or not descripcion:
+                if not all([titulo, descripcion]):
                     st.error("❌ Por favor completa todos los campos obligatorios.")
                 else:
-                    # Convertir la imagen si existe
-                    if foto_siniestro:
-                        foto_siniestro_base64 = base64.b64encode(foto_siniestro.read()).decode('utf-8')
-                    else:
-                        foto_siniestro_base64 = None
-
+                    # 🔥 Subir foto a S3 si existe
+                    foto_url = None
+                    if foto_siniestro is not None:
+                        s3 = boto3.client(
+                            's3',
+                            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+                            region_name='us-east-1'
+                        )
+    
+                        bucket_name = 'insurapp-fotos'  # (Tu bucket que ya creaste)
+                        extension = foto_siniestro.name.split('.')[-1]
+                        unique_filename = f"reclamos/{str(uuid.uuid4())}.{extension}"
+    
+                        s3.upload_fileobj(foto_siniestro, bucket_name, unique_filename, ExtraArgs={'ContentType': foto_siniestro.type})
+                        foto_url = f"https://{bucket_name}.s3.amazonaws.com/{unique_filename}"
+    
+                    # Guardar el reclamo
                     df = cargar_datos()
                     ultimo_ticket = df['Número'].max() if not df.empty else 0
                     nuevo_numero = int(ultimo_ticket) + 1
-
+    
                     nuevo_ticket = {
                         'Número': nuevo_numero,
                         'Título': titulo,
@@ -452,15 +487,14 @@ def portal_cliente():
                         'Grua': necesita_grua,
                         'Asistencia_Legal': asistencia_legal,
                         'Ubicacion': ubicacion_actual,
-                        'Foto_Base64': foto_siniestro_base64
+                        'Foto_URL': foto_url if foto_url else None
                     }
-
-                    # Convertir todo a texto
+    
                     nuevo_ticket_serializable = {k: str(v) for k, v in nuevo_ticket.items()}
                     sheet.append_row(list(nuevo_ticket_serializable.values()))
-                    st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente 🚀")     
-
-        
+    
+                    st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente 🚀")
+            
 
 
 def modulo_cotizaciones_mauricio():
@@ -680,11 +714,11 @@ def visualizar_tickets():
                     st.write("**Descripción:**")
                     st.write(ticket['Descripción'])
 
-                    if 'Foto_Base64' in ticket and ticket['Foto_Base64']:
+                    # Mostrar la imagen desde S3
+                    if 'Foto_URL' in ticket and ticket['Foto_URL']:
                         try:
                             st.subheader("📸 Foto del Siniestro")
-                            image_data = base64.b64decode(ticket['Foto_Base64'])
-                            st.image(image_data, caption="Imagen del siniestro", use_column_width=True)
+                            st.image(ticket['Foto_URL'], caption="Imagen del siniestro", use_column_width=True)
                         except Exception as e:
                             st.warning(f"⚠️ Error mostrando la imagen: {e}")
                     else:
