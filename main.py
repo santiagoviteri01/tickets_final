@@ -715,15 +715,19 @@ def visualizar_tickets():
                     st.write(ticket['Descripción'])
 
                     # Mostrar la imagen desde S3
-                    if 'Foto_URL' in ticket and ticket['Foto_URL']:
+                    if 'Foto_URL' in ticket and isinstance(ticket['Foto_URL'], str) and ticket['Foto_URL'].startswith("http"):
                         try:
                             st.subheader("📸 Foto del Siniestro")
+                    
+                            # Mostrar la imagen
                             st.image(ticket['Foto_URL'], caption="Imagen del siniestro", use_container_width=True)
+                    
+                            # Agregar un link clickeable debajo
+                            st.markdown(f"[🔗 Ver imagen en nueva pestaña]({ticket['Foto_URL']})", unsafe_allow_html=True)
                         except Exception as e:
                             st.warning(f"⚠️ Error mostrando la imagen: {e}")
                     else:
                         st.info("No se adjuntó foto del siniestro.")
-
         # Tabla general abajo
         st.dataframe(df, use_container_width=True, height=500)
 
