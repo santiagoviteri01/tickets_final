@@ -650,8 +650,44 @@ def visualizar_tickets():
             df = df[df['Área'] == area]
         if estado != "Todos":
             df = df[df['Estado'] == estado]
-
-        # Mostrar datos
+        
+        # 📸 Mostrar los tickets como expanders uno por uno
+        for _, ticket in df.iterrows():
+            with st.expander(f"Ticket #{ticket['Número']} - {ticket['Título']}"):
+                col_left, col_right = st.columns([1, 3])
+        
+                with col_left:
+                    estado_ticket = ticket['Estado'].lower()
+                    color_map = {
+                        'nuevo': '🔵',
+                        'en proceso': '🟡',
+                        'resuelto': '🟢',
+                        'cerrado': '✅',
+                        'documentacion pendiente': '🟠'
+                    }
+                    icono = color_map.get(estado_ticket, '⚫')
+                    st.markdown(f"**Estado:** {icono} {ticket['Estado'].capitalize()}")
+        
+                    st.write(f"**Fecha creación:** {ticket['Fecha_Creación']}")
+                    if pd.notna(ticket['Fecha_Modificacion']):
+                        st.write(f"**Última actualización:** {ticket['Fecha_Modificacion']}")
+        
+                with col_right:
+                    st.write("**Descripción:**")
+                    st.write(ticket['Descripción'])
+        
+                    # Mostrar foto del siniestro si existe
+                    if 'Ruta_Foto' in ticket and ticket['Ruta_Foto'] and ticket['Ruta_Foto'] != "No adjuntó foto":
+                        try:
+                            st.subheader("📸 Foto del Siniestro")
+                            with open(ticket['Ruta_Foto'], "rb") as f:
+                                st.image(f.read(), caption="Imagen del siniestro", use_column_width=True)
+                        except FileNotFoundError:
+                            st.warning("⚠️ No se encontró la foto en el servidor.")
+                    else:
+                        st.info("No se adjuntó foto del siniestro.")
+        
+        # 📋 Si quieres, abajo también puedes seguir mostrando la tabla completa
         st.dataframe(df, use_container_width=True, height=500)
         
         # Gráficos
