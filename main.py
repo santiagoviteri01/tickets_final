@@ -128,7 +128,9 @@ def formulario_cotizacion():
             st.session_state.mostrar_formulario_cotizacion = False
             st.rerun()
 
-
+if 'recargar_tickets' not in st.session_state:
+    st.session_state.recargar_tickets = False
+    
 def landing_page():
     st.markdown("""
         <style>
@@ -470,6 +472,10 @@ def modulo_cotizaciones_mauricio():
     hoja_cotizaciones = spreadsheet.worksheet("cotizaciones")
     cotizaciones_data = hoja_cotizaciones.get_all_records()
     cotizaciones_df = pd.DataFrame(cotizaciones_data)
+    # 🔥 Aquí agregas la recarga automática
+    if st.session_state.get("recargar_cotizaciones"):
+        cotizaciones_df = pd.DataFrame(hoja_cotizaciones.get_all_records())
+        st.session_state.recargar_cotizaciones = False
 
     if cotizaciones_df.empty:
         st.info("No hay cotizaciones registradas.")
@@ -480,12 +486,15 @@ def modulo_cotizaciones_mauricio():
         cotizaciones_df['Estado'] = 'no cotizada'
 
     estados = ["no cotizada", "en proceso", "cotizada", "aceptada", "rechazada"]
+    
 
     def actualizar_estado(index, nuevo_estado):
         hoja_cotizaciones.update_cell(index + 2, cotizaciones_df.columns.get_loc('Estado') + 1, nuevo_estado)
         st.success(f"Cotización actualizada a '{nuevo_estado}'.")
         time.sleep(1)
+        st.session_state.recargar_cotizaciones = True
         st.rerun()
+
 
     # Sección 1: Nuevas Cotizaciones
     st.subheader("🔵 Cotizaciones Nuevas (No Cotizadas)")
@@ -718,15 +727,18 @@ def visualizar_tickets():
 
 # Función para manejar tickets
 def manejar_tickets():
-    df = cargar_datos()  # Cargar tickets existentes desde Google Sheets
+    # Cargar tickets existentes desde Google Sheets
+    if st.session_state.get("recargar_tickets"):
+        df = cargar_datos()
+        st.session_state.recargar_tickets = False
+    else:
+        df = cargar_datos()
     
     # Mostrar opciones
-        # Mostrar opciones
-    opcion_ticket = st.radio("Seleccione una acción:", ["Ver tickets en cola","Crear nuevo ticket", "Modificar ticket existente"])
+    opcion_ticket = st.radio("Seleccione una acción:", ["Ver tickets en cola", "Crear nuevo ticket", "Modificar ticket existente"])
     
     if opcion_ticket == "Ver tickets en cola":
         st.subheader("🔍 Ver tickets en cola")
-        df = cargar_datos()
         
         if not df.empty:
             ultimos_registros = df.sort_values('Fecha_Modificacion').groupby('Número').last().reset_index()
@@ -740,7 +752,6 @@ def manejar_tickets():
             if not tickets_cola.empty:
                 st.metric("Tickets Pendientes", len(tickets_cola))
                 
-                # Mostrar tabla detallada
                 st.dataframe(
                     tickets_cola[[
                         'Número', 'Título', 'Cliente', 'Estado', 
@@ -750,7 +761,6 @@ def manejar_tickets():
                     height=400
                 )
                 
-                # Botón para tomar ticket
                 selected_ticket = st.number_input("Seleccionar Número de Ticket para gestionar:", min_value=min(tickets_cola['Número']))
                 
                 if st.button("Tomar Ticket"):
@@ -776,17 +786,9 @@ def manejar_tickets():
                 if not all([titulo, area, estado, descripcion]):
                     st.error("Todos los campos marcados con * son obligatorios")
                 else:
-                    # Obtener el último número de ticket desde Google Sheets
-                    if not df.empty:
-                        ultimo_ticket = df['Número'].max()
-                    else:
-                        ultimo_ticket = 0
-                    
-                    nuevo_numero = ultimo_ticket+1
-                    nuevo_numero =nuevo_numero.astype("float")
-                   
+                    ultimo_ticket = df['Número'].max() if not df.empty else 0
+                    nuevo_numero = ultimo_ticket + 1
 
-                    # Crear registro
                     fecha_creacion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     nuevo_ticket = {
                         'Número': nuevo_numero,
@@ -797,24 +799,21 @@ def manejar_tickets():
                         'Fecha_Creación': fecha_creacion,
                         'Usuario_Creación': st.session_state.usuario_actual,
                         'Fecha_Modificación': fecha_creacion,
-                        'Usuario_Modificación': st.session_state.usuario_actual,
-                        'Tiempo_Cambio': '0d'  # Sin cambios al principio
+                        'Usuario_Modificacion': st.session_state.usuario_actual,
+                        'Tiempo_Cambio': '0d'
                     }
 
-                    
-                    # Guardar en Google Sheetssheet.append_row(list(nuevo_ticket.values()))
-
                     nuevo_ticket_serializable = {
-                        key: (int(value) if isinstance(value, (pd.Int64Dtype, int, float)) else value)
+                        key: (int(value) if isinstance(value, (int, float)) else value)
                         for key, value in nuevo_ticket.items()
                     }
                     nuevo_ticket_serializable['Fecha_Creación'] = str(nuevo_ticket_serializable['Fecha_Creación'])
                     nuevo_ticket_serializable['Fecha_Modificación'] = str(nuevo_ticket_serializable['Fecha_Modificación'])
 
-                    # Guardar en Google Sheets
-                    # Aquí asumo que `sheet` es una instancia de tu hoja de Google Sheets autenticada
                     sheet.append_row(list(nuevo_ticket_serializable.values()))
-                    st.success("Ticket creado correctamente!")
+                    st.success("✅ Ticket creado correctamente!")
+                    st.session_state.recargar_tickets = True
+                    st.rerun()
     
     elif opcion_ticket == "Modificar ticket existente":
         with st.form("buscar_ticket"):
@@ -841,7 +840,7 @@ def manejar_tickets():
                 nuevo_estado = st.selectbox(
                     "Nuevo estado:",
                     ["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion", "cerrado"],
-                    index=["creado por usuario","inicial", "documentacion pendiente", "documentacion enviada", "en reparacion", "cerrado"]
+                    index=["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion", "cerrado"]
                         .index(st.session_state.ticket_actual['Estado'])
                 )
                 
@@ -852,18 +851,14 @@ def manejar_tickets():
                 
                 if st.form_submit_button("Guardar Cambios"):
                     fecha_modificacion = datetime.now()
-                    
-                    # Calcular días desde última modificación
                     ultima_fecha = datetime.strptime(st.session_state.ticket_actual['Fecha_Creación'], "%Y-%m-%d %H:%M:%S")
                     dias_transcurridos = (fecha_modificacion - ultima_fecha).days
                     
-                    # Usar flecha ASCII en lugar de Unicode
                     if nuevo_estado != st.session_state.ticket_actual['Estado']:
                         registro_dias = f"{dias_transcurridos}d ({st.session_state.ticket_actual['Estado']} -> {nuevo_estado})"
                     else:
                         registro_dias = "Sin cambio de estado"
                     
-                    # Crear el registro actualizado
                     ticket_actualizado = {
                         'Número': st.session_state.ticket_actual['Número'],
                         'Título': st.session_state.ticket_actual['Título'],
@@ -876,16 +871,17 @@ def manejar_tickets():
                         'Usuario_Modificacion': st.session_state.usuario_actual,
                         'Tiempo_Cambio': registro_dias,
                         'Cliente': st.session_state.ticket_actual['Cliente']
-                        
                     }
                     
-                    # Actualizar en Google Sheets
-                    #sheet = auth_google_sheets()
-                    row_index = df[df['Número'] == st.session_state.ticket_actual['Número']].index[0] + 2  # +2 porque la hoja tiene encabezado
-                    sheet.append_row(list(ticket_actualizado.values()))
-                    #sheet.update('A' + str(row_index), list(ticket_actualizado.values()))
-                    st.success("Ticket actualizado correctamente!")
-                    del st.session_state.ticket_actual
+                    nuevo_ticket_serializable = {
+                        key: (int(value) if isinstance(value, (int, float)) else value)
+                        for key, value in ticket_actualizado.items()
+                    }
+                    
+                    sheet.append_row(list(nuevo_ticket_serializable.values()))
+                    st.success("✅ Ticket actualizado correctamente!")
+                    st.session_state.recargar_tickets = True
+                    st.rerun()
 
 # Función para descargar datos
 def descargar_tickets():
