@@ -403,7 +403,7 @@ def portal_cliente():
                             st.write(ticket['Descripción'])
     
                             # Mostrar imagen si existe
-                            if 'Foto_URL' in ticket and ticket['Foto_URL']:
+                            if 'Foto_URL' in ticket and ticket['Foto_URL'] and ticket['Foto_URL'] != "None":
                                 try:
                                     st.subheader("📸 Foto del Siniestro")
                                     st.image(ticket['Foto_URL'], caption="Imagen del siniestro", use_container_width=True)
