@@ -620,6 +620,9 @@ def procesar_tiempos_estado(tiempos_cambio):
 def visualizar_tickets():
     df = cargar_datos()
     if not df.empty:
+        # 🔥 Muy importante: Solo dejar la última versión de cada ticket
+        df = df.sort_values('Fecha_Modificacion').groupby('Número').last().reset_index()
+
         # Mostrar métricas
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -628,43 +631,38 @@ def visualizar_tickets():
             st.metric("Tickets Abiertos", df[df['Estado'] != 'cerrado']['Número'].nunique())
         with col3:
             tickets_cerrados = df[df['Estado'] == 'cerrado']
-            
+
             if 'Tiempo_Cambio' in tickets_cerrados.columns:
                 try:
-                    # Convertir a string y extraer los días
                     dias = (tickets_cerrados['Tiempo_Cambio']
                             .astype(str)
                             .str.extract(r'(\d+)d', expand=False)
                             .dropna()
                             .astype(float))
-                    
                     tiempo_promedio = dias.mean() if not dias.empty else None
                 except Exception as e:
                     tiempo_promedio = None
                     st.error(f"Error al calcular el tiempo de resolución: {e}")
             else:
                 tiempo_promedio = None
-            
-            # Mostrar la métrica
-            st.metric("Tiempo Resolución Promedio", 
-                      f"{tiempo_promedio:.1f} días" if tiempo_promedio is not None else "N/A")
+
+            st.metric("Tiempo Resolución Promedio", f"{tiempo_promedio:.1f} días" if tiempo_promedio is not None else "N/A")
 
         # Filtros
         st.subheader("Filtros")
         area = st.selectbox("Área", ["Todas"] + list(df['Área'].unique()))
         estado = st.selectbox("Estado", ["Todos"] + list(df['Estado'].unique()))
 
-        # Aplicar filtros
         if area != "Todas":
             df = df[df['Área'] == area]
         if estado != "Todos":
             df = df[df['Estado'] == estado]
-        
-        # 📸 Mostrar los tickets como expanders uno por uno
+
+        # Mostrar cada ticket
         for _, ticket in df.iterrows():
             with st.expander(f"Ticket #{ticket['Número']} - {ticket['Título']}"):
                 col_left, col_right = st.columns([1, 3])
-        
+
                 with col_left:
                     estado_ticket = ticket['Estado'].lower()
                     color_map = {
@@ -676,16 +674,15 @@ def visualizar_tickets():
                     }
                     icono = color_map.get(estado_ticket, '⚫')
                     st.markdown(f"**Estado:** {icono} {ticket['Estado'].capitalize()}")
-        
+
                     st.write(f"**Fecha creación:** {ticket['Fecha_Creación']}")
                     if pd.notna(ticket['Fecha_Modificacion']):
                         st.write(f"**Última actualización:** {ticket['Fecha_Modificacion']}")
-        
+
                 with col_right:
                     st.write("**Descripción:**")
                     st.write(ticket['Descripción'])
-        
-                    # Mostrar foto del siniestro si existe
+
                     if 'Ruta_Foto' in ticket and ticket['Ruta_Foto'] and ticket['Ruta_Foto'] != "No adjuntó foto":
                         try:
                             st.subheader("📸 Foto del Siniestro")
@@ -695,10 +692,10 @@ def visualizar_tickets():
                             st.warning("⚠️ No se encontró la foto en el servidor.")
                     else:
                         st.info("No se adjuntó foto del siniestro.")
-        
-        # 📋 Si quieres, abajo también puedes seguir mostrando la tabla completa
+
+        # Tabla general abajo
         st.dataframe(df, use_container_width=True, height=500)
-        
+
         # Gráficos
         st.subheader("Estadísticas")
         col1, col2 = st.columns(2)
@@ -706,12 +703,14 @@ def visualizar_tickets():
             st.bar_chart(df['Área'].value_counts())
         with col2:
             st.bar_chart(df['Estado'].value_counts())
+        
         st.subheader("Tiempo por Estado")
         df_resultados = procesar_tiempos_estado(df['Tiempo_Cambio'])
         if not df_resultados.empty:
             st.bar_chart(df_resultados.set_index('Estado'))
         else:
             st.warning("No hay datos de tiempo por estado")
+
         st.subheader("Actividad por Usuario")
         col1, col2 = st.columns(2)
         with col1:
