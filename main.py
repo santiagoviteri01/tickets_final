@@ -503,23 +503,15 @@ def portal_cliente():
     
                     st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente 🚀")
             
-@st.cache_data(ttl=300)
-def cargar_cotizaciones():
-    hoja = spreadsheet.worksheet("cotizaciones")
-    data = hoja.get_all_records()
-    return hoja, pd.DataFrame(data)
-
-
 def modulo_cotizaciones_mauricio():
     st.title("📋 Gestión de Cotizaciones")
-    hoja_cotizaciones, cotizaciones_df = cargar_cotizaciones()
-    #hoja_cotizaciones = spreadsheet.worksheet("cotizaciones")
-    #cotizaciones_data = hoja_cotizaciones.get_all_records()
-    #cotizaciones_df = pd.DataFrame(cotizaciones_data)
-    
+
+    hoja_cotizaciones = spreadsheet.worksheet("cotizaciones")
+    cotizaciones_data = hoja_cotizaciones.get_all_records()
+    cotizaciones_df = pd.DataFrame(cotizaciones_data)
     # 🔥 Aquí agregas la recarga automática
     if st.session_state.get("recargar_cotizaciones"):
-        hoja_cotizaciones, cotizaciones_df = cargar_cotizaciones(clear_cache=True)
+        cotizaciones_df = pd.DataFrame(hoja_cotizaciones.get_all_records())
         st.session_state.recargar_cotizaciones = False
 
     if cotizaciones_df.empty:
