@@ -7,7 +7,6 @@ from io import BytesIO
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
-from oauth2client.service_account import ServiceAccountCredentials
 import os
 import json
 from pathlib import Path
@@ -76,7 +75,7 @@ if missing_keys:
     st.stop()
 
 # Convertir las credenciales a un formato JSON
-creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
 
 # Autenticarse con Google
 client = gspread.authorize(creds)
