@@ -109,6 +109,7 @@ for _, row in asegurados_df.iterrows():
         "rol": "cliente"
     }
     
+@st.cache_data(ttl=300)   
 def cargar_datos():
     try:
         # Convertir los datos de la hoja a un DataFrame
@@ -503,17 +504,23 @@ def portal_cliente():
     
                     st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente 🚀")
             
+@st.cache_data(ttl=300)
+def cargar_cotizaciones():
+    hoja = spreadsheet.worksheet("cotizaciones")
+    data = hoja.get_all_records()
+    return hoja, pd.DataFrame(data)
 
 
 def modulo_cotizaciones_mauricio():
     st.title("📋 Gestión de Cotizaciones")
-
-    hoja_cotizaciones = spreadsheet.worksheet("cotizaciones")
-    cotizaciones_data = hoja_cotizaciones.get_all_records()
-    cotizaciones_df = pd.DataFrame(cotizaciones_data)
+    hoja_cotizaciones, cotizaciones_df = cargar_cotizaciones()
+    #hoja_cotizaciones = spreadsheet.worksheet("cotizaciones")
+    #cotizaciones_data = hoja_cotizaciones.get_all_records()
+    #cotizaciones_df = pd.DataFrame(cotizaciones_data)
+    
     # 🔥 Aquí agregas la recarga automática
     if st.session_state.get("recargar_cotizaciones"):
-        cotizaciones_df = pd.DataFrame(hoja_cotizaciones.get_all_records())
+        hoja_cotizaciones, cotizaciones_df = cargar_cotizaciones(clear_cache=True)
         st.session_state.recargar_cotizaciones = False
 
     if cotizaciones_df.empty:
@@ -767,13 +774,23 @@ def visualizar_tickets():
     else:
         st.warning("No se encontraron tickets")
 
+# Versión cacheada para uso general
+@st.cache_data(ttl=300)
+def _cargar_tickets():
+    data = sheet.get_all_records()
+    return pd.DataFrame(data)
+
+# Función pública para permitir limpieza de caché
+def cargar_tickets(clear_cache=False):
+    if clear_cache:
+        st.cache_data.clear()
+    return _cargar_tickets()
+
 # Función para manejar tickets
 def manejar_tickets():
-    if st.session_state.get('recargar_tickets'):
-        df = cargar_datos()
-        st.session_state.recargar_tickets = False
-    else:
-        df = cargar_datos()
+    # ✅ Nuevo bloque más limpio y eficiente
+    df = cargar_tickets(clear_cache=st.session_state.get("recargar_tickets", False))
+    st.session_state.recargar_tickets = False
 
     opcion_ticket = st.radio("Seleccione una acción:", ["Ver tickets en cola", "Crear nuevo ticket", "Modificar ticket existente"])
 
@@ -840,10 +857,12 @@ def manejar_tickets():
                     nuevo_ticket_serializable = {
                         k: int(v) if isinstance(v, (int, float)) else v for k, v in nuevo_ticket.items()
                     }
-                    sheet.append_row(list(nuevo_ticket_serializable.values()))
-                    st.success("Ticket creado correctamente ✅")
-                    st.session_state.recargar_tickets = True
-                    st.rerun()
+
+                    with st.spinner("Guardando ticket..."):
+                        sheet.append_row(list(nuevo_ticket_serializable.values()))
+                        st.success("Ticket creado correctamente ✅")
+                        st.session_state.recargar_tickets = True
+                        st.rerun()
 
     elif opcion_ticket == "Modificar ticket existente":
         with st.form("buscar_ticket"):
@@ -907,32 +926,34 @@ def manejar_tickets():
                         k: int(v) if isinstance(v, (int, float)) else v for k, v in ticket_actualizado.items()
                     }
 
-                    sheet.append_row(list(ticket_actualizado_serializable.values()))
-                    st.success("Ticket actualizado correctamente ✅")
-                    st.session_state.recargar_tickets = True
-                    del st.session_state.ticket_actual
-                    st.rerun()
+                    with st.spinner("Actualizando ticket..."):
+                        sheet.append_row(list(ticket_actualizado_serializable.values()))
+                        st.success("Ticket actualizado correctamente ✅")
+                        st.session_state.recargar_tickets = True
+                        del st.session_state.ticket_actual
+                        st.rerun()
 
 
-# Función para descargar datos
 def descargar_tickets():
-    df = cargar_datos()
+    with st.spinner("🔄 Cargando tickets para descarga..."):
+        df = cargar_tickets()  # usa la función cacheada que definimos antes
+
     if not df.empty:
         formato = st.selectbox("Formato de descarga", ["CSV", "Excel", "JSON"])
-        
+
         if formato == "CSV":
-            st.download_button("Descargar CSV", df.to_csv(), "tickets.csv")
+            st.download_button("📥 Descargar CSV", df.to_csv(index=False), "tickets.csv", mime="text/csv")
         elif formato == "Excel":
             output = BytesIO()
             df.to_excel(output, index=False)
-            st.download_button("Descargar Excel", output.getvalue(), "tickets.xlsx")
+            st.download_button("📥 Descargar Excel", output.getvalue(), "tickets.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         elif formato == "JSON":
-            st.download_button("Descargar JSON", df.to_json(), "tickets.json")
-        
-        st.write("Vista previa:")
-        st.dataframe(df.tail())
+            st.download_button("📥 Descargar JSON", df.to_json(orient="records"), "tickets.json", mime="application/json")
+
+        st.write("📊 Vista previa de los últimos registros:")
+        st.dataframe(df.tail(), use_container_width=True)
     else:
-        st.warning("No hay datos para descargar")
+        st.warning("⚠️ No hay datos disponibles para descargar.")
 
 
 
