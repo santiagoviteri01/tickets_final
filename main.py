@@ -490,7 +490,8 @@ def portal_cliente():
             # Opción 2: Subir desde el dispositivo si no se usa la cámara
             if foto_siniestro is None:
                 foto_siniestro = st.file_uploader("O bien, sube una imagen desde tu dispositivo", type=["jpg", "jpeg", "png"])
-                            
+            
+            enviar_reclamo = st.form_submit_button("Enviar Reclamo")   
             if enviar_reclamo:
                 if not all([titulo, descripcion]):
                     st.error("❌ Por favor completa todos los campos obligatorios.")
