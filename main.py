@@ -473,6 +473,12 @@ def portal_cliente():
             if necesita_grua == "Sí" or asistencia_legal == "Sí":
                 st.subheader("📍 Ubicación del Siniestro (automática)")
                 ubicacion_actual = obtener_ubicacion()
+                if ubicacion_actual:
+                    st.success("✅ Ubicación capturada automáticamente")
+                    maps_link = f"https://www.google.com/maps?q={ubicacion_actual}"
+                    st.markdown(f"[📍 Ver en Google Maps]({maps_link})")
+                else:
+                    st.warning("⏳ Esperando ubicación del dispositivo...")
     
             st.subheader("Información sobre el Siniestro")
             siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
