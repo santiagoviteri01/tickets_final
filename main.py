@@ -431,10 +431,38 @@ def portal_cliente():
             necesita_grua = st.selectbox("¿Necesitas grúa?", ["No", "Sí"])
             asistencia_legal = st.selectbox("¿Necesitas asistencia legal en el punto?", ["No", "Sí"])
             enviar_asistencias = st.form_submit_button("Enviar Asistencias")
-    
-            ubicacion_actual = None
+            
+            # Sección de ubicación automática con GPS solo si es necesario
+            ubicacion_actual = ""
             if necesita_grua == "Sí" or asistencia_legal == "Sí":
-                ubicacion_actual = st.text_input("📍 Pega aquí tu ubicación de Google Maps:")
+                st.subheader("📍 Ubicación del Siniestro (automática)")
+                
+                ubicacion_actual = st.text_input("Ubicación GPS", key="ubicacion_actual", label_visibility="collapsed")
+            
+                # Mostrar link a Google Maps si ya se obtuvo ubicación
+                if ubicacion_actual:
+                    st.success("✅ Ubicación capturada automáticamente")
+                    maps_link = f"https://www.google.com/maps?q={ubicacion_actual}"
+                    st.markdown(f"[📍 Ver en Google Maps]({maps_link})")
+            
+                # JavaScript para capturar ubicación
+                st.markdown("""
+                    <script>
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            const coords = position.coords.latitude + "," + position.coords.longitude;
+                            const input = window.parent.document.getElementById("ubicacion_actual");
+                            if (input) {
+                                input.value = coords;
+                                input.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                        },
+                        function(error) {
+                            console.error("Error obteniendo ubicación:", error);
+                        }
+                    );
+                    </script>
+                """, unsafe_allow_html=True)
     
             st.subheader("Información sobre el Siniestro")
             siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
