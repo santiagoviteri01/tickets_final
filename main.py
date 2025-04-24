@@ -270,33 +270,38 @@ def autenticacion():
 
 def obtener_ubicacion():
     st.subheader("📍 Ubicación del Siniestro (automática)")
-    ubicacion_actual = st.text_input("Ubicación GPS", key="ubicacion_actual", label_visibility="collapsed")
-    if ubicacion_actual.strip():
-        st.success("✅ Ubicación capturada correctamente")
-        maps_link = f"https://www.google.com/maps?q={ubicacion_actual}"
-        st.markdown(f"[📍 Ver en Google Maps]({maps_link})")
-    else:
-        st.info("⏳ Esperando ubicación del dispositivo...")
-    st.markdown("""
+    components.html('''
+        <input type="text" id="ubicacion_input" style="display:none;">
         <script>
-        setTimeout(() => {
             navigator.geolocation.getCurrentPosition(
                 function(position) {
                     const coords = position.coords.latitude + "," + position.coords.longitude;
-                    const input = window.parent.document.querySelector('input[id="ubicacion_actual"]');
-                    if (input && input.value !== coords) {
+                    const input = window.parent.document.querySelector("input[data-testid='stTextInput']")
+                                  || window.frames[0].document.querySelector("#ubicacion_input");
+                    if (input) {
                         input.value = coords;
-                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                        const event = new Event('input', { bubbles: true });
+                        input.dispatchEvent(event);
                     }
                 },
                 function(error) {
                     console.error("Error obteniendo ubicación:", error);
                 }
             );
-        }, 1500);
         </script>
-    """, unsafe_allow_html=True)
+    ''', height=0)
+
+    ubicacion_actual = st.text_input("Ubicación GPS", key="ubicacion_actual")
+
+    if ubicacion_actual.strip():
+        st.success("✅ Ubicación capturada correctamente")
+        maps_link = f"https://www.google.com/maps?q={ubicacion_actual}"
+        st.markdown(f"[📍 Ver en Google Maps]({maps_link})")
+    else:
+        st.info("⏳ Esperando ubicación del dispositivo...")
+
     return ubicacion_actual
+
 
     
 # Portal del Cliente
