@@ -9,4 +9,5 @@ oauth2client
 gspread
 google-auth
 boto3
-
+folium
+streamlit-folium
