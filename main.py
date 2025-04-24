@@ -269,36 +269,36 @@ def autenticacion():
 
 
 def obtener_ubicacion():
-    st.markdown("Esperando ubicación del dispositivo...")
+    st.subheader("📍 Ubicación del Siniestro (automática)")
 
-    components.html("""
+    ubicacion_actual = st.text_input("Ubicación GPS", key="ubicacion_actual", label_visibility="collapsed")
+
+    if ubicacion_actual and ubicacion_actual.strip() != "":
+        st.success("✅ Ubicación capturada correctamente")
+        maps_link = f"https://www.google.com/maps?q={ubicacion_actual}"
+        st.markdown(f"[📍 Ver en Google Maps]({maps_link})")
+    else:
+        st.info("⏳ Esperando ubicación del dispositivo...")
+
+    st.markdown("""
         <script>
         navigator.geolocation.getCurrentPosition(
             function(position) {
                 const coords = position.coords.latitude + "," + position.coords.longitude;
-                const streamlitDoc = window.parent.document;
-                const inputs = streamlitDoc.querySelectorAll('input[type="text"]');
-                inputs.forEach(input => {
-                    if (!input.value && input.placeholder === "Ubicación") {
-                        input.value = coords;
-                        input.dispatchEvent(new Event("input", { bubbles: true }));
-                    }
-                });
+                const input = window.parent.document.querySelector('input[id="ubicacion_actual"]');
+                if (input && input.value !== coords) {
+                    input.value = coords;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                }
             },
             function(error) {
-                console.error("Error al obtener la ubicación:", error);
+                console.error("Error obteniendo ubicación:", error);
             }
         );
         </script>
-    """, height=0)
+    """, unsafe_allow_html=True)
 
-    ubicacion = st.text_input("Ubicación", placeholder="Ubicación", key="ubicacion_actual")
-
-    if ubicacion:
-        st.success(f"Ubicación capturada: {ubicacion}")
-        st.markdown(f"[📍 Ver en Google Maps](https://www.google.com/maps?q={ubicacion})")
-
-    return ubicacion
+    return ubicacion_actual
     
 # Portal del Cliente
 def portal_cliente():
@@ -473,12 +473,6 @@ def portal_cliente():
             if necesita_grua == "Sí" or asistencia_legal == "Sí":
                 st.subheader("📍 Ubicación del Siniestro (automática)")
                 ubicacion_actual = obtener_ubicacion()
-                if ubicacion_actual:
-                    st.success("✅ Ubicación capturada automáticamente")
-                    maps_link = f"https://www.google.com/maps?q={ubicacion_actual}"
-                    st.markdown(f"[📍 Ver en Google Maps]({maps_link})")
-                else:
-                    st.warning("⏳ Esperando ubicación del dispositivo...")
     
             st.subheader("Información sobre el Siniestro")
             siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
