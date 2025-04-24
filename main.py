@@ -14,6 +14,9 @@ import numpy as np
 import base64
 import boto3
 import uuid
+import streamlit.components.v1 as components
+from streamlit_folium import st_folium
+import folium
 
 st.set_page_config(
     page_title="Insurapp",
@@ -264,6 +267,43 @@ def autenticacion():
         return False
     return True
 
+
+def obtener_ubicacion():
+    obtener_gps = """
+    <script>
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const link = `${lat},${lon}`;
+            const input = window.parent.document.querySelector("input[name='ubicacion_coords']");
+            if (input) {
+                input.value = link;
+                const event = new Event("input", { bubbles: true });
+                input.dispatchEvent(event);
+            }
+        },
+        (error) => {
+            console.error("Error al obtener ubicación:", error);
+        }
+    );
+    </script>
+    """
+    components.html(obtener_gps, height=0)
+    
+    coords = st.text_input("📍 Coordenadas detectadas:", key="ubicacion_coords")
+    
+    if coords:
+        try:
+            lat, lon = map(float, coords.split(","))
+            mapa = folium.Map(location=[lat, lon], zoom_start=16)
+            folium.Marker([lat, lon], tooltip="Tu ubicación").add_to(mapa)
+            st_folium(mapa, width=700, height=500)
+            return f"https://www.google.com/maps?q={lat},{lon}"
+        except Exception as e:
+            st.error(f"Error mostrando el mapa: {e}")
+            return ""
+    return ""
 # Portal del Cliente
 def portal_cliente():
     st.title(f"👤 Portal del Cliente - {st.session_state.usuario_actual}")
@@ -436,43 +476,20 @@ def portal_cliente():
             ubicacion_actual = ""
             if necesita_grua == "Sí" or asistencia_legal == "Sí":
                 st.subheader("📍 Ubicación del Siniestro (automática)")
-                
-                ubicacion_actual = st.text_input("Ubicación GPS", key="ubicacion_actual", label_visibility="collapsed")
-            
-                # Mostrar link a Google Maps si ya se obtuvo ubicación
-                if ubicacion_actual:
-                    st.success("✅ Ubicación capturada automáticamente")
-                    maps_link = f"https://www.google.com/maps?q={ubicacion_actual}"
-                    st.markdown(f"[📍 Ver en Google Maps]({maps_link})")
-            
-                # JavaScript para capturar ubicación
-                st.markdown("""
-                    <script>
-                    navigator.geolocation.getCurrentPosition(
-                        function(position) {
-                            const coords = position.coords.latitude + "," + position.coords.longitude;
-                            const input = window.parent.document.getElementById("ubicacion_actual");
-                            if (input) {
-                                input.value = coords;
-                                input.dispatchEvent(new Event('input', { bubbles: true }));
-                            }
-                        },
-                        function(error) {
-                            console.error("Error obteniendo ubicación:", error);
-                        }
-                    );
-                    </script>
-                """, unsafe_allow_html=True)
+                ubicacion_actual = obtener_ubicacion()
     
             st.subheader("Información sobre el Siniestro")
             siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
             enviar_vehiculos = st.form_submit_button("Enviar Foto")
 
             foto_siniestro = None
-            if siniestro_vehicular == "Sí":
-                foto_siniestro = st.file_uploader("📸 Sube una foto del siniestro (opcional)", type=["jpg", "jpeg", "png"])
-    
-            enviar_reclamo = st.form_submit_button("Enviar Reclamo")
+            
+            # Opción 1: Capturar desde la cámara
+            foto_siniestro = st.camera_input("Toma una foto del siniestro (opcional)")
+            
+            # Opción 2: Subir desde el dispositivo si no se usa la cámara
+            if foto_siniestro is None:
+                foto_siniestro = st.file_uploader("O bien, sube una imagen desde tu dispositivo", type=["jpg", "jpeg", "png"])
                             
             if enviar_reclamo:
                 if not all([titulo, descripcion]):
@@ -632,7 +649,7 @@ def portal_administracion():
     elif opcion == "Gestión de Tickets":
         st.title("📋 Gestión de Tickets")
         manejar_tickets()
-        visualizar_tickets()
+
 
     elif opcion == "Análisis":
         st.title("📈 Análisis de Datos")
