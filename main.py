@@ -270,26 +270,6 @@ def autenticacion():
 
 def obtener_ubicacion():
     st.subheader("📍 Ubicación del Siniestro (automática)")
-    components.html('''
-        <input type="text" id="ubicacion_input" style="display:none;">
-        <script>
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    const coords = position.coords.latitude + "," + position.coords.longitude;
-                    const input = window.parent.document.querySelector("input[data-testid='stTextInput']")
-                                  || window.frames[0].document.querySelector("#ubicacion_input");
-                    if (input) {
-                        input.value = coords;
-                        const event = new Event('input', { bubbles: true });
-                        input.dispatchEvent(event);
-                    }
-                },
-                function(error) {
-                    console.error("Error obteniendo ubicación:", error);
-                }
-            );
-        </script>
-    ''', height=0)
 
     ubicacion_actual = st.text_input("Ubicación GPS", key="ubicacion_actual")
 
@@ -299,6 +279,31 @@ def obtener_ubicacion():
         st.markdown(f"[📍 Ver en Google Maps]({maps_link})")
     else:
         st.info("⏳ Esperando ubicación del dispositivo...")
+
+    components.html('''
+        <script>
+            window.addEventListener("DOMContentLoaded", function() {
+                setTimeout(() => {
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            const coords = position.coords.latitude + "," + position.coords.longitude;
+                            const inputs = window.parent.document.querySelectorAll("input[data-testid='stTextInput']");
+                            for (const input of inputs) {
+                                if (!input.value) {
+                                    input.value = coords;
+                                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                                    break;
+                                }
+                            }
+                        },
+                        function(error) {
+                            console.error("Error obteniendo ubicación:", error);
+                        }
+                    );
+                }, 1000);  // Espera un poco para asegurar que los inputs están renderizados
+            });
+        </script>
+    ''', height=0)
 
     return ubicacion_actual
 
