@@ -269,41 +269,37 @@ def autenticacion():
 
 
 def obtener_ubicacion():
-    obtener_gps = """
-    <script>
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-            const link = `${lat},${lon}`;
-            const input = window.parent.document.querySelector("input[name='ubicacion_coords']");
-            if (input) {
-                input.value = link;
-                const event = new Event("input", { bubbles: true });
-                input.dispatchEvent(event);
+    st.markdown("Esperando ubicación del dispositivo...")
+
+    components.html("""
+        <script>
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const coords = position.coords.latitude + "," + position.coords.longitude;
+                const streamlitDoc = window.parent.document;
+                const inputs = streamlitDoc.querySelectorAll('input[type="text"]');
+                inputs.forEach(input => {
+                    if (!input.value && input.placeholder === "Ubicación") {
+                        input.value = coords;
+                        input.dispatchEvent(new Event("input", { bubbles: true }));
+                    }
+                });
+            },
+            function(error) {
+                console.error("Error al obtener la ubicación:", error);
             }
-        },
-        (error) => {
-            console.error("Error al obtener ubicación:", error);
-        }
-    );
-    </script>
-    """
-    components.html(obtener_gps, height=0)
+        );
+        </script>
+    """, height=0)
+
+    ubicacion = st.text_input("Ubicación", placeholder="Ubicación", key="ubicacion_actual")
+
+    if ubicacion:
+        st.success(f"Ubicación capturada: {ubicacion}")
+        st.markdown(f"[📍 Ver en Google Maps](https://www.google.com/maps?q={ubicacion})")
+
+    return ubicacion
     
-    coords = st.text_input("📍 Coordenadas detectadas:", key="ubicacion_coords")
-    
-    if coords:
-        try:
-            lat, lon = map(float, coords.split(","))
-            mapa = folium.Map(location=[lat, lon], zoom_start=16)
-            folium.Marker([lat, lon], tooltip="Tu ubicación").add_to(mapa)
-            st_folium(mapa, width=700, height=500)
-            return f"https://www.google.com/maps?q={lat},{lon}"
-        except Exception as e:
-            st.error(f"Error mostrando el mapa: {e}")
-            return ""
-    return ""
 # Portal del Cliente
 def portal_cliente():
     st.title(f"👤 Portal del Cliente - {st.session_state.usuario_actual}")
