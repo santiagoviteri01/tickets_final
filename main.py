@@ -269,43 +269,57 @@ def autenticacion():
 
 
 def obtener_ubicacion():
-    st.subheader("📍 Ubicación del Siniestro (automática)")
+    st.subheader("📍 Selecciona tu Ubicación Actual")
 
-    ubicacion_actual = st.text_input("Ubicación GPS", key="ubicacion_actual")
+    components.html("""
+    <script>
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                const iframe = window.parent.document.querySelector('iframe');
+                if (iframe) {
+                    const iframeWindow = iframe.contentWindow;
+                    if (iframeWindow) {
+                        iframeWindow.postMessage({lat: lat, lon: lon}, "*");
+                    }
+                }
+            },
+            function(error) {
+                console.error("Error obteniendo ubicación:", error);
+            },
+            {enableHighAccuracy: true}
+        );
+    </script>
+    """, height=0)
 
-    if ubicacion_actual.strip():
-        st.success("✅ Ubicación capturada correctamente")
-        maps_link = f"https://www.google.com/maps?q={ubicacion_actual}"
-        st.markdown(f"[📍 Ver en Google Maps]({maps_link})")
+    # default location if not overridden
+    default_lat, default_lon = -0.2061777, -78.4915212
+
+    st.session_state.setdefault("ubicacion_coords", {"lat": default_lat, "lon": default_lon})
+
+    # mapa
+    m = folium.Map(location=[st.session_state.ubicacion_coords["lat"], st.session_state.ubicacion_coords["lon"]], zoom_start=16)
+    folium.Marker(
+        location=[st.session_state.ubicacion_coords["lat"], st.session_state.ubicacion_coords["lon"]],
+        draggable=True,
+        popup="Mueve el pin a tu ubicación exacta"
+    ).add_to(m)
+    output = st_folium(m, height=400, width=700, returned_objects=["last_clicked"])
+
+    ubicacion_actual = ""
+    if output and output.get("last_clicked"):
+        coords = output["last_clicked"]
+        lat, lon = coords["lat"], coords["lng"]
+        ubicacion_actual = f"{lat},{lon}"
+        st.session_state.ubicacion_coords = {"lat": lat, "lon": lon}
+        st.success("✅ Ubicación seleccionada correctamente")
+        st.markdown(f"[📍 Ver en Google Maps](https://www.google.com/maps?q={ubicacion_actual})")
     else:
-        st.info("⏳ Esperando ubicación del dispositivo...")
-
-    components.html('''
-        <script>
-            window.addEventListener("DOMContentLoaded", function() {
-                setTimeout(() => {
-                    navigator.geolocation.getCurrentPosition(
-                        function(position) {
-                            const coords = position.coords.latitude + "," + position.coords.longitude;
-                            const inputs = window.parent.document.querySelectorAll("input[data-testid='stTextInput']");
-                            for (const input of inputs) {
-                                if (!input.value) {
-                                    input.value = coords;
-                                    input.dispatchEvent(new Event('input', { bubbles: true }));
-                                    break;
-                                }
-                            }
-                        },
-                        function(error) {
-                            console.error("Error obteniendo ubicación:", error);
-                        }
-                    );
-                }, 1000);  // Espera un poco para asegurar que los inputs están renderizados
-            });
-        </script>
-    ''', height=0)
+        st.info("Haz clic en el mapa o espera a que se detecte tu ubicación automáticamente")
 
     return ubicacion_actual
+
 
 
     
@@ -475,7 +489,7 @@ def portal_cliente():
             st.subheader("Asistencia Adicional")
             necesita_grua = st.selectbox("¿Necesitas grúa?", ["No", "Sí"])
             asistencia_legal = st.selectbox("¿Necesitas asistencia legal en el punto?", ["No", "Sí"])
-            enviar_asistencias = st.form_submit_button("Enviar Asistencias")
+            #enviar_asistencias = st.form_submit_button("Enviar Asistencias")
             
             # Sección de ubicación automática con GPS solo si es necesario
             ubicacion_actual = ""
