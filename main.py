@@ -483,13 +483,15 @@ def portal_cliente():
             enviar_vehiculos = st.form_submit_button("Enviar Foto")
 
             foto_siniestro = None
-            
-            # Opción 1: Capturar desde la cámara
-            foto_siniestro = st.camera_input("Toma una foto del siniestro (opcional)")
-            
-            # Opción 2: Subir desde el dispositivo si no se usa la cámara
-            if foto_siniestro is None:
-                foto_siniestro = st.file_uploader("O bien, sube una imagen desde tu dispositivo", type=["jpg", "jpeg", "png"])
+            if siniestro_vehicular == "Sí":
+                foto_siniestro = None
+                
+                # Opción 1: Capturar desde la cámara
+                foto_siniestro = st.camera_input("Toma una foto del siniestro (opcional)")
+                
+                # Opción 2: Subir desde el dispositivo si no se usa la cámara
+                if foto_siniestro is None:
+                    foto_siniestro = st.file_uploader("O bien, sube una imagen desde tu dispositivo", type=["jpg", "jpeg", "png"])
             
             enviar_reclamo = st.form_submit_button("Enviar Reclamo")   
             if enviar_reclamo:
