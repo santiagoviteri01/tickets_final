@@ -274,7 +274,7 @@ from folium.plugins import LocateControl
 
 geolocator = Nominatim(user_agent="mi_app_insurapp")
 
-
+"""
 def obtener_ubicacion():
     if "ubicacion_coords" not in st.session_state:
         st.subheader("📍 Solicitando permiso de ubicación…")
@@ -334,7 +334,62 @@ def obtener_ubicacion():
     st.markdown(f"[🔗 Ver en Google Maps](https://www.google.com/maps?q={lat},{lon})")
 
     return address
+"""
+# Si no necesitas reverse geocoding, puedes eliminar Geolocator
+def obtener_ubicacion():
+    # 1) Pedir permiso y guardar coords en session_state
+    if "ubicacion_coords" not in st.session_state:
+        st.subheader("📍 Solicitando permiso de ubicación…")
+        js = '''
+        new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(
+                pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude}),
+                err => reject(err.message),
+                {enableHighAccuracy: true, timeout:10000, maximumAge:0}
+            );
+        })
+        '''
+        coords = streamlit_js_eval(js_expressions=js, key="get_geo", debounce=1.0)
 
+        if not coords or "lat" not in coords:
+            st.warning(
+                "⚠️ Para continuar, **permite** el acceso a tu ubicación en el navegador "
+                "y vuelve a pulsar el botón."
+            )
+            return ""
+
+        # Guardar coordenadas
+        st.session_state.ubicacion_coords = {"lat": coords["lat"], "lon": coords["lon"]}
+        st.success("🎉 Permiso concedido y ubicación obtenida.")
+        st.experimental_rerun()
+
+    # 2) Usar coords guardadas
+    lat = st.session_state.ubicacion_coords["lat"]
+    lon = st.session_state.ubicacion_coords["lon"]
+
+    # 3) Mostrar mapa y marcador draggable
+    m = folium.Map(location=[lat, lon], zoom_start=16)
+    LocateControl(auto_start=False, flyTo=True).add_to(m)
+    folium.Marker(
+        [lat, lon],
+        draggable=True,
+        icon=folium.Icon(color="red", icon="map-pin", prefix="fa"),
+        popup="📍 Arrastra para ajustar"
+    ).add_to(m)
+
+    out = st_folium(m, height=450, width=700, returned_objects=["last_clicked"])
+    if out and out.get("last_clicked"):
+        p = out["last_clicked"]
+        lat, lon = p["lat"], p["lng"]
+        st.session_state.ubicacion_coords = {"lat": lat, "lon": lon}
+        st.success(f"🔄 Coordenadas ajustadas: {lat:.6f}, {lon:.6f}")
+
+    # 4) Generar y mostrar link de Google Maps
+    maps_link = f"https://www.google.com/maps?q={lat:.6f},{lon:.6f}"
+    st.markdown(f"**[🔗 Ver en Google Maps]({maps_link})**")
+
+    # 5) Devolver el link para guardar en tu sheet
+    return maps_link
     
 # Portal del Cliente
 def portal_cliente():
