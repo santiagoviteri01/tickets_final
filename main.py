@@ -301,7 +301,6 @@ def obtener_ubicacion():
         # Guardar coordenadas
         st.session_state.ubicacion_coords = {"lat": coords["lat"], "lon": coords["lon"]}
         st.success("🎉 Permiso concedido y ubicación obtenida.")
-        st.experimental_rerun()
 
     # 2) Usar coords guardadas
     lat = st.session_state.ubicacion_coords["lat"]
