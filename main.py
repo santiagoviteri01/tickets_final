@@ -277,34 +277,54 @@ geolocator = Nominatim(user_agent="mi_app_insurapp")
 def obtener_ubicacion():
     st.subheader("📍 Selecciona tu Ubicación Actual")
     default = (-0.2061777, -78.4915212)
-    lat, lon = default
+    # Si ya hay coords en sesión, úsalas, si no usa default
+    lat = st.session_state.get("ubicacion_coords", {}).get("lat", default[0])
+    lon = st.session_state.get("ubicacion_coords", {}).get("lon", default[1])
 
-    m = folium.Map(location=[lat, lon], zoom_start=14)
-    LocateControl(auto_start=False, flyTo=True).add_to(m)
-    folium.Marker(
-        [lat, lon], draggable=True,
-        icon=folium.Icon(color="red", icon="map-pin", prefix="fa")
+    # 1. Crear mapa centrado en última ubicación o default
+    m = folium.Map(location=[lat, lon], zoom_start=16)
+
+    # 2. Plugin para geolocalizar automáticamente
+    LocateControl(
+        auto_start=True,            # pide permiso y localiza al cargar
+        setView=True,               # centra el mapa en la ubicación detectada
+        flyTo=True,                 # anima la transición
+        keepCurrentZoom=False,
+        drawMarker=True,            # dibuja un marcador en la ubicación detectada
+        locateOptions={             # opciones de alta precisión
+            "enableHighAccuracy": True,
+            "maxZoom": 16
+        }
     ).add_to(m)
 
-    out = st_folium(m, height=450, width=700,
-                    returned_objects=["last_clicked", "last_object_clicked"])
+    # 3. Marcador draggable para ajuste manual
+    folium.Marker(
+        [lat, lon],
+        draggable=True,
+        icon=folium.Icon(color="red", icon="map-pin", prefix="fa"),
+        popup="📍 Arrastra para ajustar"
+    ).add_to(m)
 
-    new_loc = None
-    if out.get("last_object_clicked"):
-        o = out["last_object_clicked"]
-        new_loc = (o["lat"], o["lng"])
-    elif out.get("last_clicked"):
+    # 4. Renderizar en Streamlit y capturar eventos de clic
+    out = st_folium(
+        m,
+        height=450,
+        width=700,
+        returned_objects=["last_clicked"]
+    )
+
+    # 5. Si el usuario mueve el pin (clic simple), actualiza coords
+    if out and out.get("last_clicked"):
         p = out["last_clicked"]
-        new_loc = (p["lat"], p["lng"])
-
-    if new_loc:
-        lat, lon = new_loc
+        lat, lon = p["lat"], p["lng"]
         st.session_state.ubicacion_coords = {"lat": lat, "lon": lon}
         st.success(f"✅ Coordenadas fijadas: {lat:.6f}, {lon:.6f}")
     else:
+        # si no movió el pin, asegura que queden guardadas las coords previas
         st.session_state.setdefault("ubicacion_coords", {"lat": lat, "lon": lon})
-        st.info("Usa el botón 📍 o mueve el pin para fijar tu ubicación.")
+        st.info("Si no ves el pin en tu posición, revisa permisos de ubicación.")
 
+    # 6. Reverse geocoding (dirección legible)
     lat, lon = st.session_state.ubicacion_coords.values()
     try:
         loc = geolocator.reverse((lat, lon), language='es')
