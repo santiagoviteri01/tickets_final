@@ -275,66 +275,75 @@ from folium.plugins import LocateControl
 geolocator = Nominatim(user_agent="mi_app_insurapp")
 
 def obtener_ubicacion():
-    st.subheader("📍 Selecciona tu Ubicación Actual")
-    default = (-0.2061777, -78.4915212)
-    # Si ya hay coords en sesión, úsalas, si no usa default
-    lat = st.session_state.get("ubicacion_coords", {}).get("lat", default[0])
-    lon = st.session_state.get("ubicacion_coords", {}).get("lon", default[1])
-
-    # 1. Crear mapa centrado en última ubicación o default
+    st.subheader("📍 Detectando automáticamente tu ubicación...")
+    
+    # 1) Ejecuta JS para obtener coords tan pronto cargue la página
+    js_code = """
+    new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude}),
+        err => reject(err.message),
+        {enableHighAccuracy: true}
+      );
+    })
+    """
+    coords = streamlit_js_eval(
+        js_expressions=js_code,
+        key="get_geo",
+        debounce=1.0
+    )
+    
+    # 2) Si falla la detección, mostramos error y detenemos
+    if not coords or "lat" not in coords:
+        st.error("❌ No se pudo obtener tu ubicación. Por favor permite el acceso desde el navegador.")
+        st.stop()
+    
+    lat, lon = coords["lat"], coords["lon"]
+    # Guardamos en sesión para usarlo luego si quieres
+    st.session_state.ubicacion_coords = {"lat": lat, "lon": lon}
+    st.success(f"✅ Ubicación detectada: {lat:.6f}, {lon:.6f}")
+    
+    # 3) Creamos el mapa ya centrado en tu ubicación
     m = folium.Map(location=[lat, lon], zoom_start=16)
-
-    # 2. Plugin para geolocalizar automáticamente
+    # Opcional: seguir mostrando el botón de geolocalización
     LocateControl(
-        auto_start=True,            # pide permiso y localiza al cargar
-        setView=True,               # centra el mapa en la ubicación detectada
-        flyTo=True,                 # anima la transición
-        keepCurrentZoom=False,
-        drawMarker=True,            # dibuja un marcador en la ubicación detectada
-        locateOptions={             # opciones de alta precisión
-            "enableHighAccuracy": True,
-            "maxZoom": 16
-        }
+        auto_start=False,
+        flyTo=True,
+        keepCurrentZoom=False
     ).add_to(m)
-
-    # 3. Marcador draggable para ajuste manual
+    # Marcador draggable por si quieres ajustar un pelín
     folium.Marker(
         [lat, lon],
         draggable=True,
         icon=folium.Icon(color="red", icon="map-pin", prefix="fa"),
-        popup="📍 Arrastra para ajustar"
+        popup="📍 Arrastra para afinar tu ubicación"
     ).add_to(m)
-
-    # 4. Renderizar en Streamlit y capturar eventos de clic
-    out = st_folium(
+    
+    # 4) Renderizamos y permitimos clic para ajustar manualmente
+    output = st_folium(
         m,
         height=450,
         width=700,
         returned_objects=["last_clicked"]
     )
-
-    # 5. Si el usuario mueve el pin (clic simple), actualiza coords
-    if out and out.get("last_clicked"):
-        p = out["last_clicked"]
+    if output and output.get("last_clicked"):
+        p = output["last_clicked"]
         lat, lon = p["lat"], p["lng"]
         st.session_state.ubicacion_coords = {"lat": lat, "lon": lon}
-        st.success(f"✅ Coordenadas fijadas: {lat:.6f}, {lon:.6f}")
-    else:
-        # si no movió el pin, asegura que queden guardadas las coords previas
-        st.session_state.setdefault("ubicacion_coords", {"lat": lat, "lon": lon})
-        st.info("Si no ves el pin en tu posición, revisa permisos de ubicación.")
-
-    # 6. Reverse geocoding (dirección legible)
+        st.success(f"🔄 Coordenadas ajustadas: {lat:.6f}, {lon:.6f}")
+    
+    # 5) Reverse geocoding para obtener la dirección legible
     lat, lon = st.session_state.ubicacion_coords.values()
     try:
-        loc = geolocator.reverse((lat, lon), language='es')
+        loc = geolocator.reverse((lat, lon), language="es")
         address = loc.address
     except Exception:
         address = f"{lat:.6f}, {lon:.6f}"
-
+    
     st.markdown(f"**Dirección detectada:** {address}")
     st.markdown(f"[🔗 Ver en Google Maps](https://www.google.com/maps?q={lat},{lon})")
-
+    
+    # 6) Retornamos la dirección para guardarla en el reclamo
     return address
 
 
