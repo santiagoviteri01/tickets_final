@@ -11,3 +11,4 @@ google-auth
 boto3
 folium
 streamlit-folium
+streamlit-js-eval
