@@ -276,11 +276,6 @@ geolocator = Nominatim(user_agent="mi_app_insurapp")
 
 
 def obtener_ubicacion():
-    # 1) Fase de petición de permiso
-    st.session_state.ubicacion_coords = {
-            "lat": coords["lat"],
-            "lon": coords["lon"]
-    }
     if "ubicacion_coords" not in st.session_state:
         st.subheader("📍 Solicitando permiso de ubicación…")
         js = """
