@@ -16,6 +16,7 @@ import boto3
 import uuid
 import streamlit.components.v1 as components
 from streamlit_folium import st_folium
+from streamlit_js_eval import streamlit_js_eval
 import folium
 
 st.set_page_config(
@@ -271,37 +272,23 @@ def autenticacion():
 def obtener_ubicacion():
     st.subheader("📍 Selecciona tu Ubicación Actual")
 
-    components.html("""
-    <script>
-        navigator.geolocation.getCurrentPosition(
-            function(position) {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                const iframe = window.parent.document.querySelector('iframe');
-                if (iframe) {
-                    const iframeWindow = iframe.contentWindow;
-                    if (iframeWindow) {
-                        iframeWindow.postMessage({lat: lat, lon: lon}, "*");
-                    }
-                }
-            },
-            function(error) {
-                console.error("Error obteniendo ubicación:", error);
-            },
-            {enableHighAccuracy: true}
-        );
-    </script>
-    """, height=0)
+    # Obtener coordenadas con JS
+    coords = streamlit_js_eval(js_expressions="navigator.geolocation.getCurrentPosition",
+                               key="get_geolocation",
+                               debounce=1.0)
 
-    # default location if not overridden
+    # Default location si no hay coordenadas aún
     default_lat, default_lon = -0.2061777, -78.4915212
+    lat = coords["coords"]["latitude"] if coords and "coords" in coords else default_lat
+    lon = coords["coords"]["longitude"] if coords and "coords" in coords else default_lon
 
-    st.session_state.setdefault("ubicacion_coords", {"lat": default_lat, "lon": default_lon})
+    # Actualizar estado
+    st.session_state.ubicacion_coords = {"lat": lat, "lon": lon}
 
-    # mapa
-    m = folium.Map(location=[st.session_state.ubicacion_coords["lat"], st.session_state.ubicacion_coords["lon"]], zoom_start=16)
+    # Mostrar mapa
+    m = folium.Map(location=[lat, lon], zoom_start=16)
     folium.Marker(
-        location=[st.session_state.ubicacion_coords["lat"], st.session_state.ubicacion_coords["lon"]],
+        location=[lat, lon],
         draggable=True,
         popup="Mueve el pin a tu ubicación exacta"
     ).add_to(m)
@@ -489,7 +476,7 @@ def portal_cliente():
             st.subheader("Asistencia Adicional")
             necesita_grua = st.selectbox("¿Necesitas grúa?", ["No", "Sí"])
             asistencia_legal = st.selectbox("¿Necesitas asistencia legal en el punto?", ["No", "Sí"])
-            #enviar_asistencias = st.form_submit_button("Enviar Asistencias")
+            enviar_asistencias = st.form_submit_button("Enviar Asistencias")
             
             # Sección de ubicación automática con GPS solo si es necesario
             ubicacion_actual = ""
