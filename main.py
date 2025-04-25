@@ -519,7 +519,7 @@ def portal_cliente():
             
             # Sección de ubicación automática con GPS solo si es necesario
             ubicacion_actual = ""
-            if necesita_grua == "Sí" or asistencia_legal == "Sí":
+            if enviar_asistencias and (necesita_grua == "Sí" or asistencia_legal == "Sí"):
                 ubicacion_actual = obtener_ubicacion()
     
             st.subheader("Información sobre el Siniestro")
