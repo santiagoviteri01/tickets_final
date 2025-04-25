@@ -18,6 +18,7 @@ import streamlit.components.v1 as components
 from streamlit_folium import st_folium
 from streamlit_js_eval import streamlit_js_eval
 import folium
+from geopy.geocoders import Nominatim
 
 st.set_page_config(
     page_title="Insurapp",
