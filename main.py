@@ -269,44 +269,52 @@ def autenticacion():
     return True
 
 
+from folium.plugins import LocateControl
+
+geolocator = Nominatim(user_agent="mi_app_insurapp")
+
 def obtener_ubicacion():
     st.subheader("📍 Selecciona tu Ubicación Actual")
+    default = (-0.2061777, -78.4915212)
+    lat, lon = default
 
-    # Obtener coordenadas con JS
-    coords = streamlit_js_eval(js_expressions="navigator.geolocation.getCurrentPosition",
-                               key="get_geolocation",
-                               debounce=1.0)
-
-    # Default location si no hay coordenadas aún
-    default_lat, default_lon = -0.2061777, -78.4915212
-    lat = coords["coords"]["latitude"] if coords and "coords" in coords else default_lat
-    lon = coords["coords"]["longitude"] if coords and "coords" in coords else default_lon
-
-    # Actualizar estado
-    st.session_state.ubicacion_coords = {"lat": lat, "lon": lon}
-
-    # Mostrar mapa
-    m = folium.Map(location=[lat, lon], zoom_start=16)
+    m = folium.Map(location=[lat, lon], zoom_start=14)
+    LocateControl(auto_start=False, flyTo=True).add_to(m)
     folium.Marker(
-        location=[lat, lon],
-        draggable=True,
-        popup="Mueve el pin a tu ubicación exacta"
+        [lat, lon], draggable=True,
+        icon=folium.Icon(color="red", icon="map-pin", prefix="fa")
     ).add_to(m)
-    output = st_folium(m, height=400, width=700, returned_objects=["last_clicked"])
 
-    ubicacion_actual = ""
-    if output and output.get("last_clicked"):
-        coords = output["last_clicked"]
-        lat, lon = coords["lat"], coords["lng"]
-        ubicacion_actual = f"{lat},{lon}"
+    out = st_folium(m, height=450, width=700,
+                    returned_objects=["last_clicked", "last_object_clicked"])
+
+    new_loc = None
+    if out.get("last_object_clicked"):
+        o = out["last_object_clicked"]
+        new_loc = (o["lat"], o["lng"])
+    elif out.get("last_clicked"):
+        p = out["last_clicked"]
+        new_loc = (p["lat"], p["lng"])
+
+    if new_loc:
+        lat, lon = new_loc
         st.session_state.ubicacion_coords = {"lat": lat, "lon": lon}
-        st.success("✅ Ubicación seleccionada correctamente")
-        st.markdown(f"[📍 Ver en Google Maps](https://www.google.com/maps?q={ubicacion_actual})")
-        ubicacion_actual=f"https://www.google.com/maps?q={ubicacion_actual})"
+        st.success(f"✅ Coordenadas fijadas: {lat:.6f}, {lon:.6f}")
     else:
-        st.info("Haz clic en el mapa o espera a que se detecte tu ubicación automáticamente")
+        st.session_state.setdefault("ubicacion_coords", {"lat": lat, "lon": lon})
+        st.info("Usa el botón 📍 o mueve el pin para fijar tu ubicación.")
 
-    return ubicacion_actual
+    lat, lon = st.session_state.ubicacion_coords.values()
+    try:
+        loc = geolocator.reverse((lat, lon), language='es')
+        address = loc.address
+    except Exception:
+        address = f"{lat:.6f}, {lon:.6f}"
+
+    st.markdown(f"**Dirección detectada:** {address}")
+    st.markdown(f"[🔗 Ver en Google Maps](https://www.google.com/maps?q={lat},{lon})")
+
+    return address
 
 
 
