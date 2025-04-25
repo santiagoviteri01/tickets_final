@@ -302,7 +302,7 @@ def obtener_ubicacion():
         st.session_state.ubicacion_coords = {"lat": lat, "lon": lon}
         st.success("✅ Ubicación seleccionada correctamente")
         st.markdown(f"[📍 Ver en Google Maps](https://www.google.com/maps?q={ubicacion_actual})")
-        ubicacion_actual="https://www.google.com/maps?q={ubicacion_actual})"
+        ubicacion_actual=f"https://www.google.com/maps?q={ubicacion_actual})"
     else:
         st.info("Haz clic en el mapa o espera a que se detecte tu ubicación automáticamente")
 
