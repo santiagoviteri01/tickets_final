@@ -817,6 +817,7 @@ def visualizar_tickets():
                     st.write(ticket['Descripción'])
 
                     # Ubicación
+                    st.write("**Ubicación:**")
                     ubic = ticket.get('Ubicacion', '')
                     if isinstance(ubic, str) and ubic.startswith("http"):
                         st.markdown(f"[📍 Ver en Google Maps]({ubic})", unsafe_allow_html=True)
