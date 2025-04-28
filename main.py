@@ -936,7 +936,7 @@ def manejar_tickets():
                 st.session_state.ticket_actual = ticket
                 st.success(f"✅ Ticket #{selected} asignado para gestión")
                 st.session_state.opcion_ticket = "Modificar ticket existente"
-                st.experimental_rerun()
+                st.rerun()
 
         else:
             st.info("Selecciona un número válido de la tabla anterior")
