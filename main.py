@@ -113,19 +113,35 @@ for _, row in asegurados_df.iterrows():
         "rol": "cliente"
     }
     
-@st.cache_data(ttl=300)   
+#@st.cache_data(ttl=300)   
+#def cargar_datos():
+#    try:
+#        # Convertir los datos de la hoja a un DataFrame
+#        data = sheet.get_all_records()  # Obtiene todos los registros (como una lista de diccionarios)
+#        df = pd.DataFrame(data)  # Convertirlo en un DataFrame de pandas
+#        
+#        # Mostrar el DataFrame
+#        return df
+#    except Exception as e:
+#        st.error(f"Error cargando datos: {str(e)}")
+#        return pd.DataFrame()
+
+@st.cache_data(ttl=300) 
 def cargar_datos():
     try:
-        # Convertir los datos de la hoja a un DataFrame
-        data = sheet.get_all_records()  # Obtiene todos los registros (como una lista de diccionarios)
-        df = pd.DataFrame(data)  # Convertirlo en un DataFrame de pandas
-        
-        # Mostrar el DataFrame
+        data = sheet.get_all_records()
+        df = pd.DataFrame(data)
+        # 🔥 Aseguramos que siempre existan estas columnas, aunque vengan vacías
+        for col in ['Grua', 'Asistencia_Legal', 'Ubicacion', 'Foto_URL']:
+            if col not in df.columns:
+                df[col] = None
         return df
     except Exception as e:
         st.error(f"Error cargando datos: {str(e)}")
-        return pd.DataFrame()
-
+        return pd.DataFrame(columns=['Número','Título','Área','Estado','Descripción',
+                                     'Fecha_Creación','Usuario_Creación','Fecha_Modificacion',
+                                     'Usuario_Modificacion','Tiempo_Cambio','Cliente',
+                                     'Grua','Asistencia_Legal','Ubicacion','Foto_URL'])
 def formulario_cotizacion():
     st.header("📝 Cotizador de Seguros")
 
@@ -294,7 +310,7 @@ def obtener_ubicacion():
         if not coords or "lat" not in coords:
             st.warning(
                 "⚠️ Para continuar, **permite** el acceso a tu ubicación en el navegador "
-                "y vuelve a pulsar el botón."
+                "pulsar el botón permitir ubicación."
             )
             return ""
 
@@ -502,6 +518,7 @@ def portal_cliente():
             ubicacion_actual = ""
             if necesita_grua == "Sí" or asistencia_legal == "Sí":
                 ubicacion_actual = obtener_ubicacion()
+                permiso_ubicacion = st.form_submit_button("permitir ubicación")
     
             st.subheader("Información sobre el Siniestro")
             siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
@@ -972,23 +989,24 @@ def manejar_tickets():
                     else:
                         registro_dias = "Sin cambio de estado"
 
+                    ticket_actual = st.session_state.ticket_actual
                     ticket_actualizado = {
-                        'Número': st.session_state.ticket_actual['Número'],
-                        'Título': st.session_state.ticket_actual['Título'],
-                        'Área': st.session_state.ticket_actual['Área'],
+                        'Número': ticket_actual['Número'],
+                        'Título': ticket_actual['Título'],
+                        'Área': ticket_actual['Área'],
                         'Estado': nuevo_estado,
                         'Descripción': nueva_descripcion,
-                        'Fecha_Creación': st.session_state.ticket_actual['Fecha_Creación'],
-                        'Usuario_Creación': st.session_state.ticket_actual['Usuario_Creación'],
+                        'Fecha_Creación': ticket_actual['Fecha_Creación'],
+                        'Usuario_Creación': ticket_actual['Usuario_Creación'],
                         'Fecha_Modificacion': fecha_modificacion.strftime('%Y-%m-%d %H:%M:%S'),
                         'Usuario_Modificacion': st.session_state.usuario_actual,
                         'Tiempo_Cambio': registro_dias,
-                        'Cliente': st.session_state.ticket_actual['Cliente'],
-                        'Grua': st.session_state.ticket_actual['Grua'],
-                        'Asistencia_Legal': st.session_state.ticket_actual['Asistencia_Legal'],
-                        'Ubicacion': st.session_state.ticket_actual['Ubicacion'],
-                        'Foto_URL': st.session_state.ticket_actual['Foto_URL']
-                    
+                        'Cliente': ticket_actual['Cliente'],
+                        # ahora usamos .get() con valor por defecto None
+                        'Grua': ticket_actual.get('Grua'),
+                        'Asistencia_Legal': ticket_actual.get('Asistencia_Legal'),
+                        'Ubicacion': ticket_actual.get('Ubicacion'),
+                        'Foto_URL': ticket_actual.get('Foto_URL')
                     }
 
                     ticket_actualizado_serializable = {
