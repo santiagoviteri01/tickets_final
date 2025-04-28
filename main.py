@@ -694,20 +694,22 @@ def visualizar_ticket_modificar(ticket=None):
         with col2:
             st.write("**Descripción:**")
             st.write(ticket.get('Descripción',''))
-            if ticket.get('Ubicacion'):
-                st.markdown(
-                    f"**Ubicación:** [📍 Ver en Google Maps]({ticket['Ubicacion']})",
-                    unsafe_allow_html=True
-                )
-            if ticket.get('Foto_URL'):
+            # Ubicación
+            st.write("**Ubicación:**")
+            ubic = ticket.get('Ubicacion', '')
+            if isinstance(ubic, str) and ubic.startswith("http"):
+                st.markdown(f"[📍 Ver en Google Maps]({ubic})", unsafe_allow_html=True)
+
+            # Foto del siniestro
+            url = ticket.get('Foto_URL', '')
+            if isinstance(url, str) and url.startswith("http"):
                 st.subheader("📸 Foto del Siniestro")
-                st.image(ticket['Foto_URL'], use_container_width=True)
-                st.markdown(
-                    f"[🔗 Ver imagen]({ticket['Foto_URL']})",
-                    unsafe_allow_html=True
-                )
+                st.image(url, caption="Imagen del siniestro", use_container_width=True)
+                st.markdown(f"[🔗 Ver imagen en nueva pestaña]({url})", unsafe_allow_html=True)
             else:
                 st.info("No se adjuntó foto del siniestro.")
+
+
 
 # Portal de Administración (Usuarios)
 def portal_administracion():
