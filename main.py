@@ -758,7 +758,6 @@ def visualizar_tickets():
             st.metric("Tickets Abiertos", df[df['Estado'] != 'cerrado']['Número'].nunique())
         with col3:
             tickets_cerrados = df[df['Estado'] == 'cerrado']
-
             if 'Tiempo_Cambio' in tickets_cerrados.columns:
                 try:
                     dias = (tickets_cerrados['Tiempo_Cambio']
@@ -772,14 +771,12 @@ def visualizar_tickets():
                     st.error(f"Error al calcular el tiempo de resolución: {e}")
             else:
                 tiempo_promedio = None
-
             st.metric("Tiempo Resolución Promedio", f"{tiempo_promedio:.1f} días" if tiempo_promedio is not None else "N/A")
 
         # Filtros
         st.subheader("Filtros")
         area = st.selectbox("Área", ["Todas"] + list(df['Área'].unique()))
         estado = st.selectbox("Estado", ["Todos"] + list(df['Estado'].unique()))
-
         if area != "Todas":
             df = df[df['Área'] == area]
         if estado != "Todos":
@@ -787,7 +784,11 @@ def visualizar_tickets():
 
         # Mostrar cada ticket
         for _, ticket in df.iterrows():
-            with st.expander(f"Ticket #{ticket['Número']} - {ticket['Título']}"):
+            numero    = ticket['Número']
+            titulo    = ticket['Título']
+            cliente   = ticket.get('Cliente', 'Desconocido')
+            header    = f"Ticket #{numero} – {titulo} (Cliente: {cliente})"
+            with st.expander(header):
                 col_left, col_right = st.columns([1, 3])
 
                 with col_left:
@@ -801,7 +802,6 @@ def visualizar_tickets():
                     }
                     icono = color_map.get(estado_ticket, '⚫')
                     st.markdown(f"**Estado:** {icono} {ticket['Estado'].capitalize()}")
-
                     st.write(f"**Fecha creación:** {ticket['Fecha_Creación']}")
                     if pd.notna(ticket['Fecha_Modificacion']):
                         st.write(f"**Última actualización:** {ticket['Fecha_Modificacion']}")
@@ -810,48 +810,50 @@ def visualizar_tickets():
                     st.write("**Descripción:**")
                     st.write(ticket['Descripción'])
 
-                    # Mostrar la imagen desde S3
-                    if 'Foto_URL' in ticket and isinstance(ticket['Foto_URL'], str) and ticket['Foto_URL'].startswith("http"):
-                        try:
-                            st.subheader("📸 Foto del Siniestro")
-                    
-                            # Mostrar la imagen
-                            st.image(ticket['Foto_URL'], caption="Imagen del siniestro", use_container_width=True)
-                    
-                            # Agregar un link clickeable debajo
-                            st.markdown(f"[🔗 Ver imagen en nueva pestaña]({ticket['Foto_URL']})", unsafe_allow_html=True)
-                        except Exception as e:
-                            st.warning(f"⚠️ Error mostrando la imagen: {e}")
+                    # Enlace de ubicación
+                    ubic = ticket.get('Ubicacion', '')
+                    if isinstance(ubic, str) and ubic.startswith("http"):
+                        st.write("**Ubicación del Siniestro:**")
+                        st.markdown(f"[📍 Ver en Google Maps]({ubic})", unsafe_allow_html=True)
+
+                    # Foto del siniestro
+                    url = ticket.get('Foto_URL', '')
+                    if isinstance(url, str) and url.startswith("http"):
+                        st.subheader("📸 Foto del Siniestro")
+                        st.image(url, caption="Imagen del siniestro", use_container_width=True)
+                        st.markdown(f"[🔗 Ver imagen en nueva pestaña]({url})", unsafe_allow_html=True)
                     else:
                         st.info("No se adjuntó foto del siniestro.")
+
         # Tabla general abajo
         st.dataframe(df, use_container_width=True, height=500)
 
         # Gráficos
         st.subheader("Estadísticas")
-        col1, col2 = st.columns(2)
-        with col1:
+        c1, c2 = st.columns(2)
+        with c1:
             st.bar_chart(df['Área'].value_counts())
-        with col2:
+        with c2:
             st.bar_chart(df['Estado'].value_counts())
-        
+
         st.subheader("Tiempo por Estado")
-        df_resultados = procesar_tiempos_estado(df['Tiempo_Cambio'])
-        if not df_resultados.empty:
-            st.bar_chart(df_resultados.set_index('Estado'))
+        df_res = procesar_tiempos_estado(df['Tiempo_Cambio'])
+        if not df_res.empty:
+            st.bar_chart(df_res.set_index('Estado'))
         else:
             st.warning("No hay datos de tiempo por estado")
 
         st.subheader("Actividad por Usuario")
-        col1, col2 = st.columns(2)
-        with col1:
+        c1, c2 = st.columns(2)
+        with c1:
             creados = df['Usuario_Creación'].value_counts()
             st.bar_chart(creados, use_container_width=True)
             st.caption("Tickets creados por usuario")
-        with col2:
+        with c2:
             modificados = df['Usuario_Modificacion'].value_counts()
             st.bar_chart(modificados, use_container_width=True)
             st.caption("Tickets modificados por usuario")
+
     else:
         st.warning("No se encontraron tickets")
 
