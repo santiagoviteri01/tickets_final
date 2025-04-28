@@ -664,7 +664,50 @@ def modulo_cotizaciones_mauricio():
             st.write(f"**Teléfono:** {row['Teléfono']}")
             st.info(f"Estado final: {row['Estado'].capitalize()}")
 
+def visualizar_ticket_modificar(ticket=None):
+    """
+    Muestra un expander con todos los datos del ticket.
+    Si no recibe parámetro, usa st.session_state.ticket_actual.
+    """
+    if ticket is None:
+        ticket = st.session_state.get("ticket_actual")
+    if not ticket:
+        st.warning("No hay ticket seleccionado.")
+        return
 
+    header = f"Ticket #{ticket['Número']} – {ticket['Título']}"
+    with st.expander(header, expanded=True):
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            icons = {
+                'nuevo': '🔵', 'en proceso': '🟡', 'resuelto': '🟢',
+                'cerrado': '✅', 'documentacion pendiente': '🟠'
+            }
+            est = ticket['Estado'].lower()
+            st.markdown(f"**Estado:** {icons.get(est,'⚫')} {ticket['Estado'].capitalize()}")
+            st.write(f"**Cliente:** {ticket.get('Cliente','Desconocido')}")
+            st.write(f"**Área:** {ticket.get('Área','')}")
+            st.write(f"**Fecha creación:** {ticket.get('Fecha_Creación','')}")
+            st.write(f"**Última actualización:** {ticket.get('Fecha_Modificacion','')}")
+            if ticket.get('Tiempo_Cambio'):
+                st.write(f"**Tiempo Cambio:** {ticket['Tiempo_Cambio']}")
+        with col2:
+            st.write("**Descripción:**")
+            st.write(ticket.get('Descripción',''))
+            if ticket.get('Ubicacion'):
+                st.markdown(
+                    f"**Ubicación:** [📍 Ver en Google Maps]({ticket['Ubicacion']})",
+                    unsafe_allow_html=True
+                )
+            if ticket.get('Foto_URL'):
+                st.subheader("📸 Foto del Siniestro")
+                st.image(ticket['Foto_URL'], use_container_width=True)
+                st.markdown(
+                    f"[🔗 Ver imagen]({ticket['Foto_URL']})",
+                    unsafe_allow_html=True
+                )
+            else:
+                st.info("No se adjuntó foto del siniestro.")
 
 # Portal de Administración (Usuarios)
 def portal_administracion():
@@ -694,7 +737,7 @@ def portal_administracion():
     elif opcion == "Gestión de Tickets":
         st.title("📋 Gestión de Tickets")
         manejar_tickets()
-
+        
 
     elif opcion == "Análisis":
         st.title("📈 Análisis de Datos")
@@ -830,39 +873,6 @@ def visualizar_tickets():
                         st.markdown(f"[🔗 Ver imagen en nueva pestaña]({url})", unsafe_allow_html=True)
                     else:
                         st.info("No se adjuntó foto del siniestro.")
-
-        # Tabla general abajo
-        st.dataframe(df, use_container_width=True, height=500)
-
-        # Gráficos
-        st.subheader("Estadísticas")
-        c1, c2 = st.columns(2)
-        with c1:
-            st.bar_chart(df['Área'].value_counts())
-        with c2:
-            st.bar_chart(df['Estado'].value_counts())
-
-        st.subheader("Tiempo por Estado")
-        df_res = procesar_tiempos_estado(df['Tiempo_Cambio'])
-        if not df_res.empty:
-            st.bar_chart(df_res.set_index('Estado'))
-        else:
-            st.warning("No hay datos de tiempo por estado")
-
-        st.subheader("Actividad por Usuario")
-        c1, c2 = st.columns(2)
-        with c1:
-            creados = df['Usuario_Creación'].value_counts()
-            st.bar_chart(creados, use_container_width=True)
-            st.caption("Tickets creados por usuario")
-        with c2:
-            modificados = df['Usuario_Modificacion'].value_counts()
-            st.bar_chart(modificados, use_container_width=True)
-            st.caption("Tickets modificados por usuario")
-
-    else:
-        st.warning("No se encontraron tickets")
-
 # Versión cacheada para uso general
 @st.cache_data(ttl=300)
 def _cargar_tickets():
@@ -874,45 +884,59 @@ def cargar_tickets(clear_cache=False):
     if clear_cache:
         st.cache_data.clear()
     return _cargar_tickets()
+    
 
-# Función para manejar tickets
 def manejar_tickets():
     # ✅ Nuevo bloque más limpio y eficiente
     df = cargar_tickets(clear_cache=st.session_state.get("recargar_tickets", False))
     st.session_state.recargar_tickets = False
 
     opcion_ticket = st.radio("Seleccione una acción:", ["Ver tickets en cola", "Crear nuevo ticket", "Modificar ticket existente"])
-
     if opcion_ticket == "Ver tickets en cola":
         st.subheader("🔍 Ver tickets en cola")
-        if not df.empty:
-            ultimos_registros = df.sort_values('Fecha_Modificacion').groupby('Número').last().reset_index()
-            tickets_cola = ultimos_registros[
-                (ultimos_registros['Usuario_Modificacion'] == 'cliente') &
-                (ultimos_registros['Estado'] != 'cerrado')
-            ]
-
-            if not tickets_cola.empty:
-                st.metric("Tickets Pendientes", len(tickets_cola))
-                st.dataframe(
-                    tickets_cola[['Número', 'Título', 'Cliente', 'Estado', 'Fecha_Modificacion', 'Usuario_Modificacion']]
-                    .sort_values('Fecha_Modificacion', ascending=False),
-                    use_container_width=True,
-                    height=400
-                )
-
-                selected_ticket = st.number_input("Seleccionar Número de Ticket para gestionar:", min_value=min(tickets_cola['Número']))
-
-                if st.button("Tomar Ticket"):
-                    if selected_ticket in tickets_cola['Número'].values:
-                        st.session_state.ticket_actual = tickets_cola[tickets_cola['Número'] == selected_ticket].iloc[0].to_dict()
-                        st.success(f"Ticket #{selected_ticket} asignado para gestión")
-                    else:
-                        st.error("Número de ticket inválido")
-            else:
-                st.info("No hay tickets pendientes de clientes")
-        else:
+        if df.empty:
             st.warning("No se encontraron tickets")
+            return
+
+        ultimos = (df.sort_values('Fecha_Modificacion')
+                     .groupby('Número')
+                     .last()
+                     .reset_index())
+        cola = ultimos[(ultimos['Usuario_Modificacion'] == 'cliente') &
+                      (ultimos['Estado'] != 'cerrado')]
+
+        if cola.empty:
+            st.info("No hay tickets pendientes de clientes")
+            return
+
+        st.metric("Tickets Pendientes", len(cola))
+        st.dataframe(
+            cola[['Número','Título','Cliente','Estado','Fecha_Modificacion']]
+            .sort_values('Fecha_Modificacion', ascending=False),
+            use_container_width=True, height=300
+        )
+
+        # 1) Selección
+        selected = st.number_input(
+            "Seleccionar Número de Ticket para ver detalles:",
+            min_value=int(cola['Número'].min()),
+            max_value=int(cola['Número'].max()),
+            step=1
+        )
+
+        if selected in cola['Número'].values:
+            # 2) Previsualizar antes de tomar
+            ticket = cola[cola['Número']==selected].iloc[0].to_dict()
+            visualizar_ticket_modificar(ticket)
+
+            # 3) Botón de tomar
+            if st.button(f"Tomar Ticket #{selected}"):
+                st.session_state.ticket_actual = ticket
+                st.success(f"✅ Ticket #{selected} asignado para gestión")
+                # (aquí ya puedes redirigir a la forma de modificar si quisieras)
+        else:
+            st.info("Selecciona un número válido de la tabla anterior")
+
 
     elif opcion_ticket == "Crear nuevo ticket":
         with st.form("nuevo_ticket"):
