@@ -784,14 +784,15 @@ def visualizar_tickets():
 
         # Mostrar cada ticket
         for _, ticket in df.iterrows():
-            numero    = ticket['Número']
-            titulo    = ticket['Título']
-            cliente   = ticket.get('Cliente', 'Desconocido')
-            header    = f"Ticket #{numero} – {titulo} (Cliente: {cliente})"
+            numero  = ticket['Número']
+            titulo  = ticket['Título']
+            cliente = ticket.get('Cliente', 'Desconocido')
+            header  = f"Ticket #{numero} – {titulo}"
             with st.expander(header):
                 col_left, col_right = st.columns([1, 3])
 
                 with col_left:
+                    # Estado
                     estado_ticket = ticket['Estado'].lower()
                     color_map = {
                         'nuevo': '🔵',
@@ -802,6 +803,11 @@ def visualizar_tickets():
                     }
                     icono = color_map.get(estado_ticket, '⚫')
                     st.markdown(f"**Estado:** {icono} {ticket['Estado'].capitalize()}")
+                    
+                    # Cliente justo debajo del estado
+                    st.write(f"**Cliente:** {cliente}")
+
+                    # Fechas
                     st.write(f"**Fecha creación:** {ticket['Fecha_Creación']}")
                     if pd.notna(ticket['Fecha_Modificacion']):
                         st.write(f"**Última actualización:** {ticket['Fecha_Modificacion']}")
@@ -810,10 +816,9 @@ def visualizar_tickets():
                     st.write("**Descripción:**")
                     st.write(ticket['Descripción'])
 
-                    # Enlace de ubicación
+                    # Ubicación
                     ubic = ticket.get('Ubicacion', '')
                     if isinstance(ubic, str) and ubic.startswith("http"):
-                        st.write("**Ubicación del Siniestro:**")
                         st.markdown(f"[📍 Ver en Google Maps]({ubic})", unsafe_allow_html=True)
 
                     # Foto del siniestro
