@@ -890,11 +890,25 @@ def cargar_tickets(clear_cache=False):
 
 def manejar_tickets():
     # ✅ Nuevo bloque más limpio y eficiente
+    #df = cargar_tickets(clear_cache=st.session_state.get("recargar_tickets", False))
+    #st.session_state.recargar_tickets = False
+
+    if "opcion_ticket" not in st.session_state:
+        st.session_state.opcion_ticket = "Ver tickets en cola"
+    
+    # 2) Cargar datos
     df = cargar_tickets(clear_cache=st.session_state.get("recargar_tickets", False))
     st.session_state.recargar_tickets = False
 
-    opcion_ticket = st.radio("Seleccione una acción:", ["Ver tickets en cola", "Crear nuevo ticket", "Modificar ticket existente"])
+    # 3) Radio controlada por session_state
+    opcion_ticket = st.radio(
+        "Seleccione una acción:",
+        ["Ver tickets en cola", "Crear nuevo ticket", "Modificar ticket existente"],
+        key="opcion_ticket"
+    )
+    
     if opcion_ticket == "Ver tickets en cola":
+        
         st.subheader("🔍 Ver tickets en cola")
         if df.empty:
             st.warning("No se encontraron tickets")
@@ -934,10 +948,9 @@ def manejar_tickets():
             # 3) Botón de tomar
             if st.button(f"Tomar Ticket #{selected}"):
                 st.session_state.ticket_actual = ticket
-                st.success(f"✅ Ticket #{selected} asignado para gestión")
                 st.session_state.opcion_ticket = "Modificar ticket existente"
+                st.success(f"✅ Ticket #{selected} asignado para gestión") 
                 st.rerun()
-
         else:
             st.info("Selecciona un número válido de la tabla anterior")
 
