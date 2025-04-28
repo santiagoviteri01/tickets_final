@@ -935,6 +935,7 @@ def manejar_tickets():
             if st.button(f"Tomar Ticket #{selected}"):
                 st.session_state.ticket_actual = ticket
                 st.success(f"✅ Ticket #{selected} asignado para gestión")
+                st.session_state.opcion_ticket = "Modificar ticket existente"
                 # (aquí ya puedes redirigir a la forma de modificar si quisieras)
         else:
             st.info("Selecciona un número válido de la tabla anterior")
