@@ -983,7 +983,12 @@ def manejar_tickets():
                         'Fecha_Modificacion': fecha_modificacion.strftime('%Y-%m-%d %H:%M:%S'),
                         'Usuario_Modificacion': st.session_state.usuario_actual,
                         'Tiempo_Cambio': registro_dias,
-                        'Cliente': st.session_state.ticket_actual['Cliente']
+                        'Cliente': st.session_state.ticket_actual['Cliente'],
+                        'Grua': st.session_state.ticket_actual['Grua'],
+                        'Asistencia_Legal': st.session_state.ticket_actual['Asistencia_Legal'],
+                        'Ubicacion': st.session_state.ticket_actual['Ubicacion'],
+                        'Foto_URL': st.session_state.ticket_actual['Foto_URL']
+                    
                     }
 
                     ticket_actualizado_serializable = {
