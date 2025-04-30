@@ -1385,7 +1385,7 @@ def manejar_tickets():
                         except Exception as e:
                             st.error(f"Error descargando {nombre_archivo}: {e}")
                 buffer.seek(0)
-                nombre_zip = f"{nombre_cliente.replace(' ', '_')}_ticket_{numero_ticket}.zip"
+                nombre_zip = f"ticket_{numero_ticket}.zip"
                 st.download_button(
                     label="⬇️ Descargar ZIP",
                     data=buffer,
