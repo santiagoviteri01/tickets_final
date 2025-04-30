@@ -1205,84 +1205,84 @@ def manejar_tickets():
                         st.rerun()
 
                     
-elif opcion_ticket == "Subir documentación a ticket":
-    st.subheader("📎 Subir documentación a un ticket existente")
-
-    tickets_df = cargar_tickets()
-    if tickets_df.empty:
-        st.warning("No hay tickets disponibles.")
-        return
-
-    # Opciones de búsqueda
-    busqueda_tipo = st.radio("Buscar por:", ["Número de Ticket", "Nombre del Cliente"])
-
-    if busqueda_tipo == "Número de Ticket":
-        ticket_ids = tickets_df["Número"].unique().tolist()
-        numero_ticket = st.selectbox("Selecciona el número de ticket:", sorted(ticket_ids))
-        ticket_seleccionado = tickets_df[tickets_df["Número"] == numero_ticket].iloc[-1]
-    else:
-        nombres = tickets_df["Cliente"].dropna().unique().tolist()
-        nombre_cliente = st.selectbox("Selecciona el cliente:", sorted(nombres))
-        tickets_cliente = tickets_df[tickets_df["Cliente"] == nombre_cliente]
-        ticket_ids = tickets_cliente["Número"].unique().tolist()
-        numero_ticket = st.selectbox("Selecciona el número de ticket del cliente:", sorted(ticket_ids))
-        ticket_seleccionado = tickets_cliente[tickets_cliente["Número"] == numero_ticket].iloc[-1]
-
-    st.info(f"📄 Ticket seleccionado: #{numero_ticket} — Cliente: {ticket_seleccionado['Cliente']}")
-
-    archivos = st.file_uploader(
-        "📤 Selecciona uno o más archivos (PDF o imagen)",
-        type=["jpg", "jpeg", "png", "pdf"],
-        accept_multiple_files=True,
-        key=f"upload_docs_ticket_{numero_ticket}"
-    )
-
-    if archivos:
-        bucket_name = 'insurapp-fotos'
-        s3 = boto3.client(
-            's3',
-            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
-            region_name='us-east-1'
+    elif opcion_ticket == "Subir documentación a ticket":
+        st.subheader("📎 Subir documentación a un ticket existente")
+    
+        tickets_df = cargar_tickets()
+        if tickets_df.empty:
+            st.warning("No hay tickets disponibles.")
+            return
+    
+        # Opciones de búsqueda
+        busqueda_tipo = st.radio("Buscar por:", ["Número de Ticket", "Nombre del Cliente"])
+    
+        if busqueda_tipo == "Número de Ticket":
+            ticket_ids = tickets_df["Número"].unique().tolist()
+            numero_ticket = st.selectbox("Selecciona el número de ticket:", sorted(ticket_ids))
+            ticket_seleccionado = tickets_df[tickets_df["Número"] == numero_ticket].iloc[-1]
+        else:
+            nombres = tickets_df["Cliente"].dropna().unique().tolist()
+            nombre_cliente = st.selectbox("Selecciona el cliente:", sorted(nombres))
+            tickets_cliente = tickets_df[tickets_df["Cliente"] == nombre_cliente]
+            ticket_ids = tickets_cliente["Número"].unique().tolist()
+            numero_ticket = st.selectbox("Selecciona el número de ticket del cliente:", sorted(ticket_ids))
+            ticket_seleccionado = tickets_cliente[tickets_cliente["Número"] == numero_ticket].iloc[-1]
+    
+        st.info(f"📄 Ticket seleccionado: #{numero_ticket} — Cliente: {ticket_seleccionado['Cliente']}")
+    
+        archivos = st.file_uploader(
+            "📤 Selecciona uno o más archivos (PDF o imagen)",
+            type=["jpg", "jpeg", "png", "pdf"],
+            accept_multiple_files=True,
+            key=f"upload_docs_ticket_{numero_ticket}"
         )
-
-        hoja_adjuntos = spreadsheet.worksheet("archivos_adjuntos")
-
-        for archivo in archivos:
-            file_type = archivo.type
-            extension = archivo.name.split('.')[-1]
-            unique_filename = f"adjuntos/{str(uuid.uuid4())}.{extension}"
-            archivo_url = f"https://{bucket_name}.s3.us-east-1.amazonaws.com/{unique_filename}"
-
-            archivo.seek(0)  # 👈 CORREGIDO: mover antes de subir
-            s3.upload_fileobj(
-                archivo,
-                bucket_name,
-                unique_filename,
-                ExtraArgs={'ContentType': file_type, 'ACL': 'public-read'}
+    
+        if archivos:
+            bucket_name = 'insurapp-fotos'
+            s3 = boto3.client(
+                's3',
+                aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+                region_name='us-east-1'
             )
-
-            hoja_adjuntos.append_row([
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                f"{st.session_state.usuario_actual} (admin)",
-                numero_ticket,
-                archivo.name,
-                file_type,
-                archivo_url
-            ])
-
-            st.success(f"✅ `{archivo.name}` subido correctamente al ticket #{numero_ticket}")
-
-            if file_type == "application/pdf":
-                archivo.seek(0)
-                base64_pdf = base64.b64encode(archivo.read()).decode("utf-8")
-                pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600px" type="application/pdf"></iframe>'
-                st.markdown(pdf_display, unsafe_allow_html=True)
-            else:
-                st.image(archivo, caption=archivo.name, use_container_width=True)
-
-            st.markdown(f"[🔗 Ver archivo en S3]({archivo_url})")
-            st.markdown("---")
+    
+            hoja_adjuntos = spreadsheet.worksheet("archivos_adjuntos")
+    
+            for archivo in archivos:
+                file_type = archivo.type
+                extension = archivo.name.split('.')[-1]
+                unique_filename = f"adjuntos/{str(uuid.uuid4())}.{extension}"
+                archivo_url = f"https://{bucket_name}.s3.us-east-1.amazonaws.com/{unique_filename}"
+    
+                archivo.seek(0)  # 👈 CORREGIDO: mover antes de subir
+                s3.upload_fileobj(
+                    archivo,
+                    bucket_name,
+                    unique_filename,
+                    ExtraArgs={'ContentType': file_type, 'ACL': 'public-read'}
+                )
+    
+                hoja_adjuntos.append_row([
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    f"{st.session_state.usuario_actual} (admin)",
+                    numero_ticket,
+                    archivo.name,
+                    file_type,
+                    archivo_url
+                ])
+    
+                st.success(f"✅ `{archivo.name}` subido correctamente al ticket #{numero_ticket}")
+    
+                if file_type == "application/pdf":
+                    archivo.seek(0)
+                    base64_pdf = base64.b64encode(archivo.read()).decode("utf-8")
+                    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600px" type="application/pdf"></iframe>'
+                    st.markdown(pdf_display, unsafe_allow_html=True)
+                else:
+                    st.image(archivo, caption=archivo.name, use_container_width=True)
+    
+                st.markdown(f"[🔗 Ver archivo en S3]({archivo_url})")
+                st.markdown("---")
         
 
   
