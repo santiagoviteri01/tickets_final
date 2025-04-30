@@ -1019,7 +1019,7 @@ def manejar_tickets():
             asegurados_data = asegurados_df.copy()
             tipo_busqueda = st.radio("Buscar por:", ["Cédula", "Número de Póliza"])
             if tipo_busqueda == "Cédula":
-                cedula = st.text_input("Ingrese número de cédula:")
+                cedula = st.text_input("Ingrese el número:")
                 coincidencias = asegurados_data[asegurados_data["CÉDULA"].astype(str) == cedula]
             else:
                 poliza = st.text_input("Ingrese número de póliza:")
@@ -1055,11 +1055,11 @@ def manejar_tickets():
             descripcion = st.text_area("Descripción detallada*")
             ciudad_ocurrencia = st.text_input("Ciudad donde ocurrió el siniestro*")
             fecha_ocurrencia = st.date_input("Fecha de ocurrencia")
-            valor_siniestro = st.number_input("Valor estimado del siniestro", min_value=0.0, format="%.2f")
-            deducible = st.text_input("Deducible (si aplica)")
-            causa = st.text_input("Causa del siniestro (breve)")
-            rasa = st.text_input("RASA")
-            liquidacion = st.text_input("Liquidación")
+            #valor_siniestro = st.number_input("Valor estimado del siniestro", min_value=0.0, format="%.2f")
+            #deducible = st.text_input("Deducible (si aplica)")
+            causa = st.selectbox("Causa*", ["ROBO", "ROBO PARCIAL", "PERDIDA TOTAL", "PERDIDA PARCIAL"])
+            #rasa = st.text_input("RASA")
+            #liquidacion = st.text_input("Liquidación")
     
             necesita_grua = st.selectbox("¿Necesita grúa?", ["No", "Sí"])
             asistencia_legal = st.selectbox("¿Requiere asistencia legal?", ["No", "Sí"])
@@ -1092,10 +1092,10 @@ def manejar_tickets():
                     'PLACA': placa,
                     'fecha_ocurrecia': fecha_ocurrencia.strftime("%Y-%m-%d"),
                     'SUMA ASEGURADA': suma_asegurada,
-                    'VALOR SINIESTRO': valor_siniestro,
-                    'DEDUCIBLE': deducible,
-                    'RASA': rasa,
-                    'LIQUIDACION': liquidacion,
+                    'VALOR SINIESTRO': None,
+                    'DEDUCIBLE': None,
+                    'RASA':None,
+                    'LIQUIDACION': None,
                     'CAUSA': causa,
                     'Necesita Grua': necesita_grua,
                     'Asistencia Legal': asistencia_legal,
@@ -1147,17 +1147,12 @@ def manejar_tickets():
         
                 if nuevo_estado == "cerrado":
                     st.markdown("### 📝 Información final del siniestro (opcional)")
-                    valor_siniestro = st.number_input("Valor estimado del siniestro", min_value=0.0, format="%.2f", value=0.0)
-                    deducible = st.text_input("Deducible (si aplica)", value="")
-                    causa = st.text_input("Causa del siniestro (breve)", value="")
-                    rasa = st.text_input("RASA", value="")
-                    liquidacion = st.text_input("Liquidación", value="")
-                else:
-                    valor_siniestro = ""
-                    deducible = ""
-                    causa = ""
-                    rasa = ""
-                    liquidacion = ""
+                    st.session_state.valor_siniestro = st.number_input("Valor estimado del siniestro", min_value=0.0, format="%.2f", key="valor_siniestro")
+                    st.session_state.deducible = st.text_input("Deducible (si aplica)", key="deducible")
+                    st.session_state.causa = st.text_input("Causa del siniestro (breve)", key="causa")
+                    st.session_state.rasa = st.text_input("RASA", key="rasa")
+                    st.session_state.liquidacion = st.text_input("Liquidación", key="liquidacion")
+
         
                 if st.form_submit_button("Guardar Cambios"):
                     fecha_modificacion = datetime.now()
@@ -1186,12 +1181,13 @@ def manejar_tickets():
                         'Asistencia_Legal': ticket_actual.get('Asistencia_Legal'),
                         'Ubicacion': ticket_actual.get('Ubicacion'),
                         'Foto_URL': ticket_actual.get('Foto_URL'),
-                        'VALOR SINIESTRO': valor_siniestro,
-                        'DEDUCIBLE': deducible,
-                        'CAUSA': causa,
-                        'RASA': rasa,
-                        'LIQUIDACION': liquidacion,
-                    }
+                        'VALOR SINIESTRO': st.session_state.get('valor_siniestro', ""),
+                        'DEDUCIBLE': st.session_state.get('deducible', ""),
+                        'CAUSA': st.session_state.get('causa', ""),
+                        'RASA': st.session_state.get('rasa', ""),
+                        'LIQUIDACION': st.session_state.get('liquidacion', ""),}
+                
+        
         
                     ticket_actualizado_serializable = {
                         k: int(v) if isinstance(v, (int, float)) else v for k, v in ticket_actualizado.items()
