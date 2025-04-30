@@ -1128,10 +1128,12 @@ def manejar_tickets():
                         st.session_state.ticket_actual = ticket.to_dict()
                 else:
                     st.error("Ticket no encontrado")
+        
         if 'ticket_actual' in st.session_state:
-            with st.form("modificar_ticket"):
-                st.subheader(f"✏️ Modificando Ticket #{st.session_state.ticket_actual['Número']}")
-                        
+            st.subheader(f"✏️ Modificando Ticket #{st.session_state.ticket_actual['Número']}")
+        
+            # Paso 1: Selección de estado y descripción (dentro del formulario)
+            with st.form("seleccion_estado_form"):
                 nuevo_estado = st.selectbox(
                     "Nuevo estado:",
                     ["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion", "cerrado"],
@@ -1139,18 +1141,24 @@ def manejar_tickets():
                         st.session_state.ticket_actual['Estado']
                     )
                 )
-                
+        
                 nueva_descripcion = st.text_area(
                     "Descripción actualizada:",
                     value=st.session_state.ticket_actual['Descripción']
                 )
-                
-                # Botón de paso 1: confirmar estado
-                if st.button("Seleccionar estado"):
-                    st.session_state.estado_seleccionado = nuevo_estado
-                    st.session_state.descripcion_modificada = nueva_descripcion
         
-                if st.session_state.get("estado_seleccionado") == "cerrado":
+                confirmar_estado = st.form_submit_button("Seleccionar estado")
+        
+            if confirmar_estado:
+                st.session_state.estado_seleccionado = nuevo_estado
+                st.session_state.descripcion_modificada = nueva_descripcion
+        
+            # Paso 2: Mostrar campos adicionales si ya se seleccionó el estado
+            if st.session_state.get("estado_seleccionado"):
+                estado_final = st.session_state.estado_seleccionado
+                descripcion_final = st.session_state.descripcion_modificada
+        
+                if estado_final == "cerrado":
                     st.markdown("### 📝 Información final del siniestro (opcional)")
                     valor_siniestro = st.number_input("Valor estimado del siniestro", min_value=0.0, format="%.2f", key="valor_siniestro")
                     deducible = st.text_input("Deducible (si aplica)", key="deducible")
@@ -1163,55 +1171,54 @@ def manejar_tickets():
                     causa = ""
                     rasa = ""
                     liquidacion = ""
-
         
-                if st.session_state.get("estado_seleccionado"):
-                    if st.button("Guardar Cambios"):
-                        fecha_modificacion = datetime.now()
-                        ultima_fecha = datetime.strptime(st.session_state.ticket_actual['Fecha_Creación'], "%Y-%m-%d %H:%M:%S")
-                        dias_transcurridos = (fecha_modificacion - ultima_fecha).days
-                
-                        if st.session_state.estado_seleccionado != st.session_state.ticket_actual['Estado']:
-                            registro_dias = f"{dias_transcurridos}d ({st.session_state.ticket_actual['Estado']} -> {st.session_state.estado_seleccionado})"
-                        else:
-                            registro_dias = "Sin cambio de estado"
-                
-                        ticket_actual = st.session_state.ticket_actual
-                        ticket_actualizado = {
-                            'Número': ticket_actual['Número'],
-                            'Título': ticket_actual['Título'],
-                            'Área': ticket_actual['Área'],
-                            'Estado': st.session_state.estado_seleccionado,
-                            'Descripción': st.session_state.descripcion_modificada,
-                            'Fecha_Creación': ticket_actual['Fecha_Creación'],
-                            'Usuario_Creación': ticket_actual['Usuario_Creación'],
-                            'Fecha_Modificacion': fecha_modificacion.strftime('%Y-%m-%d %H:%M:%S'),
-                            'Usuario_Modificacion': st.session_state.usuario_actual,
-                            'Tiempo_Cambio': registro_dias,
-                            'Cliente': ticket_actual['Cliente'],
-                            'Grua': ticket_actual.get('Grua'),
-                            'Asistencia_Legal': ticket_actual.get('Asistencia_Legal'),
-                            'Ubicacion': ticket_actual.get('Ubicacion'),
-                            'Foto_URL': ticket_actual.get('Foto_URL'),
-                            'VALOR SINIESTRO': valor_siniestro,
-                            'DEDUCIBLE': deducible,
-                            'CAUSA': causa,
-                            'RASA': rasa,
-                            'LIQUIDACION': liquidacion,
-                        }
-                
-                        ticket_actualizado_serializable = {
-                            k: int(v) if isinstance(v, (int, float)) else v for k, v in ticket_actualizado.items()
-                        }
-                
-                        with st.spinner("Actualizando ticket..."):
-                            sheet.append_row(list(ticket_actualizado_serializable.values()))
-                            st.success("Ticket actualizado correctamente ✅")
-                            st.session_state.recargar_tickets = True
-                            del st.session_state.ticket_actual
-                            del st.session_state.estado_seleccionado
-                            del st.session_state.descripcion_modificada
-                            st.rerun()
+                # Botón final para guardar cambios
+                if st.button("💾 Guardar Cambios"):
+                    fecha_modificacion = datetime.now()
+                    ultima_fecha = datetime.strptime(st.session_state.ticket_actual['Fecha_Creación'], "%Y-%m-%d %H:%M:%S")
+                    dias_transcurridos = (fecha_modificacion - ultima_fecha).days
+        
+                    if estado_final != st.session_state.ticket_actual['Estado']:
+                        registro_dias = f"{dias_transcurridos}d ({st.session_state.ticket_actual['Estado']} -> {estado_final})"
+                    else:
+                        registro_dias = "Sin cambio de estado"
+        
+                    ticket_actual = st.session_state.ticket_actual
+                    ticket_actualizado = {
+                        'Número': ticket_actual['Número'],
+                        'Título': ticket_actual['Título'],
+                        'Área': ticket_actual['Área'],
+                        'Estado': estado_final,
+                        'Descripción': descripcion_final,
+                        'Fecha_Creación': ticket_actual['Fecha_Creación'],
+                        'Usuario_Creación': ticket_actual['Usuario_Creación'],
+                        'Fecha_Modificacion': fecha_modificacion.strftime('%Y-%m-%d %H:%M:%S'),
+                        'Usuario_Modificacion': st.session_state.usuario_actual,
+                        'Tiempo_Cambio': registro_dias,
+                        'Cliente': ticket_actual['Cliente'],
+                        'Grua': ticket_actual.get('Grua'),
+                        'Asistencia_Legal': ticket_actual.get('Asistencia_Legal'),
+                        'Ubicacion': ticket_actual.get('Ubicacion'),
+                        'Foto_URL': ticket_actual.get('Foto_URL'),
+                        'VALOR SINIESTRO': valor_siniestro,
+                        'DEDUCIBLE': deducible,
+                        'CAUSA': causa,
+                        'RASA': rasa,
+                        'LIQUIDACION': liquidacion,
+                    }
+        
+                    ticket_actualizado_serializable = {
+                        k: int(v) if isinstance(v, (int, float)) else v for k, v in ticket_actualizado.items()
+                    }
+        
+                    with st.spinner("Actualizando ticket..."):
+                        sheet.append_row(list(ticket_actualizado_serializable.values()))
+                        st.success("Ticket actualizado correctamente ✅")
+                        st.session_state.recargar_tickets = True
+                        del st.session_state.ticket_actual
+                        del st.session_state.estado_seleccionado
+                        del st.session_state.descripcion_modificada
+                        st.rerun()
                     
     elif opcion_ticket == "Subir documentación a ticket":
         st.subheader("📎 Subir documentación a un ticket existente")
