@@ -1011,46 +1011,106 @@ def manejar_tickets():
                 st.success(f"✅ Ticket #{selected} asignado para gestión") 
         else:
             st.info("Selecciona un número válido de la tabla anterior")
-
-
     elif opcion_ticket == "Crear nuevo ticket":
         with st.form("nuevo_ticket"):
-            st.subheader("📝 Nuevo Ticket")
+            st.subheader("📝 Crear nuevo ticket con datos del asegurado")
+    
+            # Paso 1: Buscar cliente por cédula o póliza
+            asegurados_data = asegurados_df.copy()
+            tipo_busqueda = st.radio("Buscar por:", ["Cédula", "Número de Póliza"])
+            if tipo_busqueda == "Cédula":
+                cedula = st.text_input("Ingrese número de cédula:")
+                coincidencias = asegurados_data[asegurados_data["CÉDULA"].astype(str) == cedula]
+            else:
+                poliza = st.text_input("Ingrese número de póliza:")
+                coincidencias = asegurados_data[asegurados_data["POLIZA MAESTRA"].astype(str) == poliza]
+    
+            if not coincidencias.empty:
+                vehiculo = st.selectbox(
+                    "Selecciona el vehículo asegurado:",
+                    coincidencias.apply(lambda row: f"{row['MARCA']} {row['MODELO']} ({row['PLACA']})", axis=1)
+                )
+                vehiculo_info = coincidencias.iloc[list(coincidencias.apply(lambda row: f"{row['MARCA']} {row['MODELO']} ({row['PLACA']})", axis=1)).index(vehiculo)]
+    
+                # Relleno automático
+                cliente = vehiculo_info["NOMBRE COMPLETO"]
+                cedula = vehiculo_info["CÉDULA"]
+                concesionario = vehiculo_info.get("CONCESIONARIO", "")
+                id_liderseg = vehiculo_info.get("ID_LIDERSEG", "")
+                aseguradora = vehiculo_info["ASEGURADORA"]
+                ciudad = vehiculo_info["CIUDAD CLIENTE"]
+                marca = vehiculo_info["MARCA"]
+                modelo = vehiculo_info["MODELO"]
+                anio = vehiculo_info["AÑO"]
+                placa = vehiculo_info["PLACA"]
+                suma_asegurada = vehiculo_info["VALOR ASEGURADO"]
+            else:
+                st.warning("No se encontraron coincidencias.")
+                st.stop()
+    
+            # Paso 4: Datos del ticket
             titulo = st.text_input("Título del Ticket*")
             area = st.selectbox("Área*", ["crediprime", "generales"])
             estado = st.selectbox("Estado*", ["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion"])
             descripcion = st.text_area("Descripción detallada*")
-
+            ciudad_ocurrencia = st.text_input("Ciudad donde ocurrió el siniestro*")
+            fecha_ocurrencia = st.date_input("Fecha de ocurrencia")
+            valor_siniestro = st.number_input("Valor estimado del siniestro", min_value=0.0, format="%.2f")
+            deducible = st.text_input("Deducible (si aplica)")
+            causa = st.text_input("Causa del siniestro (breve)")
+            rasa = st.text_input("RASA")
+            liquidacion = st.text_input("Liquidación")
+    
+            necesita_grua = st.selectbox("¿Necesita grúa?", ["No", "Sí"])
+            asistencia_legal = st.selectbox("¿Requiere asistencia legal?", ["No", "Sí"])
+    
             if st.form_submit_button("Guardar Ticket"):
-                if not all([titulo, area, estado, descripcion]):
-                    st.error("Todos los campos marcados con * son obligatorios")
-                else:
-                    ultimo_ticket = df['Número'].max() if not df.empty else 0
-                    nuevo_numero = int(ultimo_ticket) + 1
+                fecha_creacion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                ultimo_ticket = df["Número"].max() if not df.empty else 0
+                nuevo_numero = int(ultimo_ticket) + 1
+    
+                nuevo_ticket = {
+                    'Número': nuevo_numero,
+                    'Título': titulo,
+                    'Área': area,
+                    'Estado': estado,
+                    'Descripción': descripcion,
+                    'Fecha_Creación': fecha_creacion,
+                    'Usuario_Creación': st.session_state.usuario_actual,
+                    'Fecha_Modificacion': fecha_creacion,
+                    'Usuario_Modificacion': st.session_state.usuario_actual,
+                    'Tiempo_Cambio': '0d',
+                    'Cliente': cliente,
+                    'Cedula': cedula,
+                    'CONCESIONARIO': concesionario,
+                    'ID_LIDERSEG': id_liderseg,
+                    'ASEGURADORA': aseguradora,
+                    'CIUDAD OCURRENCIA': ciudad_ocurrencia,
+                    'MARCA': marca,
+                    'MODELO': modelo,
+                    'AÑO': anio,
+                    'PLACA': placa,
+                    'fecha_ocurrecia': fecha_ocurrencia.strftime("%Y-%m-%d"),
+                    'SUMA ASEGURADA': suma_asegurada,
+                    'VALOR SINIESTRO': valor_siniestro,
+                    'DEDUCIBLE': deducible,
+                    'RASA': rasa,
+                    'LIQUIDACION': liquidacion,
+                    'CAUSA': causa,
+                    'Necesita Grua': necesita_grua,
+                    'Asistencia Legal': asistencia_legal,
+                    'Ubicacion': None,
+                    'Foto_URL': None
+                }
+    
+                nuevo_ticket_serializable = {k: str(v) for k, v in nuevo_ticket.items()}
+    
+                sheet.append_row(list(nuevo_ticket_serializable.values()))
+                st.success(f"✅ Ticket #{nuevo_numero} registrado correctamente.")
+                st.session_state.recargar_tickets = True
+                st.rerun()
 
-                    fecha_creacion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    nuevo_ticket = {
-                        'Número': nuevo_numero,
-                        'Título': titulo,
-                        'Área': area,
-                        'Estado': estado,
-                        'Descripción': descripcion,
-                        'Fecha_Creación': fecha_creacion,
-                        'Usuario_Creación': st.session_state.usuario_actual,
-                        'Fecha_Modificacion': fecha_creacion,
-                        'Usuario_Modificacion': st.session_state.usuario_actual,
-                        'Tiempo_Cambio': '0d'
-                    }
 
-                    nuevo_ticket_serializable = {
-                        k: int(v) if isinstance(v, (int, float)) else v for k, v in nuevo_ticket.items()
-                    }
-
-                    with st.spinner("Guardando ticket..."):
-                        sheet.append_row(list(nuevo_ticket_serializable.values()))
-                        st.success("Ticket creado correctamente ✅")
-                        st.session_state.recargar_tickets = True
-                        st.rerun()
 
     elif opcion_ticket == "Modificar ticket existente":
         with st.form("buscar_ticket"):
@@ -1164,6 +1224,19 @@ def manejar_tickets():
                     "Descripción actualizada:",
                     value=st.session_state.ticket_actual['Descripción']
                 )
+                if nuevo_estado == "cerrado":
+                    st.markdown("### 📝 Información final del siniestro (opcional)")
+                    valor_siniestro = st.number_input("Valor estimado del siniestro", min_value=0.0, format="%.2f", value=0.0)
+                    deducible = st.text_input("Deducible (si aplica)", value="")
+                    causa = st.text_input("Causa del siniestro (breve)", value="")
+                    rasa = st.text_input("RASA", value="")
+                    liquidacion = st.text_input("Liquidación", value="")
+                else:
+                    valor_siniestro = ""
+                    deducible = ""
+                    causa = ""
+                    rasa = ""
+                    liquidacion = ""
 
                 if st.form_submit_button("Guardar Cambios"):
                     fecha_modificacion = datetime.now()
@@ -1192,7 +1265,12 @@ def manejar_tickets():
                         'Grua': ticket_actual.get('Grua'),
                         'Asistencia_Legal': ticket_actual.get('Asistencia_Legal'),
                         'Ubicacion': ticket_actual.get('Ubicacion'),
-                        'Foto_URL': ticket_actual.get('Foto_URL')
+                        'Foto_URL': ticket_actual.get('Foto_URL'),
+                        'VALOR SINIESTRO': valor_siniestro,
+                        'DEDUCIBLE': deducible,
+                        'CAUSA': causa,
+                        'RASA': rasa,
+                        'LIQUIDACION': liquidacion,
                     }
 
                     ticket_actualizado_serializable = {
