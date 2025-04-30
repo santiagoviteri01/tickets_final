@@ -146,7 +146,40 @@ def cargar_datos():
                                      'Grua','Asistencia_Legal','Ubicacion','Foto_URL'])
 
 
+def descargar_archivos_ticket(numero_ticket, nombre_cliente):
+    hoja_adjuntos = spreadsheet.worksheet("archivos_adjuntos")
+    registros = hoja_adjuntos.get_all_records()
+    df_adjuntos = pd.DataFrame(registros)
+    archivos_ticket = df_adjuntos[df_adjuntos["Número Ticket"] == numero_ticket]
 
+    if archivos_ticket.empty:
+        st.warning("No hay archivos subidos para este ticket.")
+        return
+
+    import zipfile
+
+    buffer = BytesIO()
+    with zipfile.ZipFile(buffer, "w") as zip_file:
+        for _, row in archivos_ticket.iterrows():
+            url = row["URL"]
+            nombre_archivo = row["Nombre Archivo"]
+            try:
+                # Descargar archivo desde URL
+                import requests
+                response = requests.get(url)
+                if response.status_code == 200:
+                    zip_file.writestr(nombre_archivo, response.content)
+            except Exception as e:
+                st.error(f"Error descargando {nombre_archivo}: {e}")
+
+    buffer.seek(0)
+    nombre_zip = f"{nombre_cliente.replace(' ', '_')}_ticket_{numero_ticket}.zip"
+    st.download_button(
+        label="📥 Descargar todos los archivos",
+        data=buffer,
+        file_name=nombre_zip,
+        mime="application/zip"
+    )
 def subir_y_mostrar_archivo(archivo, bucket_name, numero_ticket, hoja_adjuntos, usuario="admin"):
     import io
     import base64
@@ -1307,7 +1340,7 @@ def manejar_tickets():
             accept_multiple_files=True,
             key=f"upload_docs_ticket_{numero_ticket}"
         )
-    
+            
         if archivos:
             bucket_name = 'insurapp-fotos'
             s3 = boto3.client(
@@ -1327,6 +1360,38 @@ def manejar_tickets():
                     hoja_adjuntos=hoja_adjuntos,
                     usuario="admin"  # o "cliente" si estás en el portal del cliente
                 )
+         
+        if st.button("📥 Descargar todos los archivos del ticket"):
+            import zipfile
+            import requests
+    
+            hoja_adjuntos = spreadsheet.worksheet("archivos_adjuntos")
+            registros = hoja_adjuntos.get_all_records()
+            df_adjuntos = pd.DataFrame(registros)
+            archivos_ticket = df_adjuntos[df_adjuntos["Número Ticket"] == numero_ticket]
+    
+            if archivos_ticket.empty:
+                st.warning("No hay archivos subidos para este ticket.")
+            else:
+                buffer = BytesIO()
+                with zipfile.ZipFile(buffer, "w") as zip_file:
+                    for _, row in archivos_ticket.iterrows():
+                        url = row["URL"]
+                        nombre_archivo = row["Nombre Archivo"]
+                        try:
+                            response = requests.get(url)
+                            if response.status_code == 200:
+                                zip_file.writestr(nombre_archivo, response.content)
+                        except Exception as e:
+                            st.error(f"Error descargando {nombre_archivo}: {e}")
+                buffer.seek(0)
+                nombre_zip = f"{nombre_cliente.replace(' ', '_')}_ticket_{numero_ticket}.zip"
+                st.download_button(
+                    label="⬇️ Descargar ZIP",
+                    data=buffer,
+                    file_name=nombre_zip,
+                    mime="application/zip"
+                )                
         
 
   
