@@ -19,6 +19,8 @@ from streamlit_folium import st_folium
 from streamlit_js_eval import streamlit_js_eval
 import folium
 from geopy.geocoders import Nominatim
+import io
+
 
 st.set_page_config(
     page_title="Insurapp",
@@ -142,6 +144,60 @@ def cargar_datos():
                                      'Fecha_Creación','Usuario_Creación','Fecha_Modificacion',
                                      'Usuario_Modificacion','Tiempo_Cambio','Cliente',
                                      'Grua','Asistencia_Legal','Ubicacion','Foto_URL'])
+
+
+
+def subir_y_mostrar_archivo(archivo, bucket_name, numero_ticket, hoja_adjuntos, usuario="admin"):
+    import io
+    import base64
+
+    file_type = archivo.type
+    extension = archivo.name.split('.')[-1]
+    unique_filename = f"adjuntos/{str(uuid.uuid4())}.{extension}"
+    archivo_url = f"https://{bucket_name}.s3.us-east-1.amazonaws.com/{unique_filename}"
+
+    # ✅ Leer contenido en memoria para evitar que se cierre
+    archivo_bytes = archivo.read()
+    archivo_buffer = io.BytesIO(archivo_bytes)
+
+    # ✅ Subir a S3
+    archivo_buffer.seek(0)
+    s3 = boto3.client(
+        's3',
+        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+        region_name='us-east-1'
+    )
+    s3.upload_fileobj(
+        archivo_buffer,
+        bucket_name,
+        unique_filename,
+        ExtraArgs={'ContentType': file_type, 'ACL': 'public-read'}
+    )
+
+    # ✅ Guardar en Google Sheets
+    hoja_adjuntos.append_row([
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        f"{st.session_state.usuario_actual} ({usuario})",
+        numero_ticket,
+        archivo.name,
+        file_type,
+        archivo_url
+    ])
+
+    # ✅ Mostrar feedback visual
+    st.success(f"✅ `{archivo.name}` subido correctamente al ticket #{numero_ticket}")
+
+    if file_type == "application/pdf":
+        base64_pdf = base64.b64encode(archivo_bytes).decode("utf-8")
+        pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600px" type="application/pdf"></iframe>'
+        st.markdown(pdf_display, unsafe_allow_html=True)
+    else:
+        st.image(io.BytesIO(archivo_bytes), caption=archivo.name, use_container_width=True)
+
+    st.markdown(f"[🔗 Ver archivo en S3]({archivo_url})")
+    st.markdown("---")
+    
 def formulario_cotizacion():
     st.header("📝 Cotizador de Seguros")
 
@@ -1262,46 +1318,18 @@ def manejar_tickets():
             )
     
             hoja_adjuntos = spreadsheet.worksheet("archivos_adjuntos")
-    
+            bucket_name = 'insurapp-fotos'
             for archivo in archivos:
-                file_type = archivo.type
-                extension = archivo.name.split('.')[-1]
-                unique_filename = f"adjuntos/{str(uuid.uuid4())}.{extension}"
-                archivo_url = f"https://{bucket_name}.s3.us-east-1.amazonaws.com/{unique_filename}"
-    
-                archivo.seek(0)  # 👈 CORREGIDO: mover antes de subir
-                s3.upload_fileobj(
-                    archivo,
-                    bucket_name,
-                    unique_filename,
-                    ExtraArgs={'ContentType': file_type, 'ACL': 'public-read'}
+                subir_y_mostrar_archivo(
+                    archivo=archivo,
+                    bucket_name=bucket_name,
+                    numero_ticket=numero_ticket,
+                    hoja_adjuntos=hoja_adjuntos,
+                    usuario="admin"  # o "cliente" si estás en el portal del cliente
                 )
-    
-                hoja_adjuntos.append_row([
-                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    f"{st.session_state.usuario_actual} (admin)",
-                    numero_ticket,
-                    archivo.name,
-                    file_type,
-                    archivo_url
-                ])
-    
-                st.success(f"✅ `{archivo.name}` subido correctamente al ticket #{numero_ticket}")
-    
-                if file_type == "application/pdf":
-                    base64_pdf = base64.b64encode(archivo.read()).decode("utf-8")
-                    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600px" type="application/pdf"></iframe>'
-                    st.markdown(pdf_display, unsafe_allow_html=True)
-                else:
-                    st.image(archivo, caption=archivo.name, use_container_width=True)
-    
-                st.markdown(f"[🔗 Ver archivo en S3]({archivo_url})")
-                st.markdown("---")
         
 
   
-
-
 def descargar_tickets():
     with st.spinner("🔄 Cargando tickets para descarga..."):
         df = cargar_tickets()  # usa la función cacheada que definimos antes
