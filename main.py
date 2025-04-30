@@ -1289,7 +1289,6 @@ def manejar_tickets():
                 st.success(f"✅ `{archivo.name}` subido correctamente al ticket #{numero_ticket}")
     
                 if file_type == "application/pdf":
-                    archivo.seek(0)
                     base64_pdf = base64.b64encode(archivo.read()).decode("utf-8")
                     pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600px" type="application/pdf"></iframe>'
                     st.markdown(pdf_display, unsafe_allow_html=True)
