@@ -1200,32 +1200,41 @@ def manejar_tickets():
 
 
     elif opcion_ticket == "Modificar reclamo existente":
-        with st.form("buscar_ticket"):
-            st.subheader("🔍 Buscar Reclamo")
-            metodo_busqueda = st.radio("Buscar por:", ["Número de Reclamo", "Nombre del Cliente"])
-            ticket_id = None
-            if metodo_busqueda == "Número de Reclamo":
-                ticket_id = st.number_input("Ingrese el número de reclamo:", min_value=1, step=1)
-            
+        tickets_df = cargar_tickets()
+        if tickets_df.empty:
+            st.warning("No hay reclamos disponibles.")
+            st.stop()
+        
+        busqueda_tipo = st.radio("Buscar por:", ["Número de Reclamo", "Nombre del Cliente"])
+        
+        ticket_id = None
+        ticket_seleccionado = None
+        
+        if busqueda_tipo == "Número de Reclamo":
+            ticket_ids = tickets_df["Número"].unique().tolist()
+            ticket_id = st.selectbox("Selecciona el número de reclamo:", sorted(ticket_ids), key="modificar_por_numero")
+            ticket_seleccionado = tickets_df[tickets_df["Número"] == ticket_id].iloc[-1]
+        
+        else:
+            nombres = tickets_df["Cliente"].dropna().unique().tolist()
+            nombre_cliente = st.selectbox("Selecciona el cliente:", sorted(nombres), key="modificar_por_cliente")
+            tickets_cliente = tickets_df[(tickets_df["Cliente"] == nombre_cliente) & (tickets_df["Estado"] != "cerrado")]
+        
+            if tickets_cliente.empty:
+                st.info("Este cliente no tiene reclamos abiertos.")
+                st.stop()
+        
+            ticket_ids = tickets_cliente["Número"].unique().tolist()
+            ticket_id = st.selectbox("Selecciona el número de reclamo del cliente:", sorted(ticket_ids), key="modificar_ticket_cliente")
+            ticket_seleccionado = tickets_cliente[tickets_cliente["Número"] == ticket_id].iloc[-1]
+        
+        # Validación final
+        if ticket_seleccionado is not None:
+            if ticket_seleccionado['Estado'] == "cerrado":
+                st.error("❌ No se puede modificar un reclamo cerrado.")
             else:
-                nombre_cliente = st.selectbox("Seleccione el cliente:", df["Cliente"].dropna().unique())
-                tickets_cliente = df[(df["Cliente"] == nombre_cliente) & (df["Estado"] != "cerrado")]
-                if tickets_cliente.empty:
-                    st.info("Este cliente no tiene reclamos abiertos.")
-                else:
-                    ticket_id = st.selectbox("Seleccione el número de reclamo del cliente:", sorted(tickets_cliente["Número"].unique()), key="reclamo_por_cliente")
-                    
-            if st.form_submit_button("Buscar"):
-                ticket_encontrado = df[df['Número'] == ticket_id]
-
-                if not ticket_encontrado.empty:
-                    ticket = ticket_encontrado.iloc[-1]
-                    if ticket['Estado'] == "cerrado":
-                        st.error("No se puede modificar un reclamo cerrado")
-                    else:
-                        st.session_state.ticket_actual = ticket.to_dict()
-                else:
-                    st.error("Reclamo no encontrado")
+                st.success(f"✅ Reclamo #{ticket_id} seleccionado para modificación")
+                st.session_state.ticket_actual = ticket_seleccionado.to_dict()
         
         if 'ticket_actual' in st.session_state:
             st.subheader(f"✏️ Modificando Reclamo #{st.session_state.ticket_actual['Número']}")
