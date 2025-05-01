@@ -870,7 +870,7 @@ def portal_administracion():
     st.sidebar.title("Menú Admin")
     opciones = [
         "Inicio", 
-        "Gestión de Tickets", 
+        "Gestión de Reclamos y Tickets", 
         "Análisis", 
         "Descargar Datos"
     ]
@@ -890,8 +890,8 @@ def portal_administracion():
         Selecciona una opción del menú lateral para comenzar.
         """)
 
-    elif opcion == "Gestión de Tickets":
-        st.title("📋 Gestión de Tickets")
+    elif opcion == "Gestión de Reclamos y Tickets":
+        st.title("📋Gestión de Reclamos y Tickets")
         manejar_tickets()
         
 
