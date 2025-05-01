@@ -871,7 +871,7 @@ def portal_administracion():
     opciones = [
         "Inicio", 
         "Gestión de Reclamos y Tickets", 
-        "Análisis", 
+        "Ver Reclamos", 
         "Descargar Datos"
     ]
     
@@ -895,8 +895,8 @@ def portal_administracion():
         manejar_tickets()
         
 
-    elif opcion == "Análisis":
-        st.title("📈 Análisis de Datos")
+    elif opcion == "Ver Reclamos":
+        st.title("📈 Reclamos")
         visualizar_tickets()
 
     elif opcion == "Descargar Datos":
@@ -971,15 +971,32 @@ def visualizar_tickets():
             else:
                 tiempo_promedio = None
             st.metric("Tiempo Resolución Promedio", f"{tiempo_promedio:.1f} días" if tiempo_promedio is not None else "N/A")
-
-        # Filtros
-        st.subheader("Filtros")
-        area = st.selectbox("Área", ["Todas"] + list(df['Área'].unique()))
-        estado = st.selectbox("Estado", ["Todos"] + list(df['Estado'].unique()))
+                        
+        st.subheader("🔍 Filtros")
+        
+        # Evitar errores si columnas están vacías
+        areas = df['Área'].dropna().unique().tolist()
+        estados = df['Estado'].dropna().unique().tolist()
+        clientes = df['Cliente'].dropna().unique().tolist()
+        numeros = df['Número'].dropna().unique().tolist()
+        
+        cola, colb = st.columns(2)
+        with cola:
+            area = st.selectbox("Área", ["Todas"] + sorted(areas))
+            estado = st.selectbox("Estado", ["Todos"] + sorted(estados))
+        with colb:
+            nombre = st.selectbox("Cliente", ["Todos"] + sorted(clientes), key="filtro_cliente")
+            numero = st.selectbox("Número de Reclamo", ["Todos"] + sorted(map(str, numeros)), key="filtro_numero")
+        
+        # Aplicar filtros
         if area != "Todas":
             df = df[df['Área'] == area]
         if estado != "Todos":
             df = df[df['Estado'] == estado]
+        if nombre != "Todos":
+            df = df[df['Cliente'] == nombre]
+        if numero != "Todos":
+            df = df[df['Número'] == int(numero)]
 
         # Mostrar cada ticket
         for _, ticket in df.iterrows():
