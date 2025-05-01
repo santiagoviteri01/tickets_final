@@ -1207,7 +1207,8 @@ def manejar_tickets():
             ticket_id = None
             if metodo_busqueda == "Número de Reclamo":
                 ticket_id = st.number_input("Ingrese el número de reclamo:", min_value=1, step=1)
-           else:
+            
+            else:
                 nombre_cliente = st.selectbox("Seleccione el cliente:", df["Cliente"].dropna().unique())
                 tickets_cliente = df[(df["Cliente"] == nombre_cliente) & (df["Estado"] != "cerrado")]
                 if tickets_cliente.empty:
