@@ -180,7 +180,7 @@ def descargar_archivos_ticket(numero_ticket, nombre_cliente):
         file_name=nombre_zip,
         mime="application/zip"
     )
-def subir_y_mostrar_archivo(archivo, bucket_name, numero_ticket, hoja_adjuntos, usuario="admin"):
+def subir_y_mostrar_archivo(archivo, bucket_name, numero_ticket, hoja_adjuntos, usuario):
     import io
     import base64
 
@@ -211,7 +211,7 @@ def subir_y_mostrar_archivo(archivo, bucket_name, numero_ticket, hoja_adjuntos, 
     # ✅ Guardar en Google Sheets
     hoja_adjuntos.append_row([
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        f"{st.session_state.usuario_actual} ({usuario})",
+        usuario,
         numero_ticket,
         archivo.name,
         file_type,
@@ -596,7 +596,7 @@ def portal_cliente():
         with st.form("nuevo_reclamo"):
             titulo = st.text_input("Título del Reclamo*")
             descripcion = st.text_area("Descripción detallada*")
-            area = st.selectbox("Área*", ["Todas", "Vehicular", "Vida", "Salud"])
+            area = st.selectbox("Área*", ["CREDIPRIME","GENERALES"])
     
             st.subheader("Asistencia Adicional")
             necesita_grua = st.selectbox("¿Necesitas grúa?", ["No", "Sí"])
@@ -659,7 +659,7 @@ def portal_cliente():
                     ultimo_ticket = df['Número'].max() if not df.empty else 0
                     nuevo_numero = int(ultimo_ticket) + 1
     
-                    nuevo_ticket = {
+                    nuevo_reclamos = {
                         'Número': nuevo_numero,
                         'Título': titulo,
                         'Área': area,
@@ -677,11 +677,11 @@ def portal_cliente():
                         'Foto_URL': foto_url if foto_url else None
                     }
     
-                    nuevo_ticket_serializable = {k: str(v) for k, v in nuevo_ticket.items()}
-                    sheet.append_row(list(nuevo_ticket_serializable.values()))
+                    nuevo_reclamos_serializable = {k: str(v) for k, v in nuevo_reclamos.items()}
+                    sheet.append_row(list(nuevo_reclamos_serializable.values()))
     
                     st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente 🚀")
-        
+            
     with tab4:
         st.header("📎 Subir Archivos Adicionales a un Reclamo")
     
@@ -716,16 +716,15 @@ def portal_cliente():
                     extension = archivo.name.split('.')[-1]
                     unique_filename = f"adjuntos/{str(uuid.uuid4())}.{extension}"
     
-                    # Subir a S3
+                    archivo.seek(0)
                     s3.upload_fileobj(
                         archivo,
                         bucket_name,
                         unique_filename,
                         ExtraArgs={'ContentType': file_type, 'ACL': 'public-read'}
                     )
-                    archivo_url = f"https://{bucket_name}.s3.us-east-1.amazonaws.com/{unique_filename}"
+                    archivo_url = f"https://{bucket_name}.s3.amazonaws.com/{unique_filename}"
     
-                    # Guardar en hoja de Google Sheets
                     hoja_adjuntos.append_row([
                         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         st.session_state.usuario_actual,
@@ -735,7 +734,6 @@ def portal_cliente():
                         archivo_url
                     ])
     
-                    # Mostrar resultado
                     st.success(f"✅ Archivo `{archivo.name}` subido y vinculado al reclamo #{numero_reclamo}")
     
                     if file_type == "application/pdf":
@@ -1052,14 +1050,14 @@ def manejar_tickets():
     # 3) Radio controlada por session_state
     opcion_ticket = st.radio(
         "Seleccione una acción:",
-        ["Ver tickets en cola", "Crear nuevo ticket", "Modificar ticket existente", "Subir documentación a ticket"]
+        ["Ver reclamos en cola", "Registrar nuevo reclamo", "Modificar reclamo existente", "Subir documentación a reclamo"]
     )
     
-    if opcion_ticket == "Ver tickets en cola":
+    if opcion_ticket == "Ver reclamos en cola":
         
-        st.subheader("🔍 Ver tickets en cola")
+        st.subheader("🔍 Ver reclamos en cola")
         if df.empty:
-            st.warning("No se encontraron tickets")
+            st.warning("No se encontraron reclamos")
             return
 
         ultimos = (df.sort_values('Fecha_Modificacion')
@@ -1070,10 +1068,10 @@ def manejar_tickets():
                       (ultimos['Estado'] != 'cerrado')]
 
         if cola.empty:
-            st.info("No hay tickets pendientes de clientes")
+            st.info("No hay reclamos pendientes de clientes")
             return
 
-        st.metric("Tickets Pendientes", len(cola))
+        st.metric("Reclamos Pendientes", len(cola))
         st.dataframe(
             cola[['Número','Título','Cliente','Estado','Fecha_Modificacion']]
             .sort_values('Fecha_Modificacion', ascending=False),
@@ -1096,13 +1094,13 @@ def manejar_tickets():
             # 3) Botón de tomar
             if st.button(f"Tomar Ticket #{selected}"):
                 st.session_state.ticket_actual = ticket
-                st.session_state.opcion_ticket = "Modificar ticket existente"
-                st.success(f"✅ Ticket #{selected} asignado para gestión") 
+                st.session_state.opcion_ticket = "Modificar reclamo existente"
+                st.success(f"✅ Reclamo #{selected} asignado para gestión") 
         else:
             st.info("Selecciona un número válido de la tabla anterior")
-    elif opcion_ticket == "Crear nuevo ticket":
-        with st.form("nuevo_ticket"):
-            st.subheader("📝 Crear nuevo ticket con datos del asegurado")
+    elif opcion_ticket == "Registrar nuevo reclamo":
+        with st.form("nuevo_reclamos"):
+            st.subheader("📝 Crear nuevo reclamo con datos del asegurado")
     
             # Paso 1: Buscar cliente por cédula o póliza
             asegurados_data = asegurados_df.copy()
@@ -1138,8 +1136,8 @@ def manejar_tickets():
                 st.stop()
     
             # Paso 4: Datos del ticket
-            titulo = st.text_input("Título del Ticket*")
-            area = st.selectbox("Área*", ["crediprime", "generales"])
+            titulo = st.text_input("Título del Reclamo*")
+            area = st.selectbox("Área*", ["CREDIPRIME", "GENERALES"])
             estado = st.selectbox("Estado*", ["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion"])
             descripcion = st.text_area("Descripción detallada*")
             ciudad_ocurrencia = st.text_input("Ciudad donde ocurrió el siniestro*")
@@ -1153,20 +1151,20 @@ def manejar_tickets():
             necesita_grua = st.selectbox("¿Necesita grúa?", ["No", "Sí"])
             asistencia_legal = st.selectbox("¿Requiere asistencia legal?", ["No", "Sí"])
     
-            if st.form_submit_button("Guardar Ticket"):
-                fecha_creacion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            if st.form_submit_button("Guardar Reclamo"):
+                fecha_modificacion= datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 ultimo_ticket = df["Número"].max() if not df.empty else 0
                 nuevo_numero = int(ultimo_ticket) + 1
     
-                nuevo_ticket = {
+                nuevo_reclamos = {
                     'Número': nuevo_numero,
                     'Título': titulo,
                     'Área': area,
                     'Estado': estado,
                     'Descripción': descripcion,
-                    'Fecha_Creación': fecha_creacion,
+                    'Fecha_Creación': fecha_modificacion,
                     'Usuario_Creación': st.session_state.usuario_actual,
-                    'Fecha_Modificacion': fecha_creacion,
+                    'Fecha_Modificacion': fecha_modificacion,
                     'Usuario_Modificacion': st.session_state.usuario_actual,
                     'Tiempo_Cambio': '0d',
                     'Cliente': cliente,
@@ -1192,34 +1190,45 @@ def manejar_tickets():
                     'Foto_URL': None
                 }
     
-                nuevo_ticket_serializable = {k: str(v) for k, v in nuevo_ticket.items()}
+                nuevo_reclamos_serializable = {k: str(v) for k, v in nuevo_reclamos.items()}
     
-                sheet.append_row(list(nuevo_ticket_serializable.values()))
+                sheet.append_row(list(nuevo_reclamos_serializable.values()))
                 st.success(f"✅ Ticket #{nuevo_numero} registrado correctamente.")
                 st.session_state.recargar_tickets = True
                 st.rerun()
 
 
 
-    elif opcion_ticket == "Modificar ticket existente":
+    elif opcion_ticket == "Modificar reclamo existente":
         with st.form("buscar_ticket"):
-            st.subheader("🔍 Buscar Ticket")
-            ticket_id = st.number_input("Ingrese el número de ticket:", min_value=1, step=1)
-
+            st.subheader("🔍 Buscar Reclamo")
+            ticket_id = st.number_input("Ingrese el número de reclamo:", min_value=1, step=1)
+            metodo_busqueda = st.radio("Buscar por:", ["Número de Reclamo", "Nombre del Cliente"])
+            ticket_id = None
+            if metodo_busqueda == "Número de Reclamo":
+                ticket_id = st.number_input("Ingrese el número de reclamo:", min_value=1, step=1)
+           else:
+                nombre_cliente = st.selectbox("Seleccione el cliente:", df["Cliente"].dropna().unique())
+                tickets_cliente = df[(df["Cliente"] == nombre_cliente) & (df["Estado"] != "cerrado")]
+                if tickets_cliente.empty:
+                    st.info("Este cliente no tiene reclamos abiertos.")
+                else:
+                    ticket_id = st.selectbox("Seleccione el número de reclamo del cliente:", sorted(tickets_cliente["Número"].unique()))
+                    
             if st.form_submit_button("Buscar"):
                 ticket_encontrado = df[df['Número'] == ticket_id]
 
                 if not ticket_encontrado.empty:
                     ticket = ticket_encontrado.iloc[-1]
                     if ticket['Estado'] == "cerrado":
-                        st.error("No se puede modificar un ticket cerrado")
+                        st.error("No se puede modificar un reclamo cerrado")
                     else:
                         st.session_state.ticket_actual = ticket.to_dict()
                 else:
-                    st.error("Ticket no encontrado")
+                    st.error("Reclamo no encontrado")
         
         if 'ticket_actual' in st.session_state:
-            st.subheader(f"✏️ Modificando Ticket #{st.session_state.ticket_actual['Número']}")
+            st.subheader(f"✏️ Modificando Reclamo #{st.session_state.ticket_actual['Número']}")
         
             # Paso 1: Selección de estado y descripción (dentro del formulario)
             with st.form("seleccion_estado_form"):
@@ -1309,20 +1318,20 @@ def manejar_tickets():
                         del st.session_state.descripcion_modificada
                         st.rerun()
                     
-    elif opcion_ticket == "Subir documentación a ticket":
-        st.subheader("📎 Subir documentación a un ticket existente")
+    elif opcion_ticket == "Subir documentación a reclamo":
+        st.subheader("📎 Subir documentación a un reclamo existente")
     
         tickets_df = cargar_tickets()
         if tickets_df.empty:
-            st.warning("No hay tickets disponibles.")
+            st.warning("No hay reclamos disponibles.")
             return
     
         # Opciones de búsqueda
-        busqueda_tipo = st.radio("Buscar por:", ["Número de Ticket", "Nombre del Cliente"])
+        busqueda_tipo = st.radio("Buscar por:", ["Número de Reclamo", "Nombre del Cliente"])
     
-        if busqueda_tipo == "Número de Ticket":
+        if busqueda_tipo == "Número de Reclamo":
             ticket_ids = tickets_df["Número"].unique().tolist()
-            numero_ticket = st.selectbox("Selecciona el número de ticket:", sorted(ticket_ids))
+            numero_ticket = st.selectbox("Selecciona el número de reclamo:", sorted(ticket_ids))
             ticket_seleccionado = tickets_df[tickets_df["Número"] == numero_ticket].iloc[-1]
         else:
             nombres = tickets_df["Cliente"].dropna().unique().tolist()
@@ -1332,7 +1341,7 @@ def manejar_tickets():
             numero_ticket = st.selectbox("Selecciona el número de ticket del cliente:", sorted(ticket_ids))
             ticket_seleccionado = tickets_cliente[tickets_cliente["Número"] == numero_ticket].iloc[-1]
     
-        st.info(f"📄 Ticket seleccionado: #{numero_ticket} — Cliente: {ticket_seleccionado['Cliente']}")
+        st.info(f"📄 Reclamo seleccionado: #{numero_ticket} — Cliente: {ticket_seleccionado['Cliente']}")
     
         archivos = st.file_uploader(
             "📤 Selecciona uno o más archivos (PDF o imagen)",
@@ -1358,10 +1367,10 @@ def manejar_tickets():
                     bucket_name=bucket_name,
                     numero_ticket=numero_ticket,
                     hoja_adjuntos=hoja_adjuntos,
-                    usuario="admin"  # o "cliente" si estás en el portal del cliente
+                    ticket_seleccionado['Cliente']
                 )
          
-        if st.button("📥 Descargar todos los archivos del ticket"):
+        if st.button("📥 Descargar todos los archivos del reclamo"):
             import zipfile
             import requests
     
