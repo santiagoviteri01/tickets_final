@@ -115,18 +115,6 @@ for _, row in asegurados_df.iterrows():
         "rol": "cliente"
     }
     
-#@st.cache_data(ttl=300)   
-#def cargar_datos():
-#    try:
-#        # Convertir los datos de la hoja a un DataFrame
-#        data = sheet.get_all_records()  # Obtiene todos los registros (como una lista de diccionarios)
-#        df = pd.DataFrame(data)  # Convertirlo en un DataFrame de pandas
-#        
-#        # Mostrar el DataFrame
-#        return df
-#    except Exception as e:
-#        st.error(f"Error cargando datos: {str(e)}")
-#        return pd.DataFrame()
 
 @st.cache_data(ttl=300) 
 def cargar_datos():
@@ -144,6 +132,20 @@ def cargar_datos():
                                      'Fecha_Creación','Usuario_Creación','Fecha_Modificacion',
                                      'Usuario_Modificacion','Tiempo_Cambio','Cliente',
                                      'Grua','Asistencia_Legal','Ubicacion','Foto_URL'])
+
+def cargar_datos_dashboard_desde_sheets():
+    # Asegúrate de que ya tengas una variable global `spreadsheet` definida con gspread
+    hoja_pagados = spreadsheet.worksheet("pagados")
+    hoja_pendientes = spreadsheet.worksheet("pendientes")
+    hoja_asegurados = spreadsheet.worksheet("aseguradosfiltrados")
+    # Convertir a DataFrame
+    df_pagados = pd.DataFrame(hoja_pagados.get_all_records())
+    df_pendientes = pd.DataFrame(hoja_pendientes.get_all_records())
+    df_asegurados = pd.DataFrame(hoja_asegurados.get_all_records())
+
+    return df_pagados, df_pendientes, df_asegurados
+
+df_pagados, df_pendientes, df_asegurados = cargar_datos_dashboard_desde_sheets()
 
 
 def descargar_archivos_ticket(numero_ticket, nombre_cliente):
@@ -889,7 +891,7 @@ def portal_administracion():
         **Bienvenido al panel de administración**
         Selecciona una opción del menú lateral para comenzar.
         """)
-        mostrar_dashboard_analisis()
+        mostrar_dashboard_analisis(df_pagados, df_pendientes, df_asegurados)
 
     elif opcion == "Gestión de Reclamos y Tickets":
         st.title("📋Gestión de Reclamos y Tickets")
