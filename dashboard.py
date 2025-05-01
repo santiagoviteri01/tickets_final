@@ -6,7 +6,6 @@ import seaborn as sns
 from datetime import datetime
 
 # Configuración inicial
-st.set_page_config(page_title="Dashboard de Seguros", layout="wide")
 def mostrar_dashboard_analisis():
 # Título principal
     st.title('📊 Dashboard de Análisis de Seguros')
