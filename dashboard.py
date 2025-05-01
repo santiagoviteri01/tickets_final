@@ -573,10 +573,9 @@ def mostrar_dashboard_analisis(pagados,pendientes,asegurados):
             with col13:
                 st.subheader("Tiempo de Resolución")
                 if 'FECHA DE SINIESTRO' in pendientes_filtrados.columns:
-                    pendientes_filtrados['DIAS PENDIENTES'] = (pd.to_datetime('today') - pd.to_datetime(pendientes_filtrados['FECHA DE SINIESTRO'])).dt.days
+                    pendientes_filtrados['DIAS PENDIENTES'] = (pd.to_datetime('today') - pd.to_datetime(pendientes_filtrados['FECHA DE SINIESTRO'], dayfirst=True, errors='coerce')).dt.days
                     avg_dias = pendientes_filtrados['DIAS PENDIENTES'].mean().round(1)
                     st.metric("Días promedio pendientes", f"{avg_dias} días")
-                    
                     fig = plt.figure(figsize=(10, 4))
                     sns.histplot(pendientes_filtrados['DIAS PENDIENTES'], bins=20, kde=True)
                     plt.title('Distribución de Días Pendientes')
