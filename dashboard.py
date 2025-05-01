@@ -8,7 +8,9 @@ from datetime import datetime
 # Configuración inicial
 def mostrar_dashboard_analisis():
 # Título principal
+# Título principal
     st.title('📊 Dashboard de Análisis de Seguros')
+    
     # Función para cargar datos
     def cargar_datos(uploaded_file_reclamos, uploaded_file_asegurados):
         try:
@@ -35,7 +37,7 @@ def mostrar_dashboard_analisis():
             # Procesamiento de datos de asegurados
             asegurados['FECHA'] = pd.to_datetime(asegurados['FECHA'])
             asegurados['MES'] = asegurados['FECHA'].dt.month
-            asegurados['MES_NOMBRE'] = asegurados['FECHA'].dt.month_name(locale='Spanish')
+            asegurados['MES_NOMBRE'] = asegurados['FECHA'].dt.month_name()
             asegurados['AÑO'] = asegurados['FECHA'].dt.year
             
             # Orden de meses y configuración temporal
@@ -250,6 +252,87 @@ def mostrar_dashboard_analisis():
                 # Mostrar los gráficos en Streamlit
                 st.pyplot(fig)
     
+                # # Sección de Evolución por Años (gráficos paralelos)
+                # col_evol1, col_evol2 = st.columns(2)
+    
+                # with col_evol1:
+                #    # Gráfico de Evolución de Primas
+                #    st.markdown("**Evolución de Primas**")
+        
+                #    # Preparar datos
+                #    evol_prima = df_filtrado.pivot_table(
+                #       values='PRIMA TOTAL VEHÍCULOS',
+                #       index='MES',
+                #       columns='AÑO',
+                #       aggfunc='sum'
+                #    ).fillna(0).reindex(range(1,13))
+        
+                #    # Crear gráfico
+                #    fig_prima, ax_prima = plt.subplots(figsize=(10,5))
+        
+                #    if tipo_grafico == "Líneas":
+                #       for año in evol_prima.columns:
+                #          ax_prima.plot(evol_prima.index, evol_prima[año], 
+                #                      marker='o', label=str(año))
+                #    else:
+                #       ancho = 0.8 / len(evol_prima.columns)
+                #       desplazamiento = np.arange(1,13) - (0.4 - ancho/2)
+            
+                #       for i, año in enumerate(evol_prima.columns):
+                #          ax_prima.bar(desplazamiento + i*ancho, 
+                #                      evol_prima[año], 
+                #                      width=ancho,
+                #                      label=str(año))
+        
+                #    ax_prima.set_title('Evolución de Primas por Mes')
+                #    ax_prima.set_xticks(range(1,13))
+                #    ax_prima.set_xticklabels(meses_orden, rotation=45)
+                #    ax_prima.legend(title="Año")
+                #    ax_prima.grid(True, linestyle='--', alpha=0.7)
+                #    ax_prima.set_ylabel("Prima Total ($)")
+        
+                #    st.pyplot(fig_prima)
+    
+                # with col_evol2:
+                #    # Gráfico de Evolución de Suma Asegurada
+                #    st.markdown("**Evolución de Suma Asegurada**")
+        
+                #    # Preparar datos
+                #    evol_suma = df_filtrado.pivot_table(
+                #       values='VALOR ASEGURADO',
+                #       index='MES',
+                #       columns='AÑO',
+                #       aggfunc='sum'
+                #    ).fillna(0).reindex(range(1,13))
+        
+                #    # Crear gráfico
+                #    fig_suma, ax_suma = plt.subplots(figsize=(10,5))
+        
+                #    if tipo_grafico == "Líneas":
+                #       for año in evol_suma.columns:
+                #          ax_suma.plot(evol_suma.index, evol_suma[año], 
+                #                      marker='o', label=str(año),
+                #                      color='teal' if año == años_sel[0] else 'salmon')
+                #    else:
+                #       ancho = 0.8 / len(evol_suma.columns)
+                #       desplazamiento = np.arange(1,13) - (0.4 - ancho/2)
+            
+                #       for i, año in enumerate(evol_suma.columns):
+                #          ax_suma.bar(desplazamiento + i*ancho, 
+                #                     evol_suma[año], 
+                #                     width=ancho,
+                #                     label=str(año),
+                #                     color='teal' if i % 2 == 0 else 'salmon')
+        
+                #    ax_suma.set_title('Evolución de Suma Asegurada por Mes')
+                #    ax_suma.set_xticks(range(1,13))
+                #    ax_suma.set_xticklabels(meses_orden, rotation=45)
+                #    ax_suma.legend(title="Año")
+                #    ax_suma.grid(True, linestyle='--', alpha=0.7)
+                #    ax_suma.set_ylabel("Suma Asegurada ($)")
+        
+                #    st.pyplot(fig_suma)
+    
                 # Tabla detallada
                 st.subheader("Detalle por Mes")
                 tabla_detalle = df_temporal.copy()
@@ -400,17 +483,32 @@ def mostrar_dashboard_analisis():
                 
                 # Convertir y ordenar meses
                 pagos_aseguradora_data['FECHA SINIESTRO'] = pd.to_datetime(pagos_aseguradora_data['FECHA SINIESTRO'])
-                pagos_aseguradora_data['MES'] = pagos_aseguradora_data['FECHA SINIESTRO'].dt.month_name(locale='Spanish')
-                pagos_aseguradora_data['MES'] = pd.Categorical(pagos_aseguradora_data['MES'], categories=orden_meses, ordered=True)
+                pagos_aseguradora_data['MES'] = pagos_aseguradora_data['FECHA SINIESTRO'].dt.month
+                #pagos_aseguradora_data['MES'] = pd.Categorical(pagos_aseguradora_data['MES'], categories=orden_meses, ordered=True)
                 
-                # Gráfico de barras ordenado
-                fig, ax = plt.subplots(figsize=(10, 5))
-                pagos_aseguradora_data['MES'].value_counts().sort_index().plot(kind='bar', color='skyblue', ax=ax)
-                plt.title('Reclamos por Mes (Orden Cronológico)')
-                plt.xlabel('Mes')
-                plt.ylabel('Cantidad')
-                plt.xticks(rotation=45)
-                st.pyplot(fig)
+                # Crear el gráfico con Seaborn (más control)
+                plt.figure(figsize=(12, 6))
+                ax = sns.countplot(
+                    data=pagos_aseguradora_data,
+                    x='MES',
+                    palette='viridis'
+                )
+                
+                # Personalización
+                plt.title('Reclamos por Mes (Orden Cronológico) 🗓️', fontsize=14, fontweight='bold')
+                plt.xlabel('Mes', fontsize=12)
+                plt.ylabel('Cantidad de Reclamos', fontsize=12)
+                plt.xticks(rotation=45, ha='right')
+                
+                # Añadir etiquetas de valores
+                for p in ax.patches:
+                    ax.annotate(
+                        f'{int(p.get_height())}', 
+                        (p.get_x() + p.get_width() / 2., p.get_height()),
+                        ha='center', va='center', xytext=(0, 5), textcoords='offset points'
+                    )
+                
+                st.pyplot(plt.gcf())
     
                 # Sección 3: Análisis de valores
                 st.header("💰 Análisis de Valores")
@@ -654,13 +752,24 @@ def mostrar_dashboard_analisis():
                     st.write(pendientes_estado)
     
                     nombre_archivo = f"Reporte_Retorno_{año_analisis}.xlsx"
-                    with pd.ExcelWriter(nombre_archivo) as writer:
+                    output = io.BytesIO()
+                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                         resumen_mes.to_excel(writer, sheet_name='Resumen Mes')
                         talleres.to_excel(writer, sheet_name='Talleres')
                         causas.to_excel(writer, sheet_name='Causas')
                         pendientes_estado.to_excel(writer, sheet_name='Pendientes')
-            
-                    st.success(f"Reporte {año_analisis} generado: {nombre_archivo}")
+                
+                    output.seek(0)  # Muy importante: volver al inicio del archivo para descargarlo
+                
+                    st.success(f"Reporte {año_analisis} generado.")
+                
+                    # Ahora sí: ofrecer el botón de descarga
+                    st.download_button(
+                        label="Descargar Reporte",
+                        data=output,
+                        file_name=f"Reporte_Retorno_{año_analisis}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
             with tab3:
                 # --- ANÁLISIS DE SINIESTRALIDAD ---
                 st.header("📉 Siniestralidad Mensual por Aseguradora")
@@ -848,6 +957,8 @@ def mostrar_dashboard_analisis():
     
         else:
             st.info("Por favor sube el archivo Excel para comenzar el análisis")
+            
+    
     # Notas finales
     st.sidebar.markdown("---")
     st.sidebar.info("""
@@ -856,6 +967,3 @@ def mostrar_dashboard_analisis():
     - Rangos en dólares estadounidenses ($)
     - Filtros aplicables a través de la barra lateral
     """)
-        
-
-
