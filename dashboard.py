@@ -848,13 +848,14 @@ def mostrar_dashboard_analisis():
     
         else:
             st.info("Por favor sube el archivo Excel para comenzar el análisis")
+    # Notas finales
+    st.sidebar.markdown("---")
+    st.sidebar.info("""
+    **Notas:**  
+    - Los datos se actualizan al cargar nuevos archivos
+    - Rangos en dólares estadounidenses ($)
+    - Filtros aplicables a través de la barra lateral
+    """)
         
 
-# Notas finales
-st.sidebar.markdown("---")
-st.sidebar.info("""
-**Notas:**  
-- Los datos se actualizan al cargar nuevos archivos
-- Rangos en dólares estadounidenses ($)
-- Filtros aplicables a través de la barra lateral
-""")
+
