@@ -1363,13 +1363,7 @@ def manejar_tickets():
             hoja_adjuntos = spreadsheet.worksheet("archivos_adjuntos")
             bucket_name = 'insurapp-fotos'
             for archivo in archivos:
-                subir_y_mostrar_archivo(
-                    archivo=archivo,
-                    bucket_name=bucket_name,
-                    numero_ticket=numero_ticket,
-                    hoja_adjuntos=hoja_adjuntos,
-                    ticket_seleccionado['Cliente']
-                )
+                subir_y_mostrar_archivo(archivo=archivo, bucket_name=bucket_name, numero_ticket=numero_ticket, hoja_adjuntos=hoja_adjuntos, ticket_seleccionado['Cliente'])
          
         if st.button("📥 Descargar todos los archivos del reclamo"):
             import zipfile
