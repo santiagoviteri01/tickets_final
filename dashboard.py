@@ -10,7 +10,7 @@ def mostrar_dashboard_analisis(pagados,pendientes,asegurados):
     st.title('📊 Dashboard de Análisis de Seguros')
     if pagados is not None and pendientes is not None and asegurados is not None:
         # Procesamiento de datos de asegurados
-        asegurados['FECHA'] = pd.to_datetime(asegurados['FECHA'])
+        asegurados['FECHA'] = pd.to_datetime(asegurados['FECHA'], dayfirst=True, errors='coerce')
         asegurados['MES'] = asegurados['FECHA'].dt.month
         asegurados['MES_NOMBRE'] = asegurados['FECHA'].dt.month_name()
         asegurados['AÑO'] = asegurados['FECHA'].dt.year
