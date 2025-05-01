@@ -20,7 +20,7 @@ from streamlit_js_eval import streamlit_js_eval
 import folium
 from geopy.geocoders import Nominatim
 import io
-
+from dashboard import mostrar_dashboard_analisis
 
 st.set_page_config(
     page_title="Insurapp",
@@ -889,6 +889,7 @@ def portal_administracion():
         **Bienvenido al panel de administración**
         Selecciona una opción del menú lateral para comenzar.
         """)
+        mostrar_dashboard_analisis()
 
     elif opcion == "Gestión de Reclamos y Tickets":
         st.title("📋Gestión de Reclamos y Tickets")
