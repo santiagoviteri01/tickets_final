@@ -1202,7 +1202,6 @@ def manejar_tickets():
     elif opcion_ticket == "Modificar reclamo existente":
         with st.form("buscar_ticket"):
             st.subheader("🔍 Buscar Reclamo")
-            ticket_id = st.number_input("Ingrese el número de reclamo:", min_value=1, step=1)
             metodo_busqueda = st.radio("Buscar por:", ["Número de Reclamo", "Nombre del Cliente"])
             ticket_id = None
             if metodo_busqueda == "Número de Reclamo":
@@ -1214,7 +1213,7 @@ def manejar_tickets():
                 if tickets_cliente.empty:
                     st.info("Este cliente no tiene reclamos abiertos.")
                 else:
-                    ticket_id = st.selectbox("Seleccione el número de reclamo del cliente:", sorted(tickets_cliente["Número"].unique()))
+                    ticket_id = st.selectbox("Seleccione el número de reclamo del cliente:", sorted(tickets_cliente["Número"].unique()), key="reclamo_por_cliente")
                     
             if st.form_submit_button("Buscar"):
                 ticket_encontrado = df[df['Número'] == ticket_id]
