@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+matplotlib.use("Agg")  # Esto debe ir antes de importar pyplot
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
