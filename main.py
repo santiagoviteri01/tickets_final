@@ -99,11 +99,11 @@ USUARIOS = {
     "santiagoviteri": {"password": "insuratlan2", "rol": "admin"},
 }
 asegurados = spreadsheet.worksheet("asegurados")
-tallers = spreadsheet.worksheet("talleres")
+talleres = spreadsheet.worksheet("talleres")
 asegurados = asegurados.get_all_records()
 asegurados_df = pd.DataFrame(asegurados)
-tallers=talleres.get_all_records()
-talleres_df = pd.DataFrame(tallers)
+talleres=talleres.get_all_records()
+talleres_df = pd.DataFrame(talleres)
 
 
 for _, row in asegurados_df.iterrows():
