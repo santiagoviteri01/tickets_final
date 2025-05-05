@@ -1322,20 +1322,35 @@ def manejar_tickets():
                         'Fecha_Modificacion': fecha_modificacion.strftime('%Y-%m-%d %H:%M:%S'),
                         'Usuario_Modificacion': st.session_state.usuario_actual,
                         'Tiempo_Cambio': registro_dias,
-                        'Cliente': ticket_actual['Cliente'],
-                        'Grua': ticket_actual.get('Grua'),
-                        'Asistencia_Legal': ticket_actual.get('Asistencia_Legal'),
-                        'Ubicacion': ticket_actual.get('Ubicacion'),
-                        'Foto_URL': ticket_actual.get('Foto_URL'),
+                        'Cliente': ticket_actual.get('Cliente'),
+                        'Cedula': ticket_actual.get('Cedula'),
+                        'CONCESIONARIO': ticket_actual.get('CONCESIONARIO'),
+                        'ID_LIDERSEG': ticket_actual.get('ID_LIDERSEG'),
+                        'ASEGURADORA': ticket_actual.get('ASEGURADORA'),
+                        'CIUDAD OCURRENCIA': ticket_actual.get('CIUDAD OCURRENCIA'),
+                        'MARCA': ticket_actual.get('MARCA'),
+                        'MODELO': ticket_actual.get('MODELO'),
+                        'AÑO': ticket_actual.get('AÑO'),
+                        'PLACA': ticket_actual.get('PLACA'),
+                        'fecha_ocurrecia': ticket_actual.get('fecha_ocurrecia'),
+                        'SUMA ASEGURADA': ticket_actual.get('SUMA ASEGURADA'),
                         'VALOR SINIESTRO': valor_siniestro,
                         'DEDUCIBLE': deducible,
                         'CAUSA': causa,
                         'RASA': rasa,
                         'LIQUIDACION': liquidacion,
+                        'Necesita Grua': ticket_actual.get('Necesita Grua'),
+                        'Asistencia Legal': ticket_actual.get('Asistencia Legal'),
+                        'Grua': ticket_actual.get('Grua'),
+                        'Asistencia_Legal': ticket_actual.get('Asistencia_Legal'),
+                        'Ubicacion': ticket_actual.get('Ubicacion'),
+                        'Foto_URL': ticket_actual.get('Foto_URL')
                     }
-        
+                    
+                    # Asegurar compatibilidad de tipos
                     ticket_actualizado_serializable = {
-                        k: int(v) if isinstance(v, (int, float)) else v for k, v in ticket_actualizado.items()
+                        k: (int(v) if isinstance(v, float) and v.is_integer() else v)
+                        for k, v in ticket_actualizado.items()
                     }
         
                     with st.spinner("Actualizando ticket..."):
