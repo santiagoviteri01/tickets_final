@@ -98,12 +98,13 @@ USUARIOS = {
     "mauriciodavila": {"password": "insuratlan1", "rol": "admin"},
     "santiagoviteri": {"password": "insuratlan2", "rol": "admin"},
 }
-asegurados = spreadsheet.worksheet("asegurados")
-talleres = spreadsheet.worksheet("talleres")
-asegurados = asegurados.get_all_records()
-asegurados_df = pd.DataFrame(asegurados)
-talleres=talleres.get_all_records()
-talleres_df = pd.DataFrame(talleres)
+# Mantienes el acceso al worksheet
+talleres_ws = spreadsheet.worksheet("talleres")
+asegurados_ws = spreadsheet.worksheet("asegurados")
+
+# Cargar los datos como DataFrame
+asegurados_df = pd.DataFrame(asegurados_ws.get_all_records())
+talleres_df = pd.DataFrame(talleres_ws.get_all_records())
 
 
 for _, row in asegurados_df.iterrows():
@@ -1146,7 +1147,7 @@ def manejar_tickets():
                 if nuevo_taller and nuevo_taller not in talleres_unicos:
                     if st.button("Guardar nuevo taller"):
                         # Guardar nuevo taller en la hoja
-                        talleres.append_row([nuevo_taller])  # Asegúrate que la hoja tiene solo una columna o esta es la primera
+                        talleres_ws.append_row([nuevo_taller])  # Asegúrate que la hoja tiene solo una columna o esta es la primera
                         st.success(f"✅ Taller '{nuevo_taller}' guardado exitosamente.")
                         taller_seleccionado = nuevo_taller
                     else:
@@ -1311,9 +1312,6 @@ def manejar_tickets():
                 lista_causas = ["ROBO", "ROBO PARCIAL", "PERDIDA TOTAL", "PERDIDA PARCIAL"]
                 causa = st.selectbox("Causa del siniestro:", lista_causas, index=lista_causas.index(ticket_actual.get("CAUSA")))
 
-                # === Obtener talleres desde Google Sheets ===
-                tallers = talleres.get_all_records()
-                talleres_df = pd.DataFrame(tallers)
                 
                 if "Taller" in talleres_df.columns:
                     talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
@@ -1329,7 +1327,7 @@ def manejar_tickets():
                     nuevo_taller = st.text_input("Escribe el nombre del nuevo taller")
                     if nuevo_taller and nuevo_taller not in talleres_unicos:
                         if st.button("Guardar nuevo taller"):
-                            talleres.append_row([nuevo_taller])
+                            talleres_ws.append_row([nuevo_taller])
                             st.success(f"Taller '{nuevo_taller}' guardado exitosamente.")
                             taller_seleccionado = nuevo_taller
                         else:
