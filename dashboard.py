@@ -127,20 +127,100 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
 
 
     with tab2:
-        st.sidebar.header("📁 Reclamos")
-        pagados['MES'] = pd.to_datetime(pagados['FECHA SINIESTRO'], errors='coerce').dt.month
-
-        if st.sidebar.checkbox("Distribución por Mes", True):
-            reclamos_mes = pagados['MES'].value_counts().sort_index()
-            st.bar_chart(reclamos_mes)
-
-        if st.sidebar.checkbox("Distribución por Aseguradora", False):
-            resumen = pagados.groupby('COMPAÑÍA')['VALOR RECLAMO'].sum()
-            st.bar_chart(resumen)
-
-        if st.sidebar.checkbox("Estados Pendientes", False):
-            pendientes_estados = pendientes['ESTADO ACTUAL'].value_counts()
-            st.bar_chart(pendientes_estados)
+        orden_meses = meses_orden
+    
+        resumen_aseguradoras_total = pagados.groupby('COMPAÑÍA').agg(
+            Media_Reclamo=('VALOR RECLAMO', 'mean'),
+            Mediana_Reclamo=('VALOR RECLAMO', 'median'),
+            Total_Reclamo=('VALOR RECLAMO', 'sum'),
+            Media_Deducible=('DEDUCIBLE', 'mean')
+        ).round(2)
+    
+        with st.sidebar:
+            st.header("Configuración del Análisis")
+            año_analisis = st.selectbox("Seleccionar Año", [2024, 2025], key="año_reclamos")
+            top_n = st.slider("Top N Marcas", 3, 10, 5, key="top_n")
+            bins_hist = st.slider("Bins para Histograma", 10, 100, 30, key="bins_hist")
+            if len(resumen_aseguradoras_total) >= 1:
+                aseguradoras_seleccionadas = st.multiselect(
+                    "Selecciona las aseguradoras para comparar",
+                    options=resumen_aseguradoras_total.index.tolist(),
+                    default=resumen_aseguradoras_total.index.tolist()[:2]
+                )
+    
+        pagados_filtrados = pagados[pagados['BASE'] == año_analisis].reset_index(drop=True)
+        pendientes_filtrados = pendientes[pendientes['BASE'] == año_analisis].reset_index(drop=True)
+    
+        pagos_aseguradora_data = pagados_filtrados[pagados_filtrados['COMPAÑÍA'].isin(aseguradoras_seleccionadas)]
+        pendientes_aseguradora_data = pendientes_filtrados[pendientes_filtrados['CIA. DE SEGUROS'].isin(aseguradoras_seleccionadas)]
+    
+        with st.expander("📁 Datos Generales"):
+            st.subheader("Reclamos Pagados")
+            st.dataframe(pagos_aseguradora_data[['COMPAÑÍA', 'VALOR RECLAMO', 'FECHA SINIESTRO', 'EVENTO']].head(3), use_container_width=True)
+    
+            st.subheader("Reclamos Pendientes")
+            st.dataframe(pendientes_aseguradora_data[['CIA. DE SEGUROS', 'VALOR SINIESTRO', 'FECHA DE SINIESTRO', 'ESTADO ACTUAL']].head(3), use_container_width=True)
+    
+        st.header("📅 Distribución Temporal")
+        pagos_aseguradora_data['FECHA SINIESTRO'] = pd.to_datetime(pagos_aseguradora_data['FECHA SINIESTRO'])
+        pagos_aseguradora_data['MES'] = pagos_aseguradora_data['FECHA SINIESTRO'].dt.month
+        fig, ax = plt.subplots(figsize=(10, 5))
+        sns.countplot(data=pagos_aseguradora_data, x='MES', palette='viridis', ax=ax)
+        ax.set_xticks(range(0, 12))
+        ax.set_xticklabels(meses_orden, rotation=45)
+        ax.set_title('Reclamos por Mes')
+        st.pyplot(fig)
+    
+        st.header("💰 Análisis de Valores")
+        grafico_valores = st.radio("Elegir gráfico de análisis de valores", ["Histograma", "Boxplot", "Por Rangos"], horizontal=True)
+        if grafico_valores == "Histograma":
+            fig = plt.figure(figsize=(10, 4))
+            sns.histplot(pagos_aseguradora_data['VALOR RECLAMO'], bins=bins_hist, kde=True)
+            st.pyplot(fig)
+        elif grafico_valores == "Boxplot":
+            fig = plt.figure(figsize=(10, 4))
+            sns.boxplot(x=pagos_aseguradora_data['VALOR RECLAMO'], color='lightgreen')
+            st.pyplot(fig)
+        elif grafico_valores == "Por Rangos":
+            max_val = int(pagos_aseguradora_data['VALOR RECLAMO'].max())
+            bin_size = st.slider("Tamaño del bin ($)", 500, max_val, 500, step=500)
+            bins = list(range(0, max_val + bin_size, bin_size))
+            labels = [f"{bins[i]}-{bins[i+1]}" for i in range(len(bins)-1)]
+            pagos_aseguradora_data['Rango'] = pd.cut(pagos_aseguradora_data['VALOR RECLAMO'], bins=bins, labels=labels, right=False)
+            fig, ax = plt.subplots(figsize=(10, 5))
+            sns.countplot(y='Rango', data=pagos_aseguradora_data, order=labels, color='salmon', ax=ax)
+            st.pyplot(fig)
+    
+        st.header("📄 Generar Informe Anual")
+        if st.button("Generar Informe"):
+            resumen_mes = pd.pivot_table(
+                pagados_filtrados,
+                values='VALOR RECLAMO',
+                index='MES',
+                columns='COMPAÑÍA',
+                aggfunc=['sum', 'count'],
+                fill_value=0,
+                margins=True
+            )
+            resumen_mes.columns = [f"{aggfunc} {compa}" for aggfunc, compa in resumen_mes.columns]
+            talleres = pagados_filtrados.pivot_table(values='VALOR RECLAMO', index='TALLER DE REPARACION', columns='COMPAÑÍA', aggfunc='count', fill_value=0)
+            causas = pagados_filtrados.pivot_table(values='VALOR RECLAMO', index='EVENTO', aggfunc=['sum', 'count'], fill_value=0)
+            causas.columns = ['Total_Reclamo', 'Cantidad_Reclamos']
+            pendientes_estado = pendientes_filtrados.pivot_table(values='VALOR SINIESTRO', index='ESTADO ACTUAL', columns='CIA. DE SEGUROS', aggfunc='count', fill_value=0)
+    
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                resumen_mes.to_excel(writer, sheet_name='Resumen Mes')
+                talleres.to_excel(writer, sheet_name='Talleres')
+                causas.to_excel(writer, sheet_name='Causas')
+                pendientes_estado.to_excel(writer, sheet_name='Pendientes')
+            output.seek(0)
+            st.download_button(
+                label="Descargar Reporte",
+                data=output,
+                file_name=f"Reporte_Retorno_{año_analisis}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
     with tab3:
         st.sidebar.header("🔥 Siniestralidad")
