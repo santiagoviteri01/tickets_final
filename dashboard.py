@@ -27,7 +27,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     
         st.header("📈 Análisis de Suma Asegurada")
         with st.sidebar:
-            st.header("⚙️ Configuración")
+            st.header("⚙️ Configuración del Analisis de Suma Asegurada")
             aseguradoras = ['Todas'] + sorted(asegurados['ASEGURADORA'].dropna().unique().tolist())
             aseguradora_sel = st.selectbox("Seleccionar Aseguradora", aseguradoras)
     
@@ -137,7 +137,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         ).round(2)
     
         with st.sidebar:
-            st.header("Configuración del Análisis")
+            st.header("⚙️ Configuración del Análisis de Reclamos")
             año_analisis = st.selectbox("Seleccionar Año", [2024, 2025], key="año_reclamos")
             top_n = st.slider("Top N Marcas", 3, 10, 5, key="top_n")
             bins_hist = st.slider("Bins para Histograma", 10, 100, 30, key="bins_hist")
@@ -162,7 +162,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.dataframe(pendientes_aseguradora_data[['CIA. DE SEGUROS', 'VALOR SINIESTRO', 'FECHA DE SINIESTRO', 'ESTADO ACTUAL']].head(3), use_container_width=True)
     
         st.header("📅 Distribución Temporal")
-        pagos_aseguradora_data['FECHA SINIESTRO'] = pd.to_datetime(pagos_aseguradora_data['FECHA SINIESTRO'])
+        pagos_aseguradora_data['FECHA SINIESTRO'] = pd.to_datetime(pagos_aseguradora_data['FECHA SINIESTRO'], dayfirst=True, errors='coerce')
         pagos_aseguradora_data['MES'] = pagos_aseguradora_data['FECHA SINIESTRO'].dt.month
         fig, ax = plt.subplots(figsize=(10, 5))
         sns.countplot(data=pagos_aseguradora_data, x='MES', palette='viridis', ax=ax)
