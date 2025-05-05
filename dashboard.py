@@ -4,6 +4,7 @@ import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
 import seaborn as sns
+import io
 
 # Configuración inicial
 def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
