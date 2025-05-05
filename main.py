@@ -86,16 +86,9 @@ creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
 
 # Autenticarse con Google
 client = gspread.authorize(creds)
-# Autenticación con la cuenta de servicio
-#creds = Credentials.from_service_account_info(st.secrets["general"], scopes=SCOPES)
-#client = gspread.authorize(creds)
 spreadsheet = client.open_by_key("13hY8la9Xke5-wu3vmdB-tNKtY5D6ud4FZrJG2_HtKd8")
 sheet = spreadsheet.worksheet("hoja")      
-asegurados = spreadsheet.worksheet("asegurados")
-#sheet1 = spreadsheet.worksheet("sheet")        # Reemplaza "sheet" por el nombre real si es distinto
-#sheet2 = spreadsheet.worksheet(asegurados)
-# Obtén los datos de ambas hojas (opcional)
-# Configuración inicial de la página
+
 
 # Configuración de usuarios y contraseñas
 USUARIOS = {
@@ -107,6 +100,9 @@ USUARIOS = {
 }
 asegurados = asegurados.get_all_records()
 asegurados_df = pd.DataFrame(asegurados)
+tallers=talleres.get_all_records()
+talleres_df = pd.DataFrame(tallers)
+
 
 for _, row in asegurados_df.iterrows():
     client_id = str(row["NOMBRE COMPLETO"])
@@ -182,6 +178,7 @@ def descargar_archivos_ticket(numero_ticket, nombre_cliente):
         file_name=nombre_zip,
         mime="application/zip"
     )
+    
 def subir_y_mostrar_archivo(archivo, bucket_name, numero_ticket, hoja_adjuntos, usuario):
     import io
     import base64
@@ -1131,6 +1128,31 @@ def manejar_tickets():
             else:
                 poliza = st.text_input("Ingrese número de póliza:")
                 coincidencias = asegurados_data[asegurados_data["POLIZA MAESTRA"].astype(str) == poliza]
+                # Validación de la columna
+
+            if "Taller" in talleres_df.columns:
+                talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
+            else:
+                st.error("❌ No se encontró la columna 'Taller' en la hoja de Google Sheets.")
+                st.stop()
+            
+            # === Selección o ingreso de nuevo taller ===
+            taller_opcion = st.selectbox("Selecciona el taller de reparación*", talleres_unicos + ["Otro..."])
+            
+            if taller_opcion == "Otro...":
+                nuevo_taller = st.text_input("Escribe el nombre del nuevo taller")
+                if nuevo_taller and nuevo_taller not in talleres_unicos:
+                    if st.button("Guardar nuevo taller"):
+                        # Guardar nuevo taller en la hoja
+                        talleres.append_row([nuevo_taller])  # Asegúrate que la hoja tiene solo una columna o esta es la primera
+                        st.success(f"✅ Taller '{nuevo_taller}' guardado exitosamente.")
+                        taller_seleccionado = nuevo_taller
+                    else:
+                        taller_seleccionado = None
+                else:
+                    taller_seleccionado = nuevo_taller
+            else:
+                taller_seleccionado = taller_opcion
     
             if not coincidencias.empty:
                 vehiculo = st.selectbox(
@@ -1162,11 +1184,10 @@ def manejar_tickets():
             descripcion = st.text_area("Descripción detallada*")
             ciudad_ocurrencia = st.text_input("Ciudad donde ocurrió el siniestro*")
             fecha_ocurrencia = st.date_input("Fecha de ocurrencia")
-            #valor_siniestro = st.number_input("Valor estimado del siniestro", min_value=0.0, format="%.2f")
-            #deducible = st.text_input("Deducible (si aplica)")
             causa = st.selectbox("Causa*", ["ROBO", "ROBO PARCIAL", "PERDIDA TOTAL", "PERDIDA PARCIAL"])
+            taller=st.text_input("Ciudad donde ocurrió el siniestro*")
             #rasa = st.text_input("RASA")
-            #liquidacion = st.text_input("Liquidación")
+            #liquidacion = st.text_input("Liquidación")   
     
             necesita_grua = st.selectbox("¿Necesita grúa?", ["No", "Sí"])
             asistencia_legal = st.selectbox("¿Requiere asistencia legal?", ["No", "Sí"])
@@ -1193,6 +1214,7 @@ def manejar_tickets():
                     'ID_LIDERSEG': id_liderseg,
                     'ASEGURADORA': aseguradora,
                     'CIUDAD OCURRENCIA': ciudad_ocurrencia,
+                    'TALLER': taller_seleccionado,
                     'MARCA': marca,
                     'MODELO': modelo,
                     'AÑO': anio,
@@ -1284,18 +1306,46 @@ def manejar_tickets():
             if st.session_state.get("estado_seleccionado"):
                 estado_final = st.session_state.estado_seleccionado
                 descripcion_final = st.session_state.descripcion_modificada
+                lista_causas = ["ROBO", "ROBO PARCIAL", "PERDIDA TOTAL", "PERDIDA PARCIAL"]
+                causa = st.selectbox("Causa del siniestro:", lista_causas, index=lista_causas.index(ticket_actual.get("CAUSA")))
+
+                # === Obtener talleres desde Google Sheets ===
+                tallers = talleres.get_all_records()
+                talleres_df = pd.DataFrame(tallers)
+                
+                if "Taller" in talleres_df.columns:
+                    talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
+                else:
+                    st.error("❌ No se encontró la columna 'Taller' en la hoja 'talleres'")
+                    st.stop()
+                
+                # === Selección del taller de reparación ===
+                taller_opcion = st.selectbox("Taller de reparación:", talleres_unicos + ["Otro..."], 
+                                             index=talleres_unicos.index(ticket_actual.get("TALLER")) if ticket_actual.get("TALLER") in talleres_unicos else len(talleres_unicos))
+                
+                if taller_opcion == "Otro...":
+                    nuevo_taller = st.text_input("Escribe el nombre del nuevo taller")
+                    if nuevo_taller and nuevo_taller not in talleres_unicos:
+                        if st.button("Guardar nuevo taller"):
+                            talleres.append_row([nuevo_taller])
+                            st.success(f"Taller '{nuevo_taller}' guardado exitosamente.")
+                            taller_seleccionado = nuevo_taller
+                        else:
+                            taller_seleccionado = None
+                    else:
+                        taller_seleccionado = nuevo_taller
+                else:
+                    taller_seleccionado = taller_opcion
         
                 if estado_final == "cerrado":
                     st.markdown("### 📝 Información final del siniestro (opcional)")
                     valor_siniestro = st.number_input("Valor estimado del siniestro", min_value=0.0, format="%.2f", key="valor_siniestro")
                     deducible = st.text_input("Deducible (si aplica)", key="deducible")
-                    causa = st.text_input("Causa del siniestro (breve)", key="causa")
                     rasa = st.text_input("RASA", key="rasa")
                     liquidacion = st.text_input("Liquidación", key="liquidacion")
                 else:
                     valor_siniestro = ""
                     deducible = ""
-                    causa = ""
                     rasa = ""
                     liquidacion = ""
         
@@ -1328,6 +1378,7 @@ def manejar_tickets():
                         'ID_LIDERSEG': ticket_actual.get('ID_LIDERSEG'),
                         'ASEGURADORA': ticket_actual.get('ASEGURADORA'),
                         'CIUDAD OCURRENCIA': ticket_actual.get('CIUDAD OCURRENCIA'),
+                        'TALLER': taller_seleccionado,
                         'MARCA': ticket_actual.get('MARCA'),
                         'MODELO': ticket_actual.get('MODELO'),
                         'AÑO': ticket_actual.get('AÑO'),
