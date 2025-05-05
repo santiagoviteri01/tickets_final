@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from datetime import datetime
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Configuración inicial
 def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
@@ -55,36 +57,54 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.metric("Prima Total", f"${df_filtrado['PRIMA TOTAL VEHÍCULOS'].sum():,.2f}")
         with col3:
             st.metric("Valor Promedio Asegurado", f"${df_filtrado['VALOR ASEGURADO'].mean():,.2f}")
-    
+
         if "Distribuciones" in mostrar_graficos:
             st.subheader("📉 Distribuciones")
             col4, col5 = st.columns(2)
             with col4:
-                st.bar_chart(df_filtrado['PRIMA TOTAL VEHÍCULOS'])
+                fig, ax = plt.subplots(figsize=(8, 4))
+                sns.histplot(df_filtrado['PRIMA TOTAL VEHÍCULOS'], kde=True, bins=30, ax=ax, color='orange')
+                ax.set_title("Distribución de Prima Total")
+                ax.set_xlabel("Prima Total ($)")
+                ax.set_ylabel("Frecuencia")
+                st.pyplot(fig)
             with col5:
-                st.bar_chart(df_filtrado['VALOR ASEGURADO'])
-    
+                fig, ax = plt.subplots(figsize=(8, 4))
+                sns.histplot(df_filtrado['VALOR ASEGURADO'], kde=True, bins=30, ax=ax, color='teal')
+                ax.set_title("Distribución de Valor Asegurado")
+                ax.set_xlabel("Valor Asegurado ($)")
+                ax.set_ylabel("Frecuencia")
+                st.pyplot(fig)
+
         if "Evolución Anual" in mostrar_graficos:
             st.subheader("📈 Evolución Anual")
             df_temporal = df_filtrado.pivot_table(
-                values='VALOR ASEGURADO', index='MES', columns='AÑO', aggfunc='sum').fillna(0).reindex(range(1,13))
-            df_temporal.index = [meses_orden[m-1] for m in df_temporal.index]
+                values='VALOR ASEGURADO', index='MES', columns='AÑO', aggfunc='sum'
+            ).fillna(0).reindex(range(1, 13))
+            df_temporal.index = pd.Categorical(
+                [meses_orden[m-1] for m in df_temporal.index], categories=meses_orden, ordered=True
+            )
             st.line_chart(df_temporal)
-    
+        
         if "Evolución Continua" in mostrar_graficos:
             st.subheader("📅 Evolución Continua desde Oct 2023")
             hoy = datetime.now()
             df_periodo = asegurados.copy()
             if aseguradora_sel != 'Todas':
                 df_periodo = df_periodo[df_periodo['ASEGURADORA'] == aseguradora_sel]
-    
+        
             df_periodo['Periodo'] = df_periodo['MES'].apply(lambda x: meses_orden[x-1][:3]) + '-' + df_periodo['AÑO'].astype(str)
+        
+            # Generar orden correcto de periodos
+            periodos_ordenados = df_periodo.sort_values(['AÑO', 'MES'])['Periodo'].unique()
+            df_periodo['Periodo'] = pd.Categorical(df_periodo['Periodo'], categories=periodos_ordenados, ordered=True)
+        
             evolucion = df_periodo.groupby('Periodo').agg(
                 Prima_Total=('PRIMA TOTAL VEHÍCULOS', 'sum'),
                 Suma_Asegurada=('VALOR ASEGURADO', 'sum')
             ).fillna(0)
             st.line_chart(evolucion)
-    
+        
         if "Tasa Mensual" in mostrar_graficos:
             st.subheader("📉 Tasa Mensual")
             tasa_mensual = df_filtrado.groupby(['AÑO', 'MES']).agg(
@@ -93,6 +113,11 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             ).reset_index()
             tasa_mensual['Tasa'] = (tasa_mensual['Prima_Total'] / tasa_mensual['Suma_Asegurada_Total']) * 100
             tasa_mensual['Periodo'] = tasa_mensual['MES'].apply(lambda x: meses_orden[x-1]) + '-' + tasa_mensual['AÑO'].astype(str)
+        
+            # Orden correcto
+            tasa_mensual = tasa_mensual.sort_values(['AÑO', 'MES'])
+            tasa_mensual['Periodo'] = pd.Categorical(tasa_mensual['Periodo'], categories=tasa_mensual['Periodo'].unique(), ordered=True)
+        
             st.line_chart(tasa_mensual.set_index('Periodo')['Tasa'])
     
         if "Top Marcas" in mostrar_graficos:
