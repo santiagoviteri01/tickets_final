@@ -98,6 +98,8 @@ USUARIOS = {
     "mauriciodavila": {"password": "insuratlan1", "rol": "admin"},
     "santiagoviteri": {"password": "insuratlan2", "rol": "admin"},
 }
+asegurados = spreadsheet.worksheet("asegurados")
+tallers = spreadsheet.worksheet("talleres")
 asegurados = asegurados.get_all_records()
 asegurados_df = pd.DataFrame(asegurados)
 tallers=talleres.get_all_records()
