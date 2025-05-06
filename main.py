@@ -592,14 +592,31 @@ def portal_cliente():
     UPLOAD_DIR = "uploads"
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
-
+    
     with tab3:
         st.header("Nuevo Reclamo")
+        
+        cliente_id = st.session_state.usuario_actual
+        cliente_data = asegurados_df[asegurados_df["NOMBRE COMPLETO"].astype(str) == cliente_id]
+        
+        if cliente_data.empty:
+            st.error("No se encontró información del asegurado.")
+            st.stop()
+        
+        datos = cliente_data.iloc[0]
+        
         with st.form("nuevo_reclamo"):
+            # Campos que el cliente debe llenar
             titulo = st.text_input("Título del Reclamo*")
             descripcion = st.text_area("Descripción detallada*")
-            area = st.selectbox("Área*", ["CREDIPRIME","GENERALES"])
+            area = st.selectbox("Área*", ["CREDIPRIME", "GENERALES"])
+            fecha_ocurrencia = st.date_input(
+                "Fecha de ocurrencia*", 
+                max_value=datetime.today(), 
+                format="YYYY-MM-DD"
+            )
     
+            ciudad_ocurrencia = st.text_input("Ciudad de ocurrencia*")
             st.subheader("Asistencia Adicional")
             necesita_grua = st.selectbox("¿Necesitas grúa?", ["No", "Sí"])
             asistencia_legal = st.selectbox("¿Necesitas asistencia legal en el punto?", ["No", "Sí"])
@@ -627,40 +644,37 @@ def portal_cliente():
                     foto_siniestro = st.file_uploader("O bien, sube una imagen desde tu dispositivo", type=["jpg", "jpeg", "png"])
             
             enviar_reclamo = st.form_submit_button("Enviar Reclamo")   
+    
             if enviar_reclamo:
-                if not all([titulo, descripcion]):
+                if not all([titulo, descripcion, ciudad_ocurrencia, fecha_ocurrencia]):
                     st.error("❌ Por favor completa todos los campos obligatorios.")
                 else:
-                    # 🔥 Subir foto a S3 si existe
+                    # Subir imagen a S3 si existe
                     foto_url = None
-                    if foto_siniestro is not None:
+                    if foto_siniestro:
                         s3 = boto3.client(
                             's3',
                             aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
                             aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
                             region_name='us-east-1'
                         )
-                    
-                        bucket_name = 'insurapp-fotos'
                         extension = foto_siniestro.name.split('.')[-1]
                         unique_filename = f"reclamos/{str(uuid.uuid4())}.{extension}"
-                    
+                        bucket_name = 'insurapp-fotos'
                         s3.upload_fileobj(
                             foto_siniestro,
                             bucket_name,
                             unique_filename,
-                            ExtraArgs={
-                                'ContentType': foto_siniestro.type,
-                                'ACL': 'public-read'  # 👈 SUPER IMPORTANTE
-                            }
+                            ExtraArgs={'ContentType': foto_siniestro.type, 'ACL': 'public-read'}
                         )
                         foto_url = f"https://{bucket_name}.s3.us-east-1.amazonaws.com/{unique_filename}"
     
-                    # Guardar el reclamo
+                    # Calcular número de ticket nuevo
                     df = cargar_datos()
                     ultimo_ticket = df['Número'].max() if not df.empty else 0
                     nuevo_numero = int(ultimo_ticket) + 1
     
+                    # Crear diccionario del reclamo
                     nuevo_reclamos = {
                         'Número': nuevo_numero,
                         'Título': titulo,
@@ -673,17 +687,34 @@ def portal_cliente():
                         'Usuario_Modificacion': 'cliente',
                         'Tiempo_Cambio': '0d',
                         'Cliente': st.session_state.usuario_actual,
+                        'Cedula': datos.get('CÉDULA'),
+                        'CONCESIONARIO': datos.get('CONCESIONARIO'),
+                        'ID_LIDERSEG': datos.get('ID LIDERSEG'),
+                        'ASEGURADORA': datos.get('ASEGURADORA'),
+                        'CIUDAD OCURRENCIA': ciudad_ocurrencia,
+                        'TALLER': "SIN TALLER DEFINIDO",
+                        'MARCA': datos.get('MARCA'),
+                        'MODELO': datos.get('MODELO'),
+                        'AÑO': datos.get('AÑO'),
+                        'PLACA': datos.get('PLACA'),
+                        'fecha_ocurrecia': fecha_ocurrencia.strftime("%Y-%m-%d"),
+                        'SUMA ASEGURADA': datos.get('VALOR ASEGURADO'),
+                        'VALOR SINIESTRO': "",
+                        'DEDUCIBLE': "",
+                        'RASA': "",
+                        'LIQUIDACION': "",
+                        'CAUSA': "ASISTENCIA",
                         'Grua': necesita_grua,
                         'Asistencia_Legal': asistencia_legal,
                         'Ubicacion': ubicacion_actual,
                         'Foto_URL': foto_url if foto_url else None
                     }
     
+                    # Serializar y guardar
                     nuevo_reclamos_serializable = {k: str(v) for k, v in nuevo_reclamos.items()}
                     sheet.append_row(list(nuevo_reclamos_serializable.values()))
-    
-                    st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente 🚀")
-            
+                    st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente")
+                
     with tab4:
         st.header("📎 Subir Archivos Adicionales a un Reclamo")
     
@@ -1174,7 +1205,7 @@ def manejar_tickets():
                 descripcion = st.text_area("Descripción detallada*")
                 ciudad_ocurrencia = st.text_input("Ciudad donde ocurrió el siniestro*")
                 fecha_ocurrencia = st.date_input("Fecha de ocurrencia")
-                causa = st.selectbox("Causa*", ["ROBO TOTAL", "CHOQUE PARCIAL + RC", "PERDIDA TOTAL", "DAÑOS MALICIOSOS", "CHOQUE PARCIAL", "ROBO PARCIAL", "ROTURA DE PARABRISAS", "SOLO RC", "DESGRAVAMEN", "ASISTENCIA"])
+                causa = st.selectbox("Causa*", ["ROBO TOTAL", "CHOQUE PARCIAL + RC", "PERDIDA TOTAL", "DAÑOS MALICIOSOS", "CHOQUE PARCIAL", "ROBO PARCIAL", "ROTURA DE PARABRISAS", "SOLO RC", "DESGRAVAMEN","ASISTENCIA"])
         
                 talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
                 taller_opcion = st.selectbox("Selecciona el taller de reparación*", talleres_unicos + ["Otro..."])
