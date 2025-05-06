@@ -1163,7 +1163,7 @@ def manejar_tickets():
             descripcion = st.text_area("Descripción detallada*")
             ciudad_ocurrencia = st.text_input("Ciudad donde ocurrió el siniestro*")
             fecha_ocurrencia = st.date_input("Fecha de ocurrencia")
-            causa = st.selectbox("Causa*", ["ROBO", "ROBO PARCIAL", "PERDIDA TOTAL", "PERDIDA PARCIAL"])
+            causa = st.selectbox("Causa*", ["ROBO TOTAL", "CHOQUE PARCIAL + RC","PERDIDA TOTAL","DAÑOS MALICIOSOS","CHOQUE PARCIAL","ROBO PARCIAL","ROTURA DE PARABRISAS","SOLO RC","DESGRAVAMEN","CHOQUE PARCIAL","PERDIDA TOTAL","ASISTENCIA"])
             if "Taller" in talleres_df.columns:
                 talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
             else:
@@ -1309,7 +1309,7 @@ def manejar_tickets():
 
                 estado_final = st.session_state.estado_seleccionado
                 descripcion_final = st.session_state.descripcion_modificada
-                lista_causas = ["ROBO", "ROBO PARCIAL", "PERDIDA TOTAL", "PERDIDA PARCIAL"]
+                lista_causas = ["ROBO TOTAL", "CHOQUE PARCIAL + RC","PERDIDA TOTAL","DAÑOS MALICIOSOS","CHOQUE PARCIAL","ROBO PARCIAL","ROTURA DE PARABRISAS","SOLO RC","DESGRAVAMEN","CHOQUE PARCIAL","PERDIDA TOTAL","ASISTENCIA"]
                 causa_actual = ticket_actual.get("CAUSA", lista_causas[0])  # ✅ PREVIENE ERROR SI NO EXISTE
                 causa = st.selectbox("Causa del siniestro:", lista_causas, index=lista_causas.index(causa_actual))
 
