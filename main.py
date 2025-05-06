@@ -1092,7 +1092,77 @@ def cargar_tickets(clear_cache=False):
         st.cache_data.clear()
     return _cargar_tickets()
     
+def actualizar_bases_reclamos(todos_df, spreadsheet):
+    todos_df["fecha_ocurrecia"] = pd.to_datetime(todos_df["fecha_ocurrecia"], errors="coerce")
+    todos_df["MES"] = todos_df["fecha_ocurrecia"].dt.month.fillna(0).astype(int)
 
+    cerrados_df = todos_df[todos_df["Estado"].str.lower() == "cerrado"]
+    pendientes_df = todos_df[todos_df["Estado"].str.lower() != "cerrado"]
+
+    # === PAGADOS ===
+    pagados_ws = spreadsheet.worksheet("pagados")
+    pagados_ws.clear()
+    pagados_ws.append_row([
+        "COMPAÑÍA", "CANAL", "CLIENTE", "MARCA", "MODELO", "AÑO", "FECHA SINIESTRO",
+        "MES SINIESTRO", "EVENTO", "VALOR RECLAMO", "DEDUCIBLE", "LIQUIDADO",
+        "TALLER DE REPARACION", "CIUDAD OCURRENCIA", "CONCESIONARIO SISTEMA",
+        "BASE", "ESTADO", "MES"
+    ])
+    for _, row in cerrados_df.iterrows():
+        fila = [
+            row.get("ASEGURADORA", ""),
+            row.get("Área", ""),
+            row.get("Cliente", ""),
+            row.get("MARCA", ""),
+            row.get("MODELO", ""),
+            row.get("AÑO", ""),
+            row.get("fecha_ocurrecia", ""),
+            row.get("fecha_ocurrecia", pd.NaT).strftime("%B") if pd.notnull(row.get("fecha_ocurrecia", pd.NaT)) else "",
+            row.get("CAUSA", ""),
+            row.get("VALOR SINIESTRO", ""),
+            row.get("DEDUCIBLE", ""),
+            row.get("LIQUIDACION", ""),
+            row.get("TALLER", ""),
+            row.get("CIUDAD OCURRENCIA", ""),
+            row.get("CONCESIONARIO", ""),
+            row.get("BASE", ""),
+            row.get("Estado", ""),
+            row.get("MES", "")
+        ]
+        pagados_ws.append_row([str(x) for x in fila])
+
+    # === PENDIENTES ===
+    pendientes_ws = spreadsheet.worksheet("pendientes")
+    pendientes_ws.clear()
+    pendientes_ws.append_row([
+        "CIA. DE SEGUROS", "CLIENTE", "CIUDAD OCURRENCIA", "MARCA", "MODELO", "AÑO", "PLACA",
+        "FECHA DE SINIESTRO", "SUMA ASEGURADA", "VALOR SINIESTRO", "DEDUCIBLE", "RASA", "LIQUIDACION",
+        "TALLER DE REPARACION", "CAUSA", "MES", "ESTADO ACTUAL", "BASE", "ESTADO"
+    ])
+    for _, row in pendientes_df.iterrows():
+        fila = [
+            row.get("ASEGURADORA", ""),
+            row.get("Cliente", ""),
+            row.get("CIUDAD OCURRENCIA", ""),
+            row.get("MARCA", ""),
+            row.get("MODELO", ""),
+            row.get("AÑO", ""),
+            row.get("PLACA", ""),
+            row.get("fecha_ocurrecia", ""),
+            row.get("SUMA ASEGURADA", ""),
+            row.get("VALOR SINIESTRO", ""),
+            row.get("DEDUCIBLE", ""),
+            row.get("RASA", ""),
+            row.get("LIQUIDACION", ""),
+            row.get("TALLER", ""),
+            row.get("CAUSA", ""),
+            row.get("MES", ""),
+            row.get("Estado", ""),
+            row.get("BASE", ""),
+            row.get("Estado", "")
+        ]
+        pendientes_ws.append_row([str(x) for x in fila])
+        
 def manejar_tickets():
     # ✅ Nuevo bloque más limpio y eficiente
     df = cargar_tickets(clear_cache=st.session_state.get("recargar_tickets", False))
@@ -1266,38 +1336,7 @@ def manejar_tickets():
                     pagados_ws = spreadsheet.worksheet("pagados")
                     todos_tickets = sheet.get_all_records()
                     todos_df = pd.DataFrame(todos_tickets)
-                    todos_df["Fecha_Modificacion"] = pd.to_datetime(todos_df["Fecha_Modificacion"], errors="coerce")
-                    
-                    # 1. Filtrar reclamos cerrados y no cerrados
-                    cerrados_df = todos_df[todos_df["Estado"].str.lower() == "cerrado"]
-                    no_cerrados_df = todos_df[todos_df["Estado"].str.lower() != "cerrado"]
-                    
-                    # 2. Actualizar hoja de pagados
-                    pagados_ws.clear()
-                    pagados_ws.append_row(todos_df.columns.tolist())  # encabezados
-                    for _, row in cerrados_df.iterrows():
-                        pagados_ws.append_row([str(v) for v in row.tolist()])
-                    
-                    # 3. Cargar pendientes actuales y actualizar
-                    pendientes_actuales = pendientes_ws.get_all_records()
-                    pendientes_df = pd.DataFrame(pendientes_actuales)
-                    pendientes_df["Fecha_Modificacion"] = pd.to_datetime(pendientes_df["Fecha_Modificacion"], errors="coerce")
-                    
-                    # Combinar y mantener el más reciente por número
-                    todos_pendientes = pd.concat([pendientes_df, no_cerrados_df])
-                    pendientes_actualizados = (
-                        todos_pendientes
-                        .sort_values("Fecha_Modificacion")
-                        .drop_duplicates(subset=["Número"], keep="last")
-                        .query("Estado.str.lower() != 'cerrado'", engine='python')
-                    )
-                    
-                    # Sobrescribir hoja de pendientes
-                    pendientes_ws.clear()
-                    pendientes_ws.append_row(todos_df.columns.tolist())  # encabezados
-                    for _, row in pendientes_actualizados.iterrows():
-                        pendientes_ws.append_row([str(v) for v in row.tolist()])
-                    st.success("Base actualizado correctamente ✅")
+                    actualizar_bases_reclamos(todos_df, spreadsheet)
                     del st.session_state.coincidencias
                     del st.session_state.busqueda_exitosa
                     st.rerun()
@@ -1471,37 +1510,7 @@ def manejar_tickets():
                         pagados_ws = spreadsheet.worksheet("pagados")
                         todos_tickets = sheet.get_all_records()
                         todos_df = pd.DataFrame(todos_tickets)
-                        todos_df["Fecha_Modificacion"] = pd.to_datetime(todos_df["Fecha_Modificacion"], errors="coerce")
-                        
-                        # 1. Filtrar reclamos cerrados y no cerrados
-                        cerrados_df = todos_df[todos_df["Estado"].str.lower() == "cerrado"]
-                        no_cerrados_df = todos_df[todos_df["Estado"].str.lower() != "cerrado"]
-                        
-                        # 2. Actualizar hoja de pagados
-                        pagados_ws.clear()
-                        pagados_ws.append_row(todos_df.columns.tolist())  # encabezados
-                        for _, row in cerrados_df.iterrows():
-                            pagados_ws.append_row([str(v) for v in row.tolist()])
-                        
-                        # 3. Cargar pendientes actuales y actualizar
-                        pendientes_actuales = pendientes_ws.get_all_records()
-                        pendientes_df = pd.DataFrame(pendientes_actuales)
-                        pendientes_df["Fecha_Modificacion"] = pd.to_datetime(pendientes_df["Fecha_Modificacion"], errors="coerce")
-                        
-                        # Combinar y mantener el más reciente por número
-                        todos_pendientes = pd.concat([pendientes_df, no_cerrados_df])
-                        pendientes_actualizados = (
-                            todos_pendientes
-                            .sort_values("Fecha_Modificacion")
-                            .drop_duplicates(subset=["Número"], keep="last")
-                            .query("Estado.str.lower() != 'cerrado'", engine='python')
-                        )
-                        
-                        # Sobrescribir hoja de pendientes
-                        pendientes_ws.clear()
-                        pendientes_ws.append_row(todos_df.columns.tolist())  # encabezados
-                        for _, row in pendientes_actualizados.iterrows():
-                            pendientes_ws.append_row([str(v) for v in row.tolist()])
+                        actualizar_bases_reclamos(todos_df, spreadsheet)
                         st.success("Base actualizado correctamente ✅")
                         st.session_state.recargar_tickets = True
                         del st.session_state.ticket_actual
