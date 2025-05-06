@@ -1132,30 +1132,6 @@ def manejar_tickets():
                 poliza = st.text_input("Ingrese número de póliza:")
                 coincidencias = asegurados_data[asegurados_data["POLIZA MAESTRA"].astype(str) == poliza]
                 # Validación de la columna
-
-            if "Taller" in talleres_df.columns:
-                talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
-            else:
-                st.error("❌ No se encontró la columna 'Taller' en la hoja de Google Sheets.")
-                st.stop()
-            
-            # === Selección o ingreso de nuevo taller ===
-            taller_opcion = st.selectbox("Selecciona el taller de reparación*", talleres_unicos + ["Otro..."])
-            
-            if taller_opcion == "Otro...":
-                nuevo_taller = st.text_input("Escribe el nombre del nuevo taller")
-                if nuevo_taller and nuevo_taller not in talleres_unicos:
-                    if st.button("Guardar nuevo taller"):
-                        # Guardar nuevo taller en la hoja
-                        talleres_ws.append_row([nuevo_taller])  # Asegúrate que la hoja tiene solo una columna o esta es la primera
-                        st.success(f"✅ Taller '{nuevo_taller}' guardado exitosamente.")
-                        taller_seleccionado = nuevo_taller
-                    else:
-                        taller_seleccionado = None
-                else:
-                    taller_seleccionado = nuevo_taller
-            else:
-                taller_seleccionado = taller_opcion
     
             if not coincidencias.empty:
                 vehiculo = st.selectbox(
@@ -1188,8 +1164,30 @@ def manejar_tickets():
             ciudad_ocurrencia = st.text_input("Ciudad donde ocurrió el siniestro*")
             fecha_ocurrencia = st.date_input("Fecha de ocurrencia")
             causa = st.selectbox("Causa*", ["ROBO", "ROBO PARCIAL", "PERDIDA TOTAL", "PERDIDA PARCIAL"])
-            #rasa = st.text_input("RASA")
-            #liquidacion = st.text_input("Liquidación")   
+            if "Taller" in talleres_df.columns:
+                talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
+            else:
+                st.error("❌ No se encontró la columna 'Taller' en la hoja de Google Sheets.")
+                st.stop()
+            
+            # === Selección o ingreso de nuevo taller ===
+            taller_opcion = st.selectbox("Selecciona el taller de reparación*", talleres_unicos + ["Otro..."])
+            
+            if taller_opcion == "Otro...":
+                nuevo_taller = st.text_input("Escribe el nombre del nuevo taller")
+                if nuevo_taller and nuevo_taller not in talleres_unicos:
+                    if st.button("Guardar nuevo taller"):
+                        # Guardar nuevo taller en la hoja
+                        talleres_ws.append_row([nuevo_taller])  # Asegúrate que la hoja tiene solo una columna o esta es la primera
+                        st.success(f"✅ Taller '{nuevo_taller}' guardado exitosamente.")
+                        taller_seleccionado = nuevo_taller
+                    else:
+                        taller_seleccionado = None
+                else:
+                    taller_seleccionado = nuevo_taller
+            else:
+                taller_seleccionado = taller_opcion
+
     
             necesita_grua = st.selectbox("¿Necesita grúa?", ["No", "Sí"])
             asistencia_legal = st.selectbox("¿Requiere asistencia legal?", ["No", "Sí"])
