@@ -1188,7 +1188,7 @@ def manejar_tickets():
             ciudad_ocurrencia = st.text_input("Ciudad donde ocurrió el siniestro*")
             fecha_ocurrencia = st.date_input("Fecha de ocurrencia")
             causa = st.selectbox("Causa*", ["ROBO", "ROBO PARCIAL", "PERDIDA TOTAL", "PERDIDA PARCIAL"])
-            taller=st.text_input("Ciudad donde ocurrió el siniestro*")
+            taller = st.text_input("Taller de reparación*", key="taller_registro")  # CAMBIADO
             #rasa = st.text_input("RASA")
             #liquidacion = st.text_input("Liquidación")   
     
@@ -1282,6 +1282,7 @@ def manejar_tickets():
                 st.session_state.ticket_actual = ticket_seleccionado.to_dict()
         
         if 'ticket_actual' in st.session_state:
+            
             st.subheader(f"✏️ Modificando Reclamo #{st.session_state.ticket_actual['Número']}")
         
             # Paso 1: Selección de estado y descripción (dentro del formulario)
@@ -1307,10 +1308,13 @@ def manejar_tickets():
         
             # Paso 2: Mostrar campos adicionales si ya se seleccionó el estado
             if st.session_state.get("estado_seleccionado"):
+                ticket_actual = st.session_state.ticket_actual  # ✅ CORRECCIÓN AQUI
+
                 estado_final = st.session_state.estado_seleccionado
                 descripcion_final = st.session_state.descripcion_modificada
                 lista_causas = ["ROBO", "ROBO PARCIAL", "PERDIDA TOTAL", "PERDIDA PARCIAL"]
-                causa = st.selectbox("Causa del siniestro:", lista_causas, index=lista_causas.index(ticket_actual.get("CAUSA")))
+                causa_actual = ticket_actual.get("CAUSA", lista_causas[0])  # ✅ PREVIENE ERROR SI NO EXISTE
+                causa = st.selectbox("Causa del siniestro:", lista_causas, index=lista_causas.index(causa_actual))
 
                 
                 if "Taller" in talleres_df.columns:
@@ -1360,7 +1364,6 @@ def manejar_tickets():
                     else:
                         registro_dias = "Sin cambio de estado"
         
-                    ticket_actual = st.session_state.ticket_actual
                     ticket_actualizado = {
                         'Número': ticket_actual['Número'],
                         'Título': ticket_actual['Título'],
