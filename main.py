@@ -1188,7 +1188,6 @@ def manejar_tickets():
             ciudad_ocurrencia = st.text_input("Ciudad donde ocurrió el siniestro*")
             fecha_ocurrencia = st.date_input("Fecha de ocurrencia")
             causa = st.selectbox("Causa*", ["ROBO", "ROBO PARCIAL", "PERDIDA TOTAL", "PERDIDA PARCIAL"])
-            taller = st.text_input("Taller de reparación*", key="taller_registro")  # CAMBIADO
             #rasa = st.text_input("RASA")
             #liquidacion = st.text_input("Liquidación")   
     
