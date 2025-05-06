@@ -1094,74 +1094,91 @@ def cargar_tickets(clear_cache=False):
     
 def actualizar_bases_reclamos(todos_df, spreadsheet):
     todos_df["fecha_ocurrecia"] = pd.to_datetime(todos_df["fecha_ocurrecia"], errors="coerce")
+    todos_df["Fecha_Modificacion"] = pd.to_datetime(todos_df["Fecha_Modificacion"], errors="coerce")
     todos_df["MES"] = todos_df["fecha_ocurrecia"].dt.month.fillna(0).astype(int)
 
-    cerrados_df = todos_df[todos_df["Estado"].str.lower() == "cerrado"]
-    pendientes_df = todos_df[todos_df["Estado"].str.lower() != "cerrado"]
+    # Tomar el último registro por número de ticket
+    todos_df_ultimos = todos_df.sort_values("Fecha_Modificacion").drop_duplicates(subset=["Número"], keep="last")
+
+    # Leer y conservar histórico de pagados y pendientes
+    pagados_ws = spreadsheet.worksheet("pagados")
+    pagados_hist = pd.DataFrame(pagados_ws.get_all_records())
+
+    pendientes_ws = spreadsheet.worksheet("pendientes")
+    pendientes_hist = pd.DataFrame(pendientes_ws.get_all_records())
+
+    # Convertir campos de fecha si existen
+    for df in [pagados_hist, pendientes_hist]:
+        if "FECHA SINIESTRO" in df.columns:
+            df["FECHA SINIESTRO"] = pd.to_datetime(df["FECHA SINIESTRO"], errors="coerce")
+
+    cerrados_df = todos_df_ultimos[todos_df_ultimos["Estado"].str.lower() == "cerrado"]
+    pendientes_df = todos_df_ultimos[todos_df_ultimos["Estado"].str.lower() != "cerrado"]
 
     # === PAGADOS ===
-    pagados_ws = spreadsheet.worksheet("pagados")
-    pagados_ws.clear()
-    pagados_ws.append_row([
-        "COMPAÑÍA", "CANAL", "CLIENTE", "MARCA", "MODELO", "AÑO", "FECHA SINIESTRO",
-        "MES SINIESTRO", "EVENTO", "VALOR RECLAMO", "DEDUCIBLE", "LIQUIDADO",
-        "TALLER DE REPARACION", "CIUDAD OCURRENCIA", "CONCESIONARIO SISTEMA",
-        "BASE", "ESTADO", "MES"
-    ])
+    nuevos_pagados = []
     for _, row in cerrados_df.iterrows():
-        fila = [
-            row.get("ASEGURADORA", ""),
-            row.get("Área", ""),
-            row.get("Cliente", ""),
-            row.get("MARCA", ""),
-            row.get("MODELO", ""),
-            row.get("AÑO", ""),
-            row.get("fecha_ocurrecia", ""),
-            row.get("fecha_ocurrecia", pd.NaT).strftime("%B") if pd.notnull(row.get("fecha_ocurrecia", pd.NaT)) else "",
-            row.get("CAUSA", ""),
-            row.get("VALOR SINIESTRO", ""),
-            row.get("DEDUCIBLE", ""),
-            row.get("LIQUIDACION", ""),
-            row.get("TALLER", ""),
-            row.get("CIUDAD OCURRENCIA", ""),
-            row.get("CONCESIONARIO", ""),
-            row.get("BASE", ""),
-            row.get("Estado", ""),
-            row.get("MES", "")
-        ]
-        pagados_ws.append_row([str(x) for x in fila])
+        fila = {
+            "COMPAÑÍA": row.get("ASEGURADORA", ""),
+            "CANAL": row.get("Área", ""),
+            "CLIENTE": row.get("Cliente", ""),
+            "MARCA": row.get("MARCA", ""),
+            "MODELO": row.get("MODELO", ""),
+            "AÑO": row.get("AÑO", ""),
+            "FECHA SINIESTRO": row.get("fecha_ocurrencia", ""),
+            "FECHA MODIFICACION" : row.get("Fecha_Modificacion", ""),
+            "MES SINIESTRO": row.get("fecha_ocurrecia", pd.NaT).strftime("%B") if pd.notnull(row.get("fecha_ocurrecia", pd.NaT)) else "",
+            "EVENTO": row.get("CAUSA", ""),
+            "VALOR RECLAMO": row.get("VALOR SINIESTRO", ""),
+            "DEDUCIBLE": row.get("DEDUCIBLE", ""),
+            "LIQUIDADO": row.get("LIQUIDACION", ""),
+            "TALLER DE REPARACION": row.get("TALLER", ""),
+            "CIUDAD OCURRENCIA": row.get("CIUDAD OCURRENCIA", ""),
+            "CONCESIONARIO SISTEMA": row.get("CONCESIONARIO", ""),
+            "BASE": row.get("BASE", ""),
+            "ESTADO": row.get("Estado", ""),
+            "MES": row.get("MES", "")
+        }
+        nuevos_pagados.append(fila)
+
+    df_pagados_final = pd.concat([pagados_hist, pd.DataFrame(nuevos_pagados)]).sort_values("FECHA MODIFICACION").drop_duplicates(subset=["CLIENTE", "FECHA SINIESTRO"], keep="last")
+    pagados_ws.clear()
+    pagados_ws.append_row(df_pagados_final.columns.tolist())
+    for _, row in df_pagados_final.iterrows():
+        pagados_ws.append_row([str(v) for v in row.tolist()])
 
     # === PENDIENTES ===
-    pendientes_ws = spreadsheet.worksheet("pendientes")
-    pendientes_ws.clear()
-    pendientes_ws.append_row([
-        "CIA. DE SEGUROS", "CLIENTE", "CIUDAD OCURRENCIA", "MARCA", "MODELO", "AÑO", "PLACA",
-        "FECHA DE SINIESTRO", "SUMA ASEGURADA", "VALOR SINIESTRO", "DEDUCIBLE", "RASA", "LIQUIDACION",
-        "TALLER DE REPARACION", "CAUSA", "MES", "ESTADO ACTUAL", "BASE", "ESTADO"
-    ])
+    nuevos_pendientes = []
     for _, row in pendientes_df.iterrows():
-        fila = [
-            row.get("ASEGURADORA", ""),
-            row.get("Cliente", ""),
-            row.get("CIUDAD OCURRENCIA", ""),
-            row.get("MARCA", ""),
-            row.get("MODELO", ""),
-            row.get("AÑO", ""),
-            row.get("PLACA", ""),
-            row.get("fecha_ocurrecia", ""),
-            row.get("SUMA ASEGURADA", ""),
-            row.get("VALOR SINIESTRO", ""),
-            row.get("DEDUCIBLE", ""),
-            row.get("RASA", ""),
-            row.get("LIQUIDACION", ""),
-            row.get("TALLER", ""),
-            row.get("CAUSA", ""),
-            row.get("MES", ""),
-            row.get("Estado", ""),
-            row.get("BASE", ""),
-            row.get("Estado", "")
-        ]
-        pendientes_ws.append_row([str(x) for x in fila])
+        fila = {
+            "CIA. DE SEGUROS": row.get("ASEGURADORA", ""),
+            "CLIENTE": row.get("Cliente", ""),
+            "CIUDAD OCURRENCIA": row.get("CIUDAD OCURRENCIA", ""),
+            "MARCA": row.get("MARCA", ""),
+            "MODELO": row.get("MODELO", ""),
+            "AÑO": row.get("AÑO", ""),
+            "PLACA": row.get("PLACA", ""),
+            "FECHA DE SINIESTRO": row.get("fecha_ocurrencia", ""),
+            "FECHA MODIFICACION": row.get("Fecha_Modificacion", ""),
+            "SUMA ASEGURADA": row.get("SUMA ASEGURADA", ""),
+            "VALOR SINIESTRO": row.get("VALOR SINIESTRO", ""),
+            "DEDUCIBLE": row.get("DEDUCIBLE", ""),
+            "RASA": row.get("RASA", ""),
+            "LIQUIDACION": row.get("LIQUIDACION", ""),
+            "TALLER DE REPARACION": row.get("TALLER", ""),
+            "CAUSA": row.get("CAUSA", ""),
+            "MES": row.get("MES", ""),
+            "ESTADO ACTUAL": row.get("Estado", ""),
+            "BASE": row.get("BASE", ""),
+            "ESTADO": row.get("Estado", "")
+        }
+        nuevos_pendientes.append(fila)
+
+    df_pendientes_final = pd.concat([pendientes_hist, pd.DataFrame(nuevos_pendientes)]).sort_values("FECHA MODIFICACION").drop_duplicates(subset=["CLIENTE", "FECHA DE SINIESTRO"], keep="last")
+    pendientes_ws.clear()
+    pendientes_ws.append_row(df_pendientes_final.columns.tolist())
+    for _, row in df_pendientes_final.iterrows():
+        pendientes_ws.append_row([str(v) for v in row.tolist()])
         
 def manejar_tickets():
     # ✅ Nuevo bloque más limpio y eficiente
