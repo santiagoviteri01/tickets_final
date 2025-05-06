@@ -1262,6 +1262,40 @@ def manejar_tickets():
         
                     sheet.append_row([str(v) for v in nuevo_reclamos.values()])
                     st.success(f"✅ Reclamo #{nuevo_numero} guardado exitosamente.")
+                    todos_tickets = sheet.get_all_records()
+                    todos_df = pd.DataFrame(todos_tickets)
+                    todos_df["Fecha_Modificacion"] = pd.to_datetime(todos_df["Fecha_Modificacion"], errors="coerce")
+                    
+                    # 1. Filtrar reclamos cerrados y no cerrados
+                    cerrados_df = todos_df[todos_df["Estado"].str.lower() == "cerrado"]
+                    no_cerrados_df = todos_df[todos_df["Estado"].str.lower() != "cerrado"]
+                    
+                    # 2. Actualizar hoja de pagados
+                    pagados_ws.clear()
+                    pagados_ws.append_row(todos_df.columns.tolist())  # encabezados
+                    for _, row in cerrados_df.iterrows():
+                        pagados_ws.append_row([str(v) for v in row.tolist()])
+                    
+                    # 3. Cargar pendientes actuales y actualizar
+                    pendientes_actuales = pendientes_ws.get_all_records()
+                    pendientes_df = pd.DataFrame(pendientes_actuales)
+                    pendientes_df["Fecha_Modificacion"] = pd.to_datetime(pendientes_df["Fecha_Modificacion"], errors="coerce")
+                    
+                    # Combinar y mantener el más reciente por número
+                    todos_pendientes = pd.concat([pendientes_df, no_cerrados_df])
+                    pendientes_actualizados = (
+                        todos_pendientes
+                        .sort_values("Fecha_Modificacion")
+                        .drop_duplicates(subset=["Número"], keep="last")
+                        .query("Estado.str.lower() != 'cerrado'", engine='python')
+                    )
+                    
+                    # Sobrescribir hoja de pendientes
+                    pendientes_ws.clear()
+                    pendientes_ws.append_row(todos_df.columns.tolist())  # encabezados
+                    for _, row in pendientes_actualizados.iterrows():
+                        pendientes_ws.append_row([str(v) for v in row.tolist()])
+                    st.success("Base actualizado correctamente ✅")
                     del st.session_state.coincidencias
                     del st.session_state.busqueda_exitosa
                     st.rerun()
@@ -1430,8 +1464,42 @@ def manejar_tickets():
         
                     with st.spinner("Actualizando ticket..."):
                         sheet.append_row(list(ticket_actualizado_serializable.values()))
-                        st.success("Ticket actualizado correctamente ✅")
                         st.session_state.recargar_tickets = True
+                        # Cargar datos actuales
+                        todos_tickets = sheet.get_all_records()
+                        todos_df = pd.DataFrame(todos_tickets)
+                        todos_df["Fecha_Modificacion"] = pd.to_datetime(todos_df["Fecha_Modificacion"], errors="coerce")
+                        
+                        # 1. Filtrar reclamos cerrados y no cerrados
+                        cerrados_df = todos_df[todos_df["Estado"].str.lower() == "cerrado"]
+                        no_cerrados_df = todos_df[todos_df["Estado"].str.lower() != "cerrado"]
+                        
+                        # 2. Actualizar hoja de pagados
+                        pagados_ws.clear()
+                        pagados_ws.append_row(todos_df.columns.tolist())  # encabezados
+                        for _, row in cerrados_df.iterrows():
+                            pagados_ws.append_row([str(v) for v in row.tolist()])
+                        
+                        # 3. Cargar pendientes actuales y actualizar
+                        pendientes_actuales = pendientes_ws.get_all_records()
+                        pendientes_df = pd.DataFrame(pendientes_actuales)
+                        pendientes_df["Fecha_Modificacion"] = pd.to_datetime(pendientes_df["Fecha_Modificacion"], errors="coerce")
+                        
+                        # Combinar y mantener el más reciente por número
+                        todos_pendientes = pd.concat([pendientes_df, no_cerrados_df])
+                        pendientes_actualizados = (
+                            todos_pendientes
+                            .sort_values("Fecha_Modificacion")
+                            .drop_duplicates(subset=["Número"], keep="last")
+                            .query("Estado.str.lower() != 'cerrado'", engine='python')
+                        )
+                        
+                        # Sobrescribir hoja de pendientes
+                        pendientes_ws.clear()
+                        pendientes_ws.append_row(todos_df.columns.tolist())  # encabezados
+                        for _, row in pendientes_actualizados.iterrows():
+                            pendientes_ws.append_row([str(v) for v in row.tolist()])
+                        st.success("Base actualizado correctamente ✅")
                         del st.session_state.ticket_actual
                         del st.session_state.estado_seleccionado
                         del st.session_state.descripcion_modificada
