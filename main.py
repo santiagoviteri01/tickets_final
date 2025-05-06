@@ -689,7 +689,7 @@ def portal_cliente():
                         'Cliente': st.session_state.usuario_actual,
                         'Cedula': datos.get('CÉDULA'),
                         'CONCESIONARIO': datos.get('CONCESIONARIO'),
-                        'ID_LIDERSEG': datos.get('ID LIDERSEG'),
+                        'ID_LIDERSEG': datos.get('ID_LIDERSEG'),
                         'ASEGURADORA': datos.get('ASEGURADORA'),
                         'CIUDAD OCURRENCIA': ciudad_ocurrencia,
                         'TALLER': "SIN TALLER DEFINIDO",
