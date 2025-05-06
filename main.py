@@ -1132,113 +1132,117 @@ def manejar_tickets():
                 poliza = st.text_input("Ingrese número de póliza:")
                 coincidencias = asegurados_data[asegurados_data["POLIZA MAESTRA"].astype(str) == poliza]
                 # Validación de la columna
-    
-            if not coincidencias.empty:
-                vehiculo = st.selectbox(
-                    "Selecciona el vehículo asegurado:",
-                    coincidencias.apply(lambda row: f"{row['MARCA']} {row['MODELO']} ({row['PLACA']})", axis=1)
-                )
-                vehiculo_info = coincidencias.iloc[list(coincidencias.apply(lambda row: f"{row['MARCA']} {row['MODELO']} ({row['PLACA']})", axis=1)).index(vehiculo)]
-    
-                # Relleno automático
-                cliente = vehiculo_info["NOMBRE COMPLETO"]
-                cedula = vehiculo_info["CÉDULA"]
-                concesionario = vehiculo_info.get("CONCESIONARIO", "")
-                id_liderseg = vehiculo_info.get("ID_LIDERSEG", "")
-                aseguradora = vehiculo_info["ASEGURADORA"]
-                ciudad = vehiculo_info["CIUDAD CLIENTE"]
-                marca = vehiculo_info["MARCA"]
-                modelo = vehiculo_info["MODELO"]
-                anio = vehiculo_info["AÑO"]
-                placa = vehiculo_info["PLACA"]
-                suma_asegurada = vehiculo_info["VALOR ASEGURADO"]
-            else:
-                st.warning("No se encontraron coincidencias.")
-                st.stop()
-    
-            # Paso 4: Datos del ticket
-            titulo = st.text_input("Título del Reclamo*")
-            area = st.selectbox("Área*", ["CREDIPRIME", "GENERALES"])
-            estado = st.selectbox("Estado*", ["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion"])
-            descripcion = st.text_area("Descripción detallada*")
-            ciudad_ocurrencia = st.text_input("Ciudad donde ocurrió el siniestro*")
-            fecha_ocurrencia = st.date_input("Fecha de ocurrencia")
-            causa = st.selectbox("Causa*", ["ROBO TOTAL", "CHOQUE PARCIAL + RC","PERDIDA TOTAL","DAÑOS MALICIOSOS","CHOQUE PARCIAL","ROBO PARCIAL","ROTURA DE PARABRISAS","SOLO RC","DESGRAVAMEN","CHOQUE PARCIAL","PERDIDA TOTAL","ASISTENCIA"])
-            if "Taller" in talleres_df.columns:
-                talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
-            else:
-                st.error("❌ No se encontró la columna 'Taller' en la hoja de Google Sheets.")
-                st.stop()
+
+            buscar = st.form_submit_button("🔍 Buscar")
+            if buscar:
             
-            # === Selección o ingreso de nuevo taller ===
-            taller_opcion = st.selectbox("Selecciona el taller de reparación*", talleres_unicos + ["Otro..."])
-            
-            if taller_opcion == "Otro...":
-                nuevo_taller = st.text_input("Escribe el nombre del nuevo taller")
-                if nuevo_taller and nuevo_taller not in talleres_unicos:
-                    if st.button("Guardar nuevo taller"):
-                        # Guardar nuevo taller en la hoja
-                        talleres_ws.append_row([nuevo_taller])  # Asegúrate que la hoja tiene solo una columna o esta es la primera
-                        st.success(f"✅ Taller '{nuevo_taller}' guardado exitosamente.")
-                        taller_seleccionado = nuevo_taller
-                    else:
-                        taller_seleccionado = None
+                if not coincidencias.empty:
+                    vehiculo = st.selectbox(
+                        "Selecciona el vehículo asegurado:",
+                        coincidencias.apply(lambda row: f"{row['MARCA']} {row['MODELO']} ({row['PLACA']})", axis=1)
+                    )
+                    vehiculo_info = coincidencias.iloc[list(coincidencias.apply(lambda row: f"{row['MARCA']} {row['MODELO']} ({row['PLACA']})", axis=1)).index(vehiculo)]
+        
+                    # Relleno automático
+                    cliente = vehiculo_info["NOMBRE COMPLETO"]
+                    cedula = vehiculo_info["CÉDULA"]
+                    concesionario = vehiculo_info.get("CONCESIONARIO", "")
+                    id_liderseg = vehiculo_info.get("ID_LIDERSEG", "")
+                    aseguradora = vehiculo_info["ASEGURADORA"]
+                    ciudad = vehiculo_info["CIUDAD CLIENTE"]
+                    marca = vehiculo_info["MARCA"]
+                    modelo = vehiculo_info["MODELO"]
+                    anio = vehiculo_info["AÑO"]
+                    placa = vehiculo_info["PLACA"]
+                    suma_asegurada = vehiculo_info["VALOR ASEGURADO"]
                 else:
-                    taller_seleccionado = nuevo_taller
+                    st.warning("No se encontraron coincidencias.")
+                    st.stop()
+        
+                # Paso 4: Datos del ticket
+                titulo = st.text_input("Título del Reclamo*")
+                area = st.selectbox("Área*", ["CREDIPRIME", "GENERALES"])
+                estado = st.selectbox("Estado*", ["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion"])
+                descripcion = st.text_area("Descripción detallada*")
+                ciudad_ocurrencia = st.text_input("Ciudad donde ocurrió el siniestro*")
+                fecha_ocurrencia = st.date_input("Fecha de ocurrencia")
+                causa = st.selectbox("Causa*", ["ROBO TOTAL", "CHOQUE PARCIAL + RC","PERDIDA TOTAL","DAÑOS MALICIOSOS","CHOQUE PARCIAL","ROBO PARCIAL","ROTURA DE PARABRISAS","SOLO RC","DESGRAVAMEN","CHOQUE PARCIAL","PERDIDA TOTAL","ASISTENCIA"])
+                if "Taller" in talleres_df.columns:
+                    talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
+                else:
+                    st.error("❌ No se encontró la columna 'Taller' en la hoja de Google Sheets.")
+                    st.stop()
+                
+                # === Selección o ingreso de nuevo taller ===
+                taller_opcion = st.selectbox("Selecciona el taller de reparación*", talleres_unicos + ["Otro..."])
+                
+                if taller_opcion == "Otro...":
+                    nuevo_taller = st.text_input("Escribe el nombre del nuevo taller")
+                    if nuevo_taller and nuevo_taller not in talleres_unicos:
+                        if st.button("Guardar nuevo taller"):
+                            # Guardar nuevo taller en la hoja
+                            talleres_ws.append_row([nuevo_taller])  # Asegúrate que la hoja tiene solo una columna o esta es la primera
+                            st.success(f"✅ Taller '{nuevo_taller}' guardado exitosamente.")
+                            taller_seleccionado = nuevo_taller
+                        else:
+                            taller_seleccionado = None
+                    else:
+                        taller_seleccionado = nuevo_taller
+                else:
+                    taller_seleccionado = taller_opcion
+    
+        
+                necesita_grua = st.selectbox("¿Necesita grúa?", ["No", "Sí"])
+                asistencia_legal = st.selectbox("¿Requiere asistencia legal?", ["No", "Sí"])
+        
+                if st.form_submit_button("Guardar Reclamo"):
+                    fecha_modificacion= datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    ultimo_ticket = df["Número"].max() if not df.empty else 0
+                    nuevo_numero = int(ultimo_ticket) + 1
+        
+                    nuevo_reclamos = {
+                        'Número': nuevo_numero,
+                        'Título': titulo,
+                        'Área': area,
+                        'Estado': estado,
+                        'Descripción': descripcion,
+                        'Fecha_Creación': fecha_modificacion,
+                        'Usuario_Creación': st.session_state.usuario_actual,
+                        'Fecha_Modificacion': fecha_modificacion,
+                        'Usuario_Modificacion': st.session_state.usuario_actual,
+                        'Tiempo_Cambio': '0d',
+                        'Cliente': cliente,
+                        'Cedula': cedula,
+                        'CONCESIONARIO': concesionario,
+                        'ID_LIDERSEG': id_liderseg,
+                        'ASEGURADORA': aseguradora,
+                        'CIUDAD OCURRENCIA': ciudad_ocurrencia,
+                        'TALLER': taller_seleccionado,
+                        'MARCA': marca,
+                        'MODELO': modelo,
+                        'AÑO': anio,
+                        'PLACA': placa,
+                        'fecha_ocurrecia': fecha_ocurrencia.strftime("%Y-%m-%d"),
+                        'SUMA ASEGURADA': suma_asegurada,
+                        'VALOR SINIESTRO': None,
+                        'DEDUCIBLE': None,
+                        'RASA':None,
+                        'LIQUIDACION': None,
+                        'CAUSA': causa,
+                        'Necesita Grua': necesita_grua,
+                        'Asistencia Legal': asistencia_legal,
+                        'Ubicacion': None,
+                        'Foto_URL': None
+                    }
+        
+                    nuevo_reclamos_serializable = {k: str(v) for k, v in nuevo_reclamos.items()}
+        
+                    sheet.append_row(list(nuevo_reclamos_serializable.values()))
+                    st.success(f"✅ Ticket #{nuevo_numero} registrado correctamente.")
+                    st.session_state.recargar_tickets = True
+                    st.rerun()    
             else:
-                taller_seleccionado = taller_opcion
-
-    
-            necesita_grua = st.selectbox("¿Necesita grúa?", ["No", "Sí"])
-            asistencia_legal = st.selectbox("¿Requiere asistencia legal?", ["No", "Sí"])
-    
-            if st.form_submit_button("Guardar Reclamo"):
-                fecha_modificacion= datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                ultimo_ticket = df["Número"].max() if not df.empty else 0
-                nuevo_numero = int(ultimo_ticket) + 1
-    
-                nuevo_reclamos = {
-                    'Número': nuevo_numero,
-                    'Título': titulo,
-                    'Área': area,
-                    'Estado': estado,
-                    'Descripción': descripcion,
-                    'Fecha_Creación': fecha_modificacion,
-                    'Usuario_Creación': st.session_state.usuario_actual,
-                    'Fecha_Modificacion': fecha_modificacion,
-                    'Usuario_Modificacion': st.session_state.usuario_actual,
-                    'Tiempo_Cambio': '0d',
-                    'Cliente': cliente,
-                    'Cedula': cedula,
-                    'CONCESIONARIO': concesionario,
-                    'ID_LIDERSEG': id_liderseg,
-                    'ASEGURADORA': aseguradora,
-                    'CIUDAD OCURRENCIA': ciudad_ocurrencia,
-                    'TALLER': taller_seleccionado,
-                    'MARCA': marca,
-                    'MODELO': modelo,
-                    'AÑO': anio,
-                    'PLACA': placa,
-                    'fecha_ocurrecia': fecha_ocurrencia.strftime("%Y-%m-%d"),
-                    'SUMA ASEGURADA': suma_asegurada,
-                    'VALOR SINIESTRO': None,
-                    'DEDUCIBLE': None,
-                    'RASA':None,
-                    'LIQUIDACION': None,
-                    'CAUSA': causa,
-                    'Necesita Grua': necesita_grua,
-                    'Asistencia Legal': asistencia_legal,
-                    'Ubicacion': None,
-                    'Foto_URL': None
-                }
-    
-                nuevo_reclamos_serializable = {k: str(v) for k, v in nuevo_reclamos.items()}
-    
-                sheet.append_row(list(nuevo_reclamos_serializable.values()))
-                st.success(f"✅ Ticket #{nuevo_numero} registrado correctamente.")
-                st.session_state.recargar_tickets = True
-                st.rerun()
-
+                st.warning("⚠️ No se encontraron coincidencias con los datos ingresados.")
 
 
     elif opcion_ticket == "Modificar reclamo existente":
