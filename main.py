@@ -697,7 +697,7 @@ def portal_cliente():
                         'MODELO': datos.get('MODELO'),
                         'AÑO': datos.get('AÑO'),
                         'PLACA': datos.get('PLACA'),
-                        'fecha_ocurrecia': fecha_ocurrencia.strftime("%Y-%m-%d"),
+                        'fecha_ocurrencia': fecha_ocurrencia.strftime("%Y-%m-%d"),
                         'SUMA ASEGURADA': datos.get('VALOR ASEGURADO'),
                         'VALOR SINIESTRO': "",
                         'DEDUCIBLE': "",
@@ -1093,9 +1093,9 @@ def cargar_tickets(clear_cache=False):
     return _cargar_tickets()
     
 def actualizar_bases_reclamos(todos_df, spreadsheet):
-    todos_df["fecha_ocurrecia"] = pd.to_datetime(todos_df["fecha_ocurrecia"], errors="coerce")
+    todos_df["fecha_ocurrencia"] = pd.to_datetime(todos_df["fecha_ocurrencia"], errors="coerce")
     todos_df["Fecha_Modificacion"] = pd.to_datetime(todos_df["Fecha_Modificacion"], errors="coerce")
-    todos_df["MES"] = todos_df["fecha_ocurrecia"].dt.month.fillna(0).astype(int)
+    todos_df["MES"] = todos_df["fecha_ocurrencia"].dt.month.fillna(0).astype(int)
 
     # Tomar el último registro por número de ticket
     todos_df_ultimos = todos_df.sort_values("Fecha_Modificacion").drop_duplicates(subset=["Número"], keep="last")
@@ -1127,7 +1127,7 @@ def actualizar_bases_reclamos(todos_df, spreadsheet):
             "AÑO": row.get("AÑO", ""),
             "FECHA SINIESTRO": row.get("fecha_ocurrencia", ""),
             "FECHA MODIFICACION" : row.get("Fecha_Modificacion", ""),
-            "MES SINIESTRO": row.get("fecha_ocurrecia", pd.NaT).strftime("%B") if pd.notnull(row.get("fecha_ocurrecia", pd.NaT)) else "",
+            "MES SINIESTRO": row.get("fecha_ocurrencia", pd.NaT).strftime("%B") if pd.notnull(row.get("fecha_ocurrencia", pd.NaT)) else "",
             "EVENTO": row.get("CAUSA", ""),
             "VALOR RECLAMO": row.get("VALOR SINIESTRO", ""),
             "DEDUCIBLE": row.get("DEDUCIBLE", ""),
@@ -1334,7 +1334,7 @@ def manejar_tickets():
                         'MODELO': modelo,
                         'AÑO': anio,
                         'PLACA': placa,
-                        'fecha_ocurrecia': fecha_ocurrencia.strftime("%Y-%m-%d"),
+                        'fecha_ocurrencia': fecha_ocurrencia.strftime("%Y-%m-%d"),
                         'SUMA ASEGURADA': suma_asegurada,
                         'VALOR SINIESTRO': None,
                         'DEDUCIBLE': None,
@@ -1501,7 +1501,7 @@ def manejar_tickets():
                         'MODELO': ticket_actual.get('MODELO'),
                         'AÑO': ticket_actual.get('AÑO'),
                         'PLACA': ticket_actual.get('PLACA'),
-                        'fecha_ocurrecia': ticket_actual.get('fecha_ocurrecia'),
+                        'fecha_ocurrencia': ticket_actual.get('fecha_ocurrencia'),
                         'SUMA ASEGURADA': ticket_actual.get('SUMA ASEGURADA'),
                         'VALOR SINIESTRO': valor_siniestro,
                         'DEDUCIBLE': deducible,
