@@ -1387,13 +1387,11 @@ def manejar_tickets():
                         'SUMA ASEGURADA': ticket_actual.get('SUMA ASEGURADA'),
                         'VALOR SINIESTRO': valor_siniestro,
                         'DEDUCIBLE': deducible,
-                        'CAUSA': causa,
                         'RASA': rasa,
                         'LIQUIDACION': liquidacion,
+                        'CAUSA': causa,
                         'Necesita Grua': ticket_actual.get('Necesita Grua'),
                         'Asistencia Legal': ticket_actual.get('Asistencia Legal'),
-                        'Grua': ticket_actual.get('Grua'),
-                        'Asistencia_Legal': ticket_actual.get('Asistencia_Legal'),
                         'Ubicacion': ticket_actual.get('Ubicacion'),
                         'Foto_URL': ticket_actual.get('Foto_URL')
                     }
