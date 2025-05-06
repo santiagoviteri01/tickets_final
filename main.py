@@ -1262,6 +1262,8 @@ def manejar_tickets():
         
                     sheet.append_row([str(v) for v in nuevo_reclamos.values()])
                     st.success(f"✅ Reclamo #{nuevo_numero} guardado exitosamente.")
+                    pendientes_ws = spreadsheet.worksheet("pendientes")
+                    pagados_ws = spreadsheet.worksheet("pagados")
                     todos_tickets = sheet.get_all_records()
                     todos_df = pd.DataFrame(todos_tickets)
                     todos_df["Fecha_Modificacion"] = pd.to_datetime(todos_df["Fecha_Modificacion"], errors="coerce")
@@ -1464,8 +1466,9 @@ def manejar_tickets():
         
                     with st.spinner("Actualizando ticket..."):
                         sheet.append_row(list(ticket_actualizado_serializable.values()))
-                        st.session_state.recargar_tickets = True
                         # Cargar datos actuales
+                        pendientes_ws = spreadsheet.worksheet("pendientes")
+                        pagados_ws = spreadsheet.worksheet("pagados")
                         todos_tickets = sheet.get_all_records()
                         todos_df = pd.DataFrame(todos_tickets)
                         todos_df["Fecha_Modificacion"] = pd.to_datetime(todos_df["Fecha_Modificacion"], errors="coerce")
@@ -1500,6 +1503,7 @@ def manejar_tickets():
                         for _, row in pendientes_actualizados.iterrows():
                             pendientes_ws.append_row([str(v) for v in row.tolist()])
                         st.success("Base actualizado correctamente ✅")
+                        st.session_state.recargar_tickets = True
                         del st.session_state.ticket_actual
                         del st.session_state.estado_seleccionado
                         del st.session_state.descripcion_modificada
