@@ -1108,9 +1108,17 @@ def actualizar_bases_reclamos(todos_df, spreadsheet):
     pendientes_hist = pd.DataFrame(pendientes_ws.get_all_records())
 
     # Convertir campos de fecha si existen
-    for df in [pagados_hist, pendientes_hist]:
-        if "FECHA SINIESTRO" in df.columns:
-            df["FECHA SINIESTRO"] = pd.to_datetime(df["FECHA SINIESTRO"], errors="coerce")
+    #Fecha Siniestro
+    if not pagados_hist.empty and "FECHA SINIESTRO" in pagados_hist.columns:
+        pagados_hist["FECHA SINIESTRO"] = pd.to_datetime(pagados_hist["FECHA SINIESTRO"], errors="coerce")
+    if not pendientes_hist.empty and "FECHA DE SINIESTRO" in pendientes_hist.columns:
+        pendientes_hist["FECHA DE SINIESTRO"] = pd.to_datetime(pendientes_hist["FECHA DE SINIESTRO"], errors="coerce")
+    #Fecha Modificacion
+    if not pagados_hist.empty and "FECHA MODIFICACION" in pagados_hist.columns:
+        pagados_hist["FECHA MODIFICACION"] = pd.to_datetime(pagados_hist["FECHA MODIFICACION"], errors="coerce")
+    
+    if not pendientes_hist.empty and "FECHA MODIFICACION" in pendientes_hist.columns:
+        pendientes_hist["FECHA MODIFICACION"] = pd.to_datetime(pendientes_hist["FECHA MODIFICACION"], errors="coerce")
 
     cerrados_df = todos_df_ultimos[todos_df_ultimos["Estado"].str.lower() == "cerrado"]
     pendientes_df = todos_df_ultimos[todos_df_ultimos["Estado"].str.lower() != "cerrado"]
