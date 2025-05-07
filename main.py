@@ -1413,7 +1413,7 @@ def manejar_tickets():
                 nuevo_estado = st.selectbox(
                     "Nuevo estado:",
                     ["INICIAL", "INSPECCION","DOCUMENTACION PENDIENTE" ,"DOCUMENTACION ENVIADA","EN LIQUIDACION","POR INGRESO VEHICULO A TALLER","POR PROFORMA","EN IMPORTACION","EN REPARACION","cerrado"],
-                    index=["creado por usuario", "INSPECCION","DOCUMENTACION PENDIENTE" ,"DOCUMENTACION ENVIADA","EN LIQUIDACION","POR INGRESO VEHICULO A TALLER","POR PROFORMA","EN IMPORTACION","EN REPARACION", "cerrado"].index(
+                    index=["creado por usuario","INICIAL", "INSPECCION","DOCUMENTACION PENDIENTE" ,"DOCUMENTACION ENVIADA","EN LIQUIDACION","POR INGRESO VEHICULO A TALLER","POR PROFORMA","EN IMPORTACION","EN REPARACION", "cerrado"].index(
                         st.session_state.ticket_actual['Estado']
                     )
                 )
