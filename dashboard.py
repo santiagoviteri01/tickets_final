@@ -285,6 +285,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     
         if aseguradora_sel != 'Todas':
             df_filtrado = df_filtrado[df_filtrado['ASEGURADORA'] == aseguradora_sel]
+            df_filtrado['FECHA'] = pd.to_datetime(df_filtrado['PERIODO'] + '-01', errors='coerce')  # ✅ AÑADE ESTA LÍNEA
+
         else:
             group_cols = ['PERIODO', 'AÑO', 'MES', 'FECHA'] if año_sel == 'Todos' else ['PERIODO', 'AÑO', 'MES']
             df_filtrado = df_filtrado.groupby(group_cols).agg({
