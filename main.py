@@ -1151,9 +1151,9 @@ def actualizar_bases_reclamos(todos_df, spreadsheet):
 
     df_pagados_final = pd.concat([pagados_hist, pd.DataFrame(nuevos_pagados)]).sort_values("FECHA MODIFICACION").drop_duplicates(subset=["CLIENTE", "FECHA SINIESTRO"], keep="last")
     pagados_ws.clear()
-    pagados_ws.append_row(df_pagados_final.columns.tolist())
-    for _, row in df_pagados_final.iterrows():
-        pagados_ws.append_row([str(v) for v in row.tolist()])
+    pagados_ws.update(
+        [df_pagados_final.columns.tolist()] + df_pagados_final.astype(str).values.tolist()
+    )
 
     # === PENDIENTES ===
     nuevos_pendientes = []
@@ -1184,9 +1184,9 @@ def actualizar_bases_reclamos(todos_df, spreadsheet):
 
     df_pendientes_final = pd.concat([pendientes_hist, pd.DataFrame(nuevos_pendientes)]).sort_values("FECHA MODIFICACION").drop_duplicates(subset=["CLIENTE", "FECHA DE SINIESTRO"], keep="last")
     pendientes_ws.clear()
-    pendientes_ws.append_row(df_pendientes_final.columns.tolist())
-    for _, row in df_pendientes_final.iterrows():
-        pendientes_ws.append_row([str(v) for v in row.tolist()])
+    pendientes_ws.update(
+        [df_pendientes_final.columns.tolist()] + df_pendientes_final.astype(str).values.tolist()
+    )
         
 def manejar_tickets():
     # ✅ Nuevo bloque más limpio y eficiente
