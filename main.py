@@ -1092,6 +1092,15 @@ def cargar_tickets(clear_cache=False):
         st.cache_data.clear()
     return _cargar_tickets()
     
+def convertir_a_float(valor):
+    try:
+        numero = pd.to_numeric(valor, errors='coerce')
+        if pd.isna(numero):
+            return 0.0
+        return round(float(numero), 2)
+    except:
+        return 0.0   
+        
 def actualizar_bases_reclamos(todos_df, spreadsheet):
     todos_df["fecha_ocurrencia"] = pd.to_datetime(todos_df["fecha_ocurrencia"], errors="coerce")
     todos_df["Fecha_Modificacion"] = pd.to_datetime(todos_df["Fecha_Modificacion"], errors="coerce")
@@ -1137,9 +1146,9 @@ def actualizar_bases_reclamos(todos_df, spreadsheet):
             "FECHA MODIFICACION" : row.get("Fecha_Modificacion", ""),
             "MES SINIESTRO": row.get("fecha_ocurrencia", pd.NaT).strftime("%B") if pd.notnull(row.get("fecha_ocurrencia", pd.NaT)) else "",
             "EVENTO": row.get("CAUSA", ""),
-            "VALOR RECLAMO": float(pd.to_numeric(row.get("VALOR SINIESTRO", "0"), errors="coerce") or 0.0),
-            "DEDUCIBLE": float(pd.to_numeric(row.get("DEDUCIBLE", "0"), errors="coerce") or 0.0),
-            "LIQUIDADO": float(pd.to_numeric(row.get("LIQUIDACION", "0"), errors="coerce") or 0.0),
+            "VALOR RECLAMO": convertir_a_float(row.get("VALOR SINIESTRO", 0)),
+            "DEDUCIBLE": convertir_a_float(row.get("DEDUCIBLE", 0)),
+            "LIQUIDADO": convertir_a_float(row.get("LIQUIDACION", 0)),
             "TALLER DE REPARACION": row.get("TALLER", ""),
             "CIUDAD OCURRENCIA": row.get("CIUDAD OCURRENCIA", ""),
             "CONCESIONARIO SISTEMA": row.get("CONCESIONARIO", ""),
@@ -1168,11 +1177,11 @@ def actualizar_bases_reclamos(todos_df, spreadsheet):
             "PLACA": row.get("PLACA", ""),
             "FECHA DE SINIESTRO": row.get("fecha_ocurrencia", ""),
             "FECHA MODIFICACION": row.get("Fecha_Modificacion", ""),
-            "SUMA ASEGURADA": float(pd.to_numeric(row.get("SUMA ASEGURADA", "0"), errors="coerce") or 0.0),
-            "VALOR SINIESTRO": float(pd.to_numeric(row.get("VALOR SINIESTRO", "0"), errors="coerce") or 0.0),
-            "DEDUCIBLE": float(pd.to_numeric(row.get("DEDUCIBLE", "0"), errors="coerce") or 0.0),
-            "RASA": float(pd.to_numeric(row.get("RASA", "0"), errors="coerce") or 0.0),
-            "LIQUIDACION": float(pd.to_numeric(row.get("LIQUIDACION", "0"), errors="coerce") or 0.0),
+            "SUMA ASEGURADA": convertir_a_float(row.get("SUMA ASEGURADA", 0)),
+            "VALOR SINIESTRO": convertir_a_float(row.get("VALOR SINIESTRO", 0)),
+            "DEDUCIBLE": convertir_a_float(row.get("DEDUCIBLE", 0)),
+            "RASA": convertir_a_float(row.get("RASA", 0)),
+            "LIQUIDACION": convertir_a_float(row.get("LIQUIDACION", 0)),
             "TALLER DE REPARACION": row.get("TALLER", ""),
             "CAUSA": row.get("CAUSA", ""),
             "MES": row.get("MES", ""),
