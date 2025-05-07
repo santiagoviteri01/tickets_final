@@ -922,6 +922,7 @@ def portal_administracion():
         **Bienvenido al panel de administración**
         Selecciona una opción del menú lateral para comenzar.
         """)
+        df_pagados, df_pendientes, df_asegurados = cargar_datos_dashboard_desde_sheets()
         mostrar_dashboard_analisis(df_pagados, df_pendientes, df_asegurados)
 
     elif opcion == "Gestión de Reclamos y Tickets":
