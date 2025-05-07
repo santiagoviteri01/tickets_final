@@ -249,7 +249,7 @@ def formulario_cotizacion():
                 st.warning("Por favor completa todos los campos.")
             else:
                 hoja_cotizaciones = spreadsheet.worksheet("cotizaciones")
-                nueva_fila = [datetime.now().strftime("%Y-%m-%d %H:%M:%S"), tipo_seguro, nombre, apellidos, correo, telefono, "no cotizada"]
+                nueva_fila = [datetime.now().strftime("%Y-%m-%d %H:%M:%S"), tipo_seguro, nombre, apellidos, correo, telefono, "NO COTIZADA"]
                 hoja_cotizaciones.append_row(nueva_fila)
                 st.success("🎉 Tu solicitud ha sido enviada exitosamente. Pronto nos contactaremos contigo.")
                 time.sleep(1.5)
@@ -558,11 +558,11 @@ def portal_cliente():
                         with col_left:
                             estado = ticket['Estado'].lower()
                             color_map = {
-                                'nuevo': '🔵',
-                                'en proceso': '🟡',
+                                'NUEVO': '🔵',
+                                'EN PROCESO': '🟡',
                                 'resuelto': '🟢',
                                 'cerrado': '✅',
-                                'documentacion pendiente': '🟠'
+                                'DOCUMENTACION PENDIENTE': '🟠'
                             }
                             icono = color_map.get(estado, '⚫')
                             st.markdown(f"**Estado:** {icono} {ticket['Estado'].capitalize()}")
@@ -797,9 +797,9 @@ def modulo_cotizaciones_mauricio():
 
     # Asegurarse que la columna de estado existe
     if 'Estado' not in cotizaciones_df.columns:
-        cotizaciones_df['Estado'] = 'no cotizada'
+        cotizaciones_df['Estado'] = 'NO COTIZADA'
 
-    estados = ["no cotizada", "en proceso", "cotizada", "aceptada", "rechazada"]
+    estados = ["NO COTIZADA", "EN PROCESO", "COTIZADA", "ACEPTADA", "RECHAZADA"]
     
 
     def actualizar_estado(index, nuevo_estado):
@@ -811,40 +811,40 @@ def modulo_cotizaciones_mauricio():
 
 
     # Sección 1: Nuevas Cotizaciones
-    st.subheader("🔵 Cotizaciones Nuevas (No Cotizadas)")
-    nuevas = cotizaciones_df[cotizaciones_df['Estado'] == 'no cotizada']
+    st.subheader("🔵 Cotizaciones Nuevas (no cotizadas)")
+    nuevas = cotizaciones_df[cotizaciones_df['Estado'] == 'NO COTIZADA']
     for idx, row in nuevas.iterrows():
         with st.expander(f"🆕 {row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']}"):
             st.write(f"**Correo:** {row['Correo']}")
             st.write(f"**Teléfono:** {row['Teléfono']}")
             if st.button(f"Tomar Cotización #{idx}", key=f"tomar_{idx}"):
-                actualizar_estado(idx, "en proceso")
+                actualizar_estado(idx, "EN PROCESO")
 
     # Sección 2: Cotizaciones en Proceso
     st.subheader("🟡 Cotizaciones en Proceso")
-    en_proceso = cotizaciones_df[cotizaciones_df['Estado'] == 'en proceso']
+    en_proceso = cotizaciones_df[cotizaciones_df['Estado'] == 'EN PROCESO']
     for idx, row in en_proceso.iterrows():
         with st.expander(f"🔄 {row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']}"):
             st.write(f"**Correo:** {row['Correo']}")
             st.write(f"**Teléfono:** {row['Teléfono']}")
-            opcion = st.selectbox(f"Actualizar estado Cotización #{idx}", ["cotizada", "rechazada"], key=f"proceso_{idx}")
+            opcion = st.selectbox(f"Actualizar estado Cotización #{idx}", ["COTIZADA", "RECHAZADA"], key=f"proceso_{idx}")
             if st.button(f"Actualizar Estado #{idx}", key=f"btn_proceso_{idx}"):
                 actualizar_estado(idx, opcion)
 
     # Sección 3: Cotizaciones Cotizadas
     st.subheader("🟢 Cotizaciones Cotizadas")
-    cotizadas = cotizaciones_df[cotizaciones_df['Estado'] == 'cotizada']
+    cotizadas = cotizaciones_df[cotizaciones_df['Estado'] == 'COTIZADA']
     for idx, row in cotizadas.iterrows():
         with st.expander(f"✅ {row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']}"):
             st.write(f"**Correo:** {row['Correo']}")
             st.write(f"**Teléfono:** {row['Teléfono']}")
-            opcion = st.selectbox(f"Actualizar estado Cotización #{idx}", ["aceptada", "rechazada"], key=f"cotizada_{idx}")
+            opcion = st.selectbox(f"Actualizar estado Cotización #{idx}", ["ACEPTADA", "RECHAZADA"], key=f"cotizada_{idx}")
             if st.button(f"Actualizar Estado #{idx}", key=f"btn_cotizada_{idx}"):
                 actualizar_estado(idx, opcion)
 
     # Sección 4: Cotizaciones Finalizadas
     st.subheader("⚪ Cotizaciones Finalizadas (Aceptadas o Rechazadas)")
-    finalizadas = cotizaciones_df[cotizaciones_df['Estado'].isin(['aceptada', 'rechazada'])]
+    finalizadas = cotizaciones_df[cotizaciones_df['Estado'].isin(['ACEPTADA', 'RECHAZADA'])]
     for idx, row in finalizadas.iterrows():
         with st.expander(f"🏁 {row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']} - {row['Estado'].capitalize()}"):
             st.write(f"**Correo:** {row['Correo']}")
@@ -867,8 +867,8 @@ def visualizar_ticket_modificar(ticket=None):
         col1, col2 = st.columns([1, 2])
         with col1:
             icons = {
-                'nuevo': '🔵', 'en proceso': '🟡', 'resuelto': '🟢',
-                'cerrado': '✅', 'documentacion pendiente': '🟠'
+                'NUEVO': '🔵', 'EN PROCESO': '🟡', 'RESUELTO': '🟢',
+                'cerrado': '✅', 'DOCUMENTACION PENDIENTE': '🟠'
             }
             est = ticket['Estado'].lower()
             st.markdown(f"**Estado:** {icons.get(est,'⚫')} {ticket['Estado'].capitalize()}")
@@ -1045,11 +1045,11 @@ def visualizar_tickets():
                     # Estado
                     estado_ticket = ticket['Estado'].lower()
                     color_map = {
-                        'nuevo': '🔵',
-                        'en proceso': '🟡',
-                        'resuelto': '🟢',
+                        'NUEVO': '🔵',
+                        'EN PROCESO': '🟡',
+                        'RESUELTO': '🟢',
                         'cerrado': '✅',
-                        'documentacion pendiente': '🟠'
+                        'DOCUMENTACION PENDIENTE': '🟠'
                     }
                     icono = color_map.get(estado_ticket, '⚫')
                     st.markdown(f"**Estado:** {icono} {ticket['Estado'].capitalize()}")
@@ -1296,7 +1296,7 @@ def manejar_tickets():
                 # Formulario restante
                 titulo = st.text_input("Título del Reclamo*")
                 area = st.selectbox("Área*", ["CREDIPRIME", "GENERALES"])
-                estado = st.selectbox("Estado*", ["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion"])
+                estado = st.selectbox("Estado*", ["INICIAL","INSPECCION","DOCUMENTACION PENDIENTE" ,"DOCUMENTACION ENVIADA","EN LIQUIDACION","POR INGRESO VEHICULO A TALLER","POR PROFORMA","EN IMPORTACION","EN REPARACION"])
                 descripcion = st.text_area("Descripción detallada*")
                 ciudad_ocurrencia = st.text_input("Ciudad donde ocurrió el siniestro*")
                 fecha_ocurrencia = st.date_input("Fecha de ocurrencia")
@@ -1412,8 +1412,8 @@ def manejar_tickets():
             with st.form("seleccion_estado_form"):
                 nuevo_estado = st.selectbox(
                     "Nuevo estado:",
-                    ["inicial", "documentacion pendiente", "documentacion enviada", "en reparacion", "cerrado"],
-                    index=["creado por usuario", "inicial", "documentacion pendiente", "documentacion enviada", "en reparacion", "cerrado"].index(
+                    ["INICIAL", "INSPECCION","DOCUMENTACION PENDIENTE" ,"DOCUMENTACION ENVIADA","EN LIQUIDACION","POR INGRESO VEHICULO A TALLER","POR PROFORMA","EN IMPORTACION","EN REPARACION","cerrado"],
+                    index=["creado por usuario", "INSPECCION","DOCUMENTACION PENDIENTE" ,"DOCUMENTACION ENVIADA","EN LIQUIDACION","POR INGRESO VEHICULO A TALLER","POR PROFORMA","EN IMPORTACION","EN REPARACION", "cerrado"].index(
                         st.session_state.ticket_actual['Estado']
                     )
                 )
