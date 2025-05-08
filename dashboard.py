@@ -357,4 +357,25 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             use_container_width=True,
             height=400
         )
+        st.subheader("🔍 Indicadores Clave")
+
+        if not df_filtrado.empty:
+            ultimo_mes = df_filtrado.iloc[-1]
+            primer_mes = df_filtrado.iloc[0]
+        
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Periodo Inicial", primer_mes['PERIODO'])
+            with col2:
+                st.metric("Periodo Final", ultimo_mes['PERIODO'])
+            with col3:
+                st.metric("Total Periodos", len(df_filtrado))
+        
+            col4, col5, col6 = st.columns(3)
+            with col4:
+                st.metric("Prima Vehículos Promedio", f"${df_filtrado['Prima_Vehiculos'].mean():,.2f}")
+            with col5:
+                st.metric("Siniestralidad Promedio", f"{df_filtrado['Siniestralidad'].mean():.2%}")
+            with col6:
+                st.metric("Total Reclamos", f"{df_filtrado['Total_Reclamos'].sum():,.0f}")
 
