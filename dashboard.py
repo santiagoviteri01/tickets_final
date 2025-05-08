@@ -129,6 +129,13 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
 
     
     with tab2:
+        # Asegurar formato de fecha
+        pagados['FECHA SINIESTRO'] = pd.to_datetime(pagados['FECHA SINIESTRO'], errors='coerce')
+        pendientes['FECHA DE SINIESTRO'] = pd.to_datetime(pendientes['FECHA DE SINIESTRO'], errors='coerce')
+        
+        # Forzar que BASE sea el año de la fecha siniestro
+        pagados['BASE'] = pagados['FECHA SINIESTRO'].dt.year.astype('Int64')
+        pendientes['BASE'] = pendientes['FECHA DE SINIESTRO'].dt.year.astype('Int64')
         orden_meses = meses_orden
     
         resumen_aseguradoras_total = pagados.groupby('COMPAÑÍA').agg(
@@ -226,6 +233,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
 
     with tab3:
         st.header("📉 Siniestralidad Mensual por Aseguradora")
+    
+        # Estándar de nombres desde pendientes
         mapeo_columnas = {
             'CIA. DE SEGUROS': 'COMPAÑÍA',
             'VALOR SINIESTRO': 'VALOR RECLAMO',
@@ -233,28 +242,36 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         }
         pendientes_estandarizado = pendientes.rename(columns=mapeo_columnas)
     
+        # Asegurar tipos correctos
+        pagados['FECHA SINIESTRO'] = pd.to_datetime(pagados['FECHA SINIESTRO'], errors='coerce')
+        pagados['VALOR RECLAMO'] = pd.to_numeric(pagados['VALOR RECLAMO'], errors='coerce')
+    
+        pendientes_estandarizado['FECHA SINIESTRO'] = pd.to_datetime(pendientes_estandarizado['FECHA SINIESTRO'], errors='coerce')
+        pendientes_estandarizado['VALOR RECLAMO'] = pd.to_numeric(pendientes_estandarizado['VALOR RECLAMO'], errors='coerce')
+    
+        # Unir reclamos pagados + pendientes
+        df_completo = pd.concat([
+            pagados[['COMPAÑÍA', 'FECHA SINIESTRO', 'VALOR RECLAMO']],
+            pendientes_estandarizado[['COMPAÑÍA', 'FECHA SINIESTRO', 'VALOR RECLAMO']]
+        ], ignore_index=True).dropna(subset=['FECHA SINIESTRO'])
+    
+        # Generar columnas de año y mes
+        df_completo['FECHA_SINIESTRO'] = pd.to_datetime(df_completo['FECHA SINIESTRO'], errors='coerce')
+        df_completo['AÑO'] = df_completo['FECHA_SINIESTRO'].dt.year.astype('Int64')
+        df_completo['MES'] = df_completo['FECHA_SINIESTRO'].dt.month.astype('Int64')
+    
+        # Valor asegurado por mes
         valor_asegurado = asegurados.groupby(['ASEGURADORA', 'AÑO', 'MES']).agg(
             Prima_Vehiculos=('PRIMA VEHÍCULOS', 'sum')
         ).reset_index()
     
-        df_completo = pd.concat([
-            pagados[['COMPAÑÍA', 'FECHA SINIESTRO', 'VALOR RECLAMO']],
-            pendientes_estandarizado[['COMPAÑÍA', 'FECHA SINIESTRO', 'VALOR RECLAMO']]
-        ])
-    
-        reclamos = df_completo.copy()
-        reclamos['FECHA_SINIESTRO'] = pd.to_datetime(reclamos['FECHA SINIESTRO'], dayfirst=True, errors='coerce')
-        reclamos = reclamos.dropna(subset=['FECHA_SINIESTRO'])
-        reclamos['AÑO'] = reclamos['FECHA_SINIESTRO'].dt.year
-        reclamos['MES'] = reclamos['FECHA_SINIESTRO'].dt.month
-    
-        reclamos_agrupados = reclamos.groupby(['COMPAÑÍA', 'AÑO', 'MES']).agg(
+        # Reclamos agregados
+        reclamos_agrupados = df_completo.groupby(['COMPAÑÍA', 'AÑO', 'MES']).agg(
             Total_Reclamos=('VALOR RECLAMO', 'count'),
             Monto_Total_Reclamos=('VALOR RECLAMO', 'sum')
-        ).reset_index()
+        ).reset_index().rename(columns={'COMPAÑÍA': 'ASEGURADORA'})
     
-        reclamos_agrupados = reclamos_agrupados.rename(columns={'COMPAÑÍA': 'ASEGURADORA'})
-    
+        # Unión con asegurados
         df_siniestralidad = pd.merge(
             valor_asegurado,
             reclamos_agrupados,
@@ -269,25 +286,25 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         )
     
         df_siniestralidad['PERIODO'] = df_siniestralidad['AÑO'].astype(str) + '-' + df_siniestralidad['MES'].astype(str).str.zfill(2)
-        df_siniestralidad['FECHA'] = pd.to_datetime(df_siniestralidad['PERIODO'] + '-01')
+        df_siniestralidad['FECHA'] = pd.to_datetime(df_siniestralidad['PERIODO'] + '-01', errors='coerce')
     
+        # Filtros
         col1, col2 = st.columns(2)
         with col1:
-            años_disponibles = sorted(df_siniestralidad['AÑO'].unique(), reverse=True)
-            año_sel = st.selectbox("Año de análisis", options=['Todos'] + años_disponibles, key='sini_año')
+            años_disponibles = sorted(df_siniestralidad['AÑO'].dropna().unique(), reverse=True)
+            año_sel = st.selectbox("Año de análisis", options=['Todos'] + list(años_disponibles), key='sini_año')
         with col2:
             aseguradora_sel = st.selectbox("Aseguradora", options=['Todas'] + sorted(df_siniestralidad['ASEGURADORA'].unique()), key='sini_aseguradora')
     
-        if año_sel == 'Todos':
-            df_filtrado = df_siniestralidad.copy()
-        else:
+        # Filtro por año
+        if año_sel != 'Todos':
             df_filtrado = df_siniestralidad[df_siniestralidad['AÑO'] == int(año_sel)]
-            df_filtrado['FECHA'] = pd.to_datetime(df_filtrado['PERIODO'] + '-01', errors='coerce')  # ✅ AÑADE ESTA LÍNEA
+        else:
+            df_filtrado = df_siniestralidad.copy()
     
+        # Filtro por aseguradora
         if aseguradora_sel != 'Todas':
             df_filtrado = df_filtrado[df_filtrado['ASEGURADORA'] == aseguradora_sel]
-            df_filtrado['FECHA'] = pd.to_datetime(df_filtrado['PERIODO'] + '-01', errors='coerce')  # ✅ AÑADE ESTA LÍNEA
-
         else:
             group_cols = ['PERIODO', 'AÑO', 'MES', 'FECHA'] if año_sel == 'Todos' else ['PERIODO', 'AÑO', 'MES']
             df_filtrado = df_filtrado.groupby(group_cols).agg({
@@ -300,9 +317,10 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 df_filtrado['Monto_Total_Reclamos'] / df_filtrado['Prima_Vehiculos'],
                 0
             )
+            df_filtrado['FECHA'] = pd.to_datetime(df_filtrado['PERIODO'] + '-01', errors='coerce')
     
+        # Gráfico
         df_filtrado = df_filtrado.sort_values('FECHA')
-    
         fig, ax = plt.subplots(figsize=(14, 6))
         sns.lineplot(data=df_filtrado, x='PERIODO', y='Siniestralidad', marker='o', color='#E53935', ax=ax)
         ax.set_ylabel("Ratio Siniestralidad", color='#E53935')
@@ -311,7 +329,6 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         num_periodos = len(df_filtrado['PERIODO'].unique())
         rotation = 45 if num_periodos > 6 else 0
         step = max(1, num_periodos // 12)
-    
         ax.set_xticks(df_filtrado['PERIODO'].unique()[::step])
         ax.set_xticklabels(df_filtrado['PERIODO'].unique()[::step], rotation=rotation)
     
@@ -321,14 +338,13 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             ax2.set_ylabel("Monto Total Reclamos ($)", color='#1E88E5')
             ax2.tick_params(axis='y', colors='#1E88E5')
     
-        titulo = f'Siniestralidad {"por Aseguradora" if aseguradora_sel != "Todas" else "Acumulada"}'
+        titulo = f"Siniestralidad {'por Aseguradora' if aseguradora_sel != 'Todas' else 'Acumulada'}"
         titulo += f" ({'Histórico Completo' if año_sel == 'Todos' else año_sel})"
         plt.title(titulo)
         st.pyplot(fig)
     
         st.subheader("📊 Datos Detallados")
         columnas = ['PERIODO', 'ASEGURADORA', 'Prima_Vehiculos', 'Total_Reclamos', 'Monto_Total_Reclamos', 'Siniestralidad'] if aseguradora_sel != 'Todas' else ['PERIODO', 'Prima_Vehiculos', 'Total_Reclamos', 'Monto_Total_Reclamos', 'Siniestralidad']
-    
         st.dataframe(
             df_filtrado[columnas]
             .style.format({
@@ -341,25 +357,4 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             use_container_width=True,
             height=400
         )
-    
-        st.subheader("🔍 Indicadores Clave")
-        if not df_filtrado.empty:
-            ultimo_mes = df_filtrado.iloc[-1]
-            primer_mes = df_filtrado.iloc[0]
-    
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Periodo Inicial", primer_mes['PERIODO'])
-            with col2:
-                st.metric("Periodo Final", ultimo_mes['PERIODO'])
-            with col3:
-                st.metric("Total Periodos", len(df_filtrado))
-    
-            col4, col5, col6 = st.columns(3)
-            with col4:
-                st.metric("Prima Vehículos Promedio", f"${df_filtrado['Prima_Vehiculos'].mean():,.2f}")
-            with col5:
-                st.metric("Siniestralidad Promedio", f"{df_filtrado['Siniestralidad'].mean():.2%}")
-            with col6:
-                st.metric("Total Reclamos", f"{df_filtrado['Total_Reclamos'].sum():,.0f}")
 
