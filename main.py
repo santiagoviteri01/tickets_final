@@ -132,6 +132,7 @@ def cargar_datos():
                                      'Usuario_Modificacion','Tiempo_Cambio','Cliente',
                                      'Grua','Asistencia_Legal','Ubicacion','Foto_URL'])
 
+@st.cache_data
 def cargar_datos_dashboard_desde_sheets():
     # Asegúrate de que ya tengas una variable global `spreadsheet` definida con gspread
     hoja_pagados = spreadsheet.worksheet("pagados")
@@ -1153,7 +1154,7 @@ def actualizar_bases_reclamos(todos_df, spreadsheet):
             "TALLER DE REPARACION": row.get("TALLER", ""),
             "CIUDAD OCURRENCIA": row.get("CIUDAD OCURRENCIA", ""),
             "CONCESIONARIO SISTEMA": row.get("CONCESIONARIO", ""),
-            "BASE": row.get("BASE", ""),
+            "BASE": int(row.get("fecha_ocurrencia").year) if pd.notnull(row.get("fecha_ocurrencia")) else None,
             "ESTADO": row.get("Estado", ""),
             "MES": row.get("MES", "")
         }
