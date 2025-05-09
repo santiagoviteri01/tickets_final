@@ -14,6 +14,7 @@ streamlit-folium
 streamlit-js-eval
 geopy
 XlsxWriter
+requests
 # ---- Añadidos para visión computacional ----
 torch
 torchvision
