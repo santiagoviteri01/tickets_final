@@ -14,3 +14,12 @@ streamlit-folium
 streamlit-js-eval
 geopy
 XlsxWriter
+# ---- Añadidos para visión computacional ----
+torch
+torchvision
+ultralytics
+segmentation-models-pytorch
+timm
+albumentations
+pillow
+opencv-python-headless
