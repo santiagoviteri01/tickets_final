@@ -18,6 +18,7 @@ requests
 torch
 torchvision
 ultralytics
+efficientnet-pytorch
 segmentation-models-pytorch
 timm
 albumentations
