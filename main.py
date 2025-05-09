@@ -437,6 +437,54 @@ def obtener_ubicacion():
 
     # 5) Devolver el link para guardar en tu sheet
     return maps_link
+
+from PIL import Image
+from ultralytics import YOLO
+
+
+# 1. Carga del modelo (se cachea para no recargar en cada interacción)
+@st.cache_resource
+def load_detector():
+    # Puedes cambiar 'yolov8n.pt' por el checkpoint que prefieras
+    return YOLO('yolov8n.pt')
+
+model = load_detector()
+
+# 2. Función auxiliar para verificar si hay un auto
+def contiene_auto(pil_img: Image.Image, conf_threshold=0.25) -> bool:
+    # Convertir a numpy array compatible
+    img_np = np.array(pil_img)
+    # Inferencia
+    results = model.predict(source=img_np, conf=conf_threshold, verbose=False)
+    # Revisar cada detección
+    for det in results:
+        # det.boxes.cls es un tensor con índices de clase
+        clases = det.boxes.cls.cpu().numpy().astype(int)
+        for c in clases:
+            if model.names[c] == 'car':
+                return True
+    return False
+
+# -------------------
+# En tu sección de subida de foto:
+foto_siniestro = None
+if siniestro_vehicular == "Sí":
+    # Opción 1: cámara
+    foto_siniestro = st.camera_input("Toma una foto del siniestro (opcional)")
+    # Opción 2: uploader
+    if foto_siniestro is None:
+        foto_siniestro = st.file_uploader("O bien, sube una imagen desde tu dispositivo", type=["jpg", "jpeg", "png"])
+
+    # 3. Validar que la imagen tenga un auto
+    if foto_siniestro is not None:
+        img = Image.open(foto_siniestro)
+        if not contiene_auto(img):
+            st.error("No detecté un automóvil en la imagen. Por favor, sube otra foto que contenga claramente un vehículo.")
+            foto_siniestro = None  # Resetea para que el usuario intente de nuevo
+        else:
+            st.success("Automóvil detectado correctamente 👍")
+            # Aquí puedes seguir con el flujo normal, p.ej. mostrar la imagen validada
+            st.image(img, caption="Imagen validada", use_column_width=True)
     
 # Portal del Cliente
 def portal_cliente():
@@ -643,6 +691,16 @@ def portal_cliente():
                 # Opción 2: Subir desde el dispositivo si no se usa la cámara
                 if foto_siniestro is None:
                     foto_siniestro = st.file_uploader("O bien, sube una imagen desde tu dispositivo", type=["jpg", "jpeg", "png"])
+                # 3. Validar que la imagen tenga un auto
+                if foto_siniestro is not None:
+                    img = Image.open(foto_siniestro)
+                    if not contiene_auto(img):
+                        st.error("No detecté un automóvil en la imagen. Por favor, sube otra foto que contenga claramente un vehículo.")
+                        foto_siniestro = None  # Resetea para que el usuario intente de nuevo
+                    else:
+                        st.success("Automóvil detectado correctamente 👍")
+                        # Aquí puedes seguir con el flujo normal, p.ej. mostrar la imagen validada
+                        st.image(img, caption="Imagen validada", use_column_width=True)
             
             enviar_reclamo = st.form_submit_button("Enviar Reclamo")   
     
