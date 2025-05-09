@@ -465,26 +465,14 @@ def contiene_auto(pil_img: Image.Image, conf_threshold=0.25) -> bool:
                 return True
     return False
 
-# -------------------
-# En tu sección de subida de foto:
-foto_siniestro = None
-if siniestro_vehicular == "Sí":
-    # Opción 1: cámara
-    foto_siniestro = st.camera_input("Toma una foto del siniestro (opcional)")
-    # Opción 2: uploader
-    if foto_siniestro is None:
-        foto_siniestro = st.file_uploader("O bien, sube una imagen desde tu dispositivo", type=["jpg", "jpeg", "png"])
 
-    # 3. Validar que la imagen tenga un auto
-    if foto_siniestro is not None:
-        img = Image.open(foto_siniestro)
-        if not contiene_auto(img):
-            st.error("No detecté un automóvil en la imagen. Por favor, sube otra foto que contenga claramente un vehículo.")
-            foto_siniestro = None  # Resetea para que el usuario intente de nuevo
-        else:
-            st.success("Automóvil detectado correctamente 👍")
-            # Aquí puedes seguir con el flujo normal, p.ej. mostrar la imagen validada
-            st.image(img, caption="Imagen validada", use_column_width=True)
+@st.cache_resource
+def cargar_modelo_mm1():
+    m = smp.Unet("resnet34", encoder_weights=None, in_channels=3, classes=1)
+    # Si lo pusiste en models/, usar "models/unet_resnet34_cardd_best.pth"
+    m.load_state_dict(torch.load("unet_resnet34_cardd_best.pth", map_location="cpu"))
+    m.eval()
+    return m
     
 # Portal del Cliente
 def portal_cliente():
@@ -698,9 +686,38 @@ def portal_cliente():
                         st.error("No detecté un automóvil en la imagen. Por favor, sube otra foto que contenga claramente un vehículo.")
                         foto_siniestro = None  # Resetea para que el usuario intente de nuevo
                     else:
-                        st.success("Automóvil detectado correctamente 👍")
                         # Aquí puedes seguir con el flujo normal, p.ej. mostrar la imagen validada
                         st.image(img, caption="Imagen validada", use_column_width=True)
+                        st.success("Automóvil detectado correctamente 👍")
+                
+                        # ——— Segmentación ———
+                        seg_model = cargar_modelo_mm1()
+                        transform = get_seg_transform()
+                
+                        # Prepara la imagen para el modelo
+                        img_np = np.array(img)
+                        augmented = transform(image=img_np)
+                        inp = augmented["image"].unsqueeze(0)  # (1,3,512,512)
+                
+                        # Inferencia
+                        with torch.no_grad():
+                            logits = seg_model(inp)             # (1,1,512,512)
+                            mask = (torch.sigmoid(logits[0,0]) > 0.5).cpu().numpy().astype("uint8") * 255
+                
+                        # Redimensiona la máscara al tamaño original
+                        mask_pil = Image.fromarray(mask).resize(img.size)
+                
+                        # Crea un overlay rojo semi-transparente
+                        overlay = Image.new("RGBA", img.size, (255, 0, 0, 100))
+                        img_rgba = img.convert("RGBA")
+                
+                        # Aplica la máscara como alpha mask
+                        masked_img = Image.composite(overlay, img_rgba, mask_pil)
+                
+                        # ——— Muestra resultado en el portal ———
+                        st.subheader("🔍 Segmentación de daño")
+                        st.image(mask_pil,    caption="Máscara binaria",      use_column_width=True)
+                        st.image(masked_img,  caption="Máscara sobrepuesta", use_column_width=True)
             
             enviar_reclamo = st.form_submit_button("Enviar Reclamo")   
     
