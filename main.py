@@ -465,7 +465,24 @@ def contiene_auto(pil_img: Image.Image, conf_threshold=0.25) -> bool:
                 return True
     return False
 
+WEIGHTS_URL  = "https://github.com/santiagoviteri01/tickets_final/releases/download/v1.0.0/unet_resnet34_cardd_best.pth"
+WEIGHTS_PATH = "unet_resnet34_cardd_best.pth"
 
+if not os.path.exists(WEIGHTS_PATH):
+    # Con requests:
+    resp = requests.get(WEIGHTS_URL, stream=True)
+    resp.raise_for_status()
+    with open(WEIGHTS_PATH, "wb") as f:
+        for chunk in resp.iter_content(1024 * 1024):
+            f.write(chunk)
+
+# Luego tu función cacheada:
+@st.cache_resource
+def cargar_modelo_mm1():
+    m = smp.Unet("resnet34", encoder_weights=None, in_channels=3, classes=1)
+    m.load_state_dict(torch.load(WEIGHTS_PATH, map_location="cpu"))
+    m.eval()
+    return m
 @st.cache_resource
 def cargar_modelo_mm1():
     m = smp.Unet("resnet34", encoder_weights=None, in_channels=3, classes=1)
