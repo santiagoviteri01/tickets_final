@@ -23,6 +23,7 @@ from geopy.geocoders import Nominatim
 import io
 from dashboard import mostrar_dashboard_analisis
 import segmentation_models_pytorch as smp
+import torch
 
 st.set_page_config(
     page_title="Insurapp",
@@ -688,10 +689,9 @@ def portal_cliente():
             siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
             enviar_vehiculos = st.form_submit_button("Enviar Foto")
 
+            auto_detectado = False
             foto_siniestro = None
-            if siniestro_vehicular == "Sí":
-                foto_siniestro = None
-                
+            if siniestro_vehicular == "Sí":                
                 # Opción 1: Capturar desde la cámara
                 foto_siniestro = st.camera_input("Toma una foto del siniestro (opcional)")
                 
@@ -708,6 +708,8 @@ def portal_cliente():
                         # Aquí puedes seguir con el flujo normal, p.ej. mostrar la imagen validada
                         st.image(img, caption="Imagen validada", use_column_width=True)
                         st.success("Automóvil detectado correctamente 👍")
+                        auto_detectado = True
+
                 
                         # ——— Segmentación ———
                         seg_model = cargar_modelo_mm1()
