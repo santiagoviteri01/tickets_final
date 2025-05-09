@@ -22,6 +22,7 @@ import folium
 from geopy.geocoders import Nominatim
 import io
 from dashboard import mostrar_dashboard_analisis
+import segmentation_models_pytorch as smp
 
 st.set_page_config(
     page_title="Insurapp",
@@ -737,7 +738,11 @@ def portal_cliente():
                         st.image(mask_pil,    caption="Máscara binaria",      use_column_width=True)
                         st.image(masked_img,  caption="Máscara sobrepuesta", use_column_width=True)
             
-            enviar_reclamo = st.form_submit_button("Enviar Reclamo")   
+            if siniestro_vehicular == "No" or auto_detectado:
+                enviar_reclamo = st.form_submit_button("Enviar Reclamo")
+            else:
+                # Podrías opcionalmente dejar el botón gris o simplemente mostrar un aviso
+                st.info("Para enviar el reclamo debes subir primero una foto con un automóvil.")
     
             if enviar_reclamo:
                 if not all([titulo, descripcion, ciudad_ocurrencia, fecha_ocurrencia]):
