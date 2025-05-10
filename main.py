@@ -24,6 +24,10 @@ import io
 from dashboard import mostrar_dashboard_analisis
 import segmentation_models_pytorch as smp
 import torch
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+
+
 
 st.set_page_config(
     page_title="Insurapp",
@@ -486,13 +490,14 @@ def cargar_modelo_mm1():
     m.load_state_dict(torch.load(WEIGHTS_PATH, map_location="cpu"))
     m.eval()
     return m
+
 @st.cache_resource
-def cargar_modelo_mm1():
-    m = smp.Unet("resnet34", encoder_weights=None, in_channels=3, classes=1)
-    # Si lo pusiste en models/, usar "models/unet_resnet34_cardd_best.pth"
-    m.load_state_dict(torch.load("unet_resnet34_cardd_best.pth", map_location="cpu"))
-    m.eval()
-    return m
+def get_seg_transform():
+    return A.Compose([
+        A.Resize(512, 512),
+        A.Normalize(),       # asume ImageNet stats
+        ToTensorV2(),
+    ])
     
 # Portal del Cliente
 def portal_cliente():
@@ -652,7 +657,7 @@ def portal_cliente():
     
     with tab3:
         st.header("Nuevo Reclamo")
-        
+        enviar_reclamo = False  
         cliente_id = st.session_state.usuario_actual
         cliente_data = asegurados_df[asegurados_df["NOMBRE COMPLETO"].astype(str) == cliente_id]
         
@@ -699,17 +704,7 @@ def portal_cliente():
                 if foto_siniestro is None:
                     foto_siniestro = st.file_uploader("O bien, sube una imagen desde tu dispositivo", type=["jpg", "jpeg", "png"])
                 # 3. Validar que la imagen tenga un auto
-                import albumentations as A
-                from albumentations.pytorch import ToTensorV2
-                
-                # 1) Cachea también el transform para la segmentación
-                @st.cache_resource
-                def get_seg_transform():
-                    return A.Compose([
-                        A.Resize(512, 512),
-                        A.Normalize(),       # asume ImageNet stats
-                        ToTensorV2(),
-                    ])
+
                 if foto_siniestro is not None:
                     img = Image.open(foto_siniestro)
                     if not contiene_auto(img):
