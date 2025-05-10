@@ -706,59 +706,39 @@ def portal_cliente():
                     foto_siniestro = st.file_uploader("O bien, sube una imagen desde tu dispositivo", type=["jpg", "jpeg", "png"])
                 # 3. Validar que la imagen tenga un auto
 
-                if foto_siniestro is not None:
-                    img = Image.open(foto_siniestro)
-                    if not contiene_auto(img):
-                        st.error("No detecté un automóvil en la imagen. Por favor, sube otra foto que contenga claramente un vehículo.")
-                        foto_siniestro = None  # Resetea para que el usuario intente de nuevo
-                    else:
-                        # Aquí puedes seguir con el flujo normal, p.ej. mostrar la imagen validada
-                        st.image(img, caption="Imagen validada", use_column_width=True)
-                        st.success("Automóvil detectado correctamente 👍")
-                        auto_detectado = True
-
+                # 1) Inferencia (igual que antes)
+                with torch.no_grad():
+                    logits = seg_model(inp)              # (1,1,512,512)
+                    mask_512 = (torch.sigmoid(logits[0,0]) > 0.5).cpu().numpy().astype("uint8") * 255
                 
-                        # ——— Segmentación ———
-                        seg_model = cargar_modelo_mm1()
-                        transform = get_seg_transform()
+                # 2) Redimensiona la máscara al tamaño original
+                orig = img  # PIL.Image en RGB
+                mask_pil = Image.fromarray(mask_512).resize(orig.size)
+                mask_np = np.array(mask_pil)            # ahora tiene shape (H_orig, W_orig)
                 
-                        # Prepara la imagen para el modelo
-                        img_np = np.array(img)
-                        augmented = transform(image=img_np)
-                        inp = augmented["image"].unsqueeze(0)  # (1,3,512,512)
+                # 3) Encuentra contornos sobre la máscara ya redimensionada
+                #    cv2.findContours necesita grayscale con valores 0/255
+                cnts, _ = cv2.findContours(mask_np, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 
-                        # Inferencia
-                        with torch.no_grad():
-                            logits = seg_model(inp)             # (1,1,512,512)
-                            mask = (torch.sigmoid(logits[0,0]) > 0.5).cpu().numpy().astype("uint8") * 255
+                # 4) Dibuja los contornos en la imagen original
+                orig_bgr = cv2.cvtColor(np.array(orig), cv2.COLOR_RGB2BGR)
+                cv2.drawContours(orig_bgr, cnts, -1, (255, 0, 0), 3)  # azul en BGR
                 
-                        # Redimensiona la máscara al tamaño original
-                        orig = img  # PIL.Image RGB
-                        mask_pil = Image.fromarray(mask).resize(orig.size)
-                        
-                        # 2. Crea la imagen con contorno
-                        #    Convertimos a BGR para usar OpenCV
-                        orig_bgr = cv2.cvtColor(np.array(orig), cv2.COLOR_RGB2BGR)
-                        #    Encuentra contornos en la máscara binaria
-                        cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                        #    Dibuja los contornos en azul (BGR) con grosor 3
-                        cv2.drawContours(orig_bgr, cnts, -1, (255,0,0), 3)
-                        #    Volvemos a RGB para Streamlit
-                        contour_img = Image.fromarray(cv2.cvtColor(orig_bgr, cv2.COLOR_BGR2RGB))
-                        
-                        # 3. Crea el overlay rojo semi-transparente
-                        overlay = Image.new("RGBA", orig.size, (255, 0, 0, 100))
-                        masked_img = Image.composite(overlay, orig.convert("RGBA"), mask_pil)
-                        
-                        # 4. Muestra todo en 3 columnas
-                        col1, col2, col3 = st.columns(3)
-                        col1.image(orig,         caption="Original",  use_column_width=True)
-                        col2.image(mask_pil,     caption="Máscara",   use_column_width=True)
-                        col3.image(masked_img,   caption="Overlay",   use_column_width=True)
-                        
-                        # 5. Y justo debajo, la versión con contorno
-                        st.subheader("🔍 Contorno del daño")
-                        st.image(contour_img, caption="Contorno sobre la foto", use_column_width=True)    
+                # 5) Convierte de nuevo a PIL para mostrar
+                contour_img = Image.fromarray(cv2.cvtColor(orig_bgr, cv2.COLOR_BGR2RGB))
+                
+                # 6) Crea también el overlay rojo semitransparente
+                overlay = Image.new("RGBA", orig.size, (255, 0, 0, 100))
+                masked_img = Image.composite(overlay, orig.convert("RGBA"), mask_pil)
+                
+                # 7) Muestra todo en tu UI
+                col1, col2, col3 = st.columns(3)
+                col1.image(orig,         caption="Original", use_container_width=True)
+                col2.image(mask_pil,     caption="Máscara",  use_container_width=True)
+                col3.image(masked_img,   caption="Overlay",  use_container_width=True)
+                
+                st.subheader("🔍 Contorno del daño")
+                st.image(contour_img, caption="Contorno sobre la foto", use_container_width=True)
 
             
             if siniestro_vehicular == "No" or auto_detectado:
