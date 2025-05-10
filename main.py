@@ -699,6 +699,17 @@ def portal_cliente():
                 if foto_siniestro is None:
                     foto_siniestro = st.file_uploader("O bien, sube una imagen desde tu dispositivo", type=["jpg", "jpeg", "png"])
                 # 3. Validar que la imagen tenga un auto
+                import albumentations as A
+                from albumentations.pytorch import ToTensorV2
+                
+                # 1) Cachea también el transform para la segmentación
+                @st.cache_resource
+                def get_seg_transform():
+                    return A.Compose([
+                        A.Resize(512, 512),
+                        A.Normalize(),       # asume ImageNet stats
+                        ToTensorV2(),
+                    ])
                 if foto_siniestro is not None:
                     img = Image.open(foto_siniestro)
                     if not contiene_auto(img):
