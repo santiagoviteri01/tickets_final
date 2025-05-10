@@ -26,7 +26,8 @@ import segmentation_models_pytorch as smp
 import torch
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-
+from PIL import ImageDraw
+import cv2
 
 
 st.set_page_config(
@@ -732,19 +733,33 @@ def portal_cliente():
                             mask = (torch.sigmoid(logits[0,0]) > 0.5).cpu().numpy().astype("uint8") * 255
                 
                         # Redimensiona la máscara al tamaño original
-                        mask_pil = Image.fromarray(mask).resize(img.size)
-                
-                        # Crea un overlay rojo semi-transparente
-                        overlay = Image.new("RGBA", img.size, (255, 0, 0, 100))
-                        img_rgba = img.convert("RGBA")
-                
-                        # Aplica la máscara como alpha mask
-                        masked_img = Image.composite(overlay, img_rgba, mask_pil)
-                
-                        # ——— Muestra resultado en el portal ———
-                        st.subheader("🔍 Segmentación de daño")
-                        st.image(mask_pil,    caption="Máscara binaria",      use_column_width=True)
-                        st.image(masked_img,  caption="Máscara sobrepuesta", use_column_width=True)
+                        orig = img  # PIL.Image RGB
+                        mask_pil = Image.fromarray(mask).resize(orig.size)
+                        
+                        # 2. Crea la imagen con contorno
+                        #    Convertimos a BGR para usar OpenCV
+                        orig_bgr = cv2.cvtColor(np.array(orig), cv2.COLOR_RGB2BGR)
+                        #    Encuentra contornos en la máscara binaria
+                        cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                        #    Dibuja los contornos en azul (BGR) con grosor 3
+                        cv2.drawContours(orig_bgr, cnts, -1, (255,0,0), 3)
+                        #    Volvemos a RGB para Streamlit
+                        contour_img = Image.fromarray(cv2.cvtColor(orig_bgr, cv2.COLOR_BGR2RGB))
+                        
+                        # 3. Crea el overlay rojo semi-transparente
+                        overlay = Image.new("RGBA", orig.size, (255, 0, 0, 100))
+                        masked_img = Image.composite(overlay, orig.convert("RGBA"), mask_pil)
+                        
+                        # 4. Muestra todo en 3 columnas
+                        col1, col2, col3 = st.columns(3)
+                        col1.image(orig,         caption="Original",  use_column_width=True)
+                        col2.image(mask_pil,     caption="Máscara",   use_column_width=True)
+                        col3.image(masked_img,   caption="Overlay",   use_column_width=True)
+                        
+                        # 5. Y justo debajo, la versión con contorno
+                        st.subheader("🔍 Contorno del daño")
+                        st.image(contour_img, caption="Contorno sobre la foto", use_column_width=True)    
+
             
             if siniestro_vehicular == "No" or auto_detectado:
                 enviar_reclamo = st.form_submit_button("Enviar Reclamo")
