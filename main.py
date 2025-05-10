@@ -697,48 +697,55 @@ def portal_cliente():
 
             auto_detectado = False
             foto_siniestro = None
-            if siniestro_vehicular == "Sí":                
-                # Opción 1: Capturar desde la cámara
+            
+            if siniestro_vehicular == "Sí":
                 foto_siniestro = st.camera_input("Toma una foto del siniestro (opcional)")
-                
-                # Opción 2: Subir desde el dispositivo si no se usa la cámara
                 if foto_siniestro is None:
-                    foto_siniestro = st.file_uploader("O bien, sube una imagen desde tu dispositivo", type=["jpg", "jpeg", "png"])
-                # 3. Validar que la imagen tenga un auto
-
-                # 1) Inferencia (igual que antes)
-                with torch.no_grad():
-                    logits = seg_model(inp)              # (1,1,512,512)
-                    mask_512 = (torch.sigmoid(logits[0,0]) > 0.5).cpu().numpy().astype("uint8") * 255
-                
-                # 2) Redimensiona la máscara al tamaño original
-                orig = img  # PIL.Image en RGB
-                mask_pil = Image.fromarray(mask_512).resize(orig.size)
-                mask_np = np.array(mask_pil)            # ahora tiene shape (H_orig, W_orig)
-                
-                # 3) Encuentra contornos sobre la máscara ya redimensionada
-                #    cv2.findContours necesita grayscale con valores 0/255
-                cnts, _ = cv2.findContours(mask_np, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                
-                # 4) Dibuja los contornos en la imagen original
-                orig_bgr = cv2.cvtColor(np.array(orig), cv2.COLOR_RGB2BGR)
-                cv2.drawContours(orig_bgr, cnts, -1, (255, 0, 0), 3)  # azul en BGR
-                
-                # 5) Convierte de nuevo a PIL para mostrar
-                contour_img = Image.fromarray(cv2.cvtColor(orig_bgr, cv2.COLOR_BGR2RGB))
-                
-                # 6) Crea también el overlay rojo semitransparente
-                overlay = Image.new("RGBA", orig.size, (255, 0, 0, 100))
-                masked_img = Image.composite(overlay, orig.convert("RGBA"), mask_pil)
-                
-                # 7) Muestra todo en tu UI
-                col1, col2, col3 = st.columns(3)
-                col1.image(orig,         caption="Original", use_container_width=True)
-                col2.image(mask_pil,     caption="Máscara",  use_container_width=True)
-                col3.image(masked_img,   caption="Overlay",  use_container_width=True)
-                
-                st.subheader("🔍 Contorno del daño")
-                st.image(contour_img, caption="Contorno sobre la foto", use_container_width=True)
+                    foto_siniestro = st.file_uploader("O bien, sube una imagen", type=["jpg","jpeg","png"])
+            
+                # ——— Detección de auto ———
+                if foto_siniestro is not None:
+                    img = Image.open(foto_siniestro).convert("RGB")
+                    if not contiene_auto(img):
+                        st.error("No detecté un automóvil en la imagen. Por favor, sube otra foto.")
+                        foto_siniestro = None
+                    else:
+                        st.success("Automóvil detectado correctamente 👍")
+                        auto_detectado = True
+            
+                # ——— Segmentación y visualización sólo si el auto fue detectado ———
+                if auto_detectado:
+                    seg_model  = cargar_modelo_mm1()
+                    transform  = get_seg_transform()
+                    img_np     = np.array(img)
+                    augmented  = transform(image=img_np)
+                    inp        = augmented["image"].unsqueeze(0).to(device)
+            
+                    with torch.no_grad():
+                        logits  = seg_model(inp)                         # (1,1,512,512)
+                        mask_512 = (torch.sigmoid(logits[0,0]) > 0.5).cpu().numpy().astype("uint8") * 255
+            
+                    # Redimensiona máscara
+                    mask_pil = Image.fromarray(mask_512).resize(img.size)
+                    mask_np  = np.array(mask_pil)
+            
+                    # Extrae y dibuja contornos
+                    cnts, _   = cv2.findContours(mask_np, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                    orig_bgr  = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+                    cv2.drawContours(orig_bgr, cnts, -1, (255,0,0), 3)
+                    contour_img = Image.fromarray(cv2.cvtColor(orig_bgr, cv2.COLOR_BGR2RGB))
+            
+                    # Overlay semitransparente
+                    overlay    = Image.new("RGBA", img.size, (255, 0, 0, 100))
+                    masked_img = Image.composite(overlay, img.convert("RGBA"), mask_pil)
+            
+                    # Muestra
+                    col1, col2, col3 = st.columns(3)
+                    col1.image(img,         caption="Original", use_container_width=True)
+                    col2.image(mask_pil,     caption="Máscara",  use_container_width=True)
+                    col3.image(masked_img,   caption="Overlay",  use_container_width=True)
+                    st.subheader("🔍 Contorno del daño")
+                    st.image(contour_img,    caption="Contorno", use_container_width=True)
 
             
             if siniestro_vehicular == "No" or auto_detectado:
