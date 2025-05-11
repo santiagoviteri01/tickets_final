@@ -448,6 +448,7 @@ def obtener_ubicacion():
 
 from PIL import Image
 from ultralytics import YOLO
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 # 1. Carga del modelo (se cachea para no recargar en cada interacción)
@@ -489,8 +490,7 @@ if not os.path.exists(WEIGHTS_PATH):
 def cargar_modelo_mm1():
     m = smp.Unet("resnet34", encoder_weights=None, in_channels=3, classes=1)
     m.load_state_dict(torch.load(WEIGHTS_PATH, map_location="cpu"))
-    m.eval()
-    return m
+    return m.to(device).eval()   # ← lo movemos al device aquí
 
 @st.cache_resource
 def get_seg_transform():
@@ -719,7 +719,9 @@ def portal_cliente():
                     transform  = get_seg_transform()
                     img_np     = np.array(img)
                     augmented  = transform(image=img_np)
-                    inp        = augmented["image"].unsqueeze(0).to(device)
+                    inp = augmented["image"].unsqueeze(0).to(device)
+
+                    
             
                     with torch.no_grad():
                         logits  = seg_model(inp)                         # (1,1,512,512)
