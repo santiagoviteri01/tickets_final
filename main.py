@@ -453,11 +453,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # 1. Carga del modelo (se cachea para no recargar en cada interacción)
 @st.cache_resource
-def load_detector():
-    # Puedes cambiar 'yolov8n.pt' por el checkpoint que prefieras
-    return YOLO('yolov8n.pt')
-
-model = load_detector()
+def cargar_modelo_yolo():
+    return YOLO("best.pt")
 
 # 2. Función auxiliar para verificar si hay un auto
 def contiene_auto(pil_img: Image.Image, conf_threshold=0.25) -> bool:
@@ -474,31 +471,6 @@ def contiene_auto(pil_img: Image.Image, conf_threshold=0.25) -> bool:
                 return True
     return False
 
-WEIGHTS_URL  = "https://github.com/santiagoviteri01/tickets_final/releases/download/v1.0.0/unet_resnet34_cardd_best.pth"
-WEIGHTS_PATH = "unet_resnet34_cardd_best.pth"
-
-if not os.path.exists(WEIGHTS_PATH):
-    # Con requests:
-    resp = requests.get(WEIGHTS_URL, stream=True)
-    resp.raise_for_status()
-    with open(WEIGHTS_PATH, "wb") as f:
-        for chunk in resp.iter_content(1024 * 1024):
-            f.write(chunk)
-
-# Luego tu función cacheada:
-@st.cache_resource
-def cargar_modelo_mm1():
-    m = smp.Unet("resnet34", encoder_weights=None, in_channels=3, classes=1)
-    m.load_state_dict(torch.load(WEIGHTS_PATH, map_location="cpu"))
-    return m.to(device).eval()   # ← lo movemos al device aquí
-
-@st.cache_resource
-def get_seg_transform():
-    return A.Compose([
-        A.Resize(512, 512),
-        A.Normalize(),       # asume ImageNet stats
-        ToTensorV2(),
-    ])
     
 # Portal del Cliente
 def portal_cliente():
@@ -716,8 +688,7 @@ def portal_cliente():
                 # ——— Segmentación y visualización sólo si el auto fue detectado ———
                 if auto_detectado:
                     from ultralytics import YOLO
-                
-                    seg_model = YOLO("best.pt")  # Ruta a tu modelo entrenado
+                    seg_model = cargar_modelo_yolo()
                     img_path = "temp_img.jpg"
                     img.save(img_path)
                 
