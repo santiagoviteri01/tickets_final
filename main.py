@@ -715,39 +715,45 @@ def portal_cliente():
             
                 # ——— Segmentación y visualización sólo si el auto fue detectado ———
                 if auto_detectado:
-                    seg_model  = cargar_modelo_mm1()
-                    transform  = get_seg_transform()
-                    img_np     = np.array(img)
-                    augmented  = transform(image=img_np)
-                    inp = augmented["image"].unsqueeze(0).to(device)
-
-                    
-            
-                    with torch.no_grad():
-                        logits  = seg_model(inp)                         # (1,1,512,512)
-                        mask_512 = (torch.sigmoid(logits[0,0]) > 0.5).cpu().numpy().astype("uint8") * 255
-            
-                    # Redimensiona máscara
-                    mask_pil = Image.fromarray(mask_512).resize(img.size)
-                    mask_np  = np.array(mask_pil)
-            
-                    # Extrae y dibuja contornos
-                    cnts, _   = cv2.findContours(mask_np, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                    orig_bgr  = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-                    cv2.drawContours(orig_bgr, cnts, -1, (255,0,0), 3)
-                    contour_img = Image.fromarray(cv2.cvtColor(orig_bgr, cv2.COLOR_BGR2RGB))
-            
-                    # Overlay semitransparente
-                    overlay    = Image.new("RGBA", img.size, (255, 0, 0, 100))
-                    masked_img = Image.composite(overlay, img.convert("RGBA"), mask_pil)
-            
-                    # Muestra
+                    from ultralytics import YOLO
+                
+                    seg_model = YOLO("best.pt")  # Ruta a tu modelo entrenado
+                    img_path = "temp_img.jpg"
+                    img.save(img_path)
+                
+                    results = seg_model(img_path)[0]
+                
+                    img_np = np.array(img)
+                    overlay_img = img_np.copy()
+                    mask_canvas = np.zeros_like(img_np)
+                
+                    names = seg_model.names  # Diccionario de clases
+                
+                    for i, mask in enumerate(results.masks.data):
+                        # Procesar la máscara
+                        mask_resized = cv2.resize(mask.cpu().numpy(), (img.width, img.height))
+                        mask_binary = (mask_resized > 0.5).astype(np.uint8) * 255
+                
+                        # Añadir la máscara al canvas
+                        contours, _ = cv2.findContours(mask_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                        cv2.drawContours(mask_canvas, contours, -1, (255, 0, 0), -1)
+                
+                        # Dibujar bounding box + clase si está disponible
+                        if results.boxes is not None and i < len(results.boxes):
+                            box = results.boxes.xyxy[i].cpu().numpy().astype(int)
+                            cls = int(results.boxes.cls[i].item())
+                            label = names[cls] if cls in names else f"Clase {cls}"
+                
+                            x1, y1, x2, y2 = box
+                            cv2.rectangle(overlay_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                            cv2.putText(overlay_img, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                                        0.6, (0, 255, 0), 2, cv2.LINE_AA)
+                
+                    # Mostrar resultados
                     col1, col2, col3 = st.columns(3)
-                    col1.image(img,         caption="Original", use_container_width=True)
-                    col2.image(mask_pil,     caption="Máscara",  use_container_width=True)
-                    col3.image(masked_img,   caption="Overlay",  use_container_width=True)
-                    st.subheader("🔍 Contorno del daño")
-                    st.image(contour_img,    caption="Contorno", use_container_width=True)
+                    col1.image(img, caption="📷 Imagen Original", use_container_width=True)
+                    col2.image(mask_canvas, caption="🟥 Máscara de Daño", use_container_width=True)
+                    col3.image(overlay_img, caption="📦 Bounding Boxes y Clases", use_container_width=True)
 
             
             if siniestro_vehicular == "No" or auto_detectado:
