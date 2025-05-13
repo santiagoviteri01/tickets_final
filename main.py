@@ -1732,26 +1732,58 @@ def manejar_tickets():
 
   
 def descargar_tickets():
-    with st.spinner("🔄 Cargando tickets para descarga..."):
-        df = cargar_tickets()  # usa la función cacheada que definimos antes
+    st.subheader("📤 Descargar información de reclamos y tickets")
+
+    with st.spinner("🔄 Cargando datos..."):
+        df_tickets = cargar_tickets()
+        df_pagados, df_pendientes, df_asegurados = cargar_datos_dashboard_desde_sheets()
+
+    hoja = st.selectbox(
+        "Selecciona qué hoja quieres descargar:",
+        ["Tickets", "Reclamos Pagados", "Reclamos Pendientes"]
+    )
+
+    formato = st.selectbox("Formato de descarga", ["CSV", "Excel", "JSON"])
+
+    if hoja == "Tickets":
+        df = df_tickets
+        nombre_archivo = "tickets"
+    elif hoja == "Reclamos Pagados":
+        df = df_pagados
+        nombre_archivo = "reclamos_pagados"
+    elif hoja == "Reclamos Pendientes":
+        df = df_pendientes
+        nombre_archivo = "reclamos_pendientes"
 
     if not df.empty:
-        formato = st.selectbox("Formato de descarga", ["CSV", "Excel", "JSON"])
-
         if formato == "CSV":
-            st.download_button("📥 Descargar CSV", df.to_csv(index=False), "tickets.csv", mime="text/csv")
+            st.download_button(
+                f"📥 Descargar {hoja} en CSV",
+                df.to_csv(index=False),
+                f"{nombre_archivo}.csv",
+                mime="text/csv"
+            )
         elif formato == "Excel":
             output = BytesIO()
             df.to_excel(output, index=False)
-            st.download_button("📥 Descargar Excel", output.getvalue(), "tickets.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            st.download_button(
+                f"📥 Descargar {hoja} en Excel",
+                output.getvalue(),
+                f"{nombre_archivo}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
         elif formato == "JSON":
-            st.download_button("📥 Descargar JSON", df.to_json(orient="records"), "tickets.json", mime="application/json")
+            st.download_button(
+                f"📥 Descargar {hoja} en JSON",
+                df.to_json(orient="records"),
+                f"{nombre_archivo}.json",
+                mime="application/json"
+            )
 
-        st.write("📊 Vista previa de los últimos registros:")
+        st.write("📊 Vista previa:")
         st.dataframe(df.tail(), use_container_width=True)
     else:
-        st.warning("⚠️ No hay datos disponibles para descargar.")
-
+        st.warning(f"⚠️ No hay datos disponibles en la hoja seleccionada ({hoja}).")
 
 
 if 'autenticado' not in st.session_state:
