@@ -465,7 +465,7 @@ def load_detector():
 model = load_detector()
 
 # 2. Función auxiliar para verificar si hay un auto
-def contiene_auto(pil_img: Image.Image, conf_threshold=0.25) -> bool:
+def contiene_auto(pil_img: Image.Image, conf_threshold=0.10) -> bool:
     # Convertir a numpy array compatible
     img_np = np.array(pil_img)
     # Inferencia
@@ -707,32 +707,34 @@ def portal_cliente():
                     mask_canvas = np.zeros_like(img_np)
                 
                     names = seg_model.names  # Diccionario de clases
-                
-                    for i, mask in enumerate(results.masks.data):
-                        # Procesar la máscara
-                        mask_resized = cv2.resize(mask.cpu().numpy(), (img.width, img.height))
-                        mask_binary = (mask_resized > 0.5).astype(np.uint8) * 255
-                
-                        # Añadir la máscara al canvas
-                        contours, _ = cv2.findContours(mask_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                        cv2.drawContours(mask_canvas, contours, -1, (255, 0, 0), -1)
-                
-                        # Dibujar bounding box + clase si está disponible
-                        if results.boxes is not None and i < len(results.boxes):
-                            box = results.boxes.xyxy[i].cpu().numpy().astype(int)
-                            cls = int(results.boxes.cls[i].item())
-                            label = names[cls] if cls in names else f"Clase {cls}"
-                
-                            x1, y1, x2, y2 = box
-                            cv2.rectangle(overlay_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                            cv2.putText(overlay_img, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
-                                        0.6, (0, 255, 0), 2, cv2.LINE_AA)
-                
-                    # Mostrar resultados
-                    col1, col2, col3 = st.columns(3)
-                    col1.image(img, caption="📷 Imagen Original", use_container_width=True)
-                    col2.image(mask_canvas, caption="🟥 Máscara de Daño", use_container_width=True)
-                    col3.image(overlay_img, caption="📦 Bounding Boxes y Clases", use_container_width=True)
+                    if results.masks is not None and results.masks.data is not None:
+                        for i, mask in enumerate(results.masks.data):
+                            # Procesar la máscara
+                            mask_resized = cv2.resize(mask.cpu().numpy(), (img.width, img.height))
+                            mask_binary = (mask_resized > 0.5).astype(np.uint8) * 255
+                    
+                            # Añadir la máscara al canvas
+                            contours, _ = cv2.findContours(mask_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                            cv2.drawContours(mask_canvas, contours, -1, (255, 0, 0), -1)
+                    
+                            # Dibujar bounding box + clase si está disponible
+                            if results.boxes is not None and i < len(results.boxes):
+                                box = results.boxes.xyxy[i].cpu().numpy().astype(int)
+                                cls = int(results.boxes.cls[i].item())
+                                label = names[cls] if cls in names else f"Clase {cls}"
+                    
+                                x1, y1, x2, y2 = box
+                                cv2.rectangle(overlay_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                                cv2.putText(overlay_img, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                                            0.6, (0, 255, 0), 2, cv2.LINE_AA)
+                    
+                        # Mostrar resultados
+                        col1, col2, col3 = st.columns(3)
+                        col1.image(img, caption="📷 Imagen Original", use_container_width=True)
+                        col2.image(mask_canvas, caption="🟥 Máscara de Daño", use_container_width=True)
+                        col3.image(overlay_img, caption="📦 Bounding Boxes y Clases", use_container_width=True)
+                    else:
+                        st.warning("No se detectaron daños en la imagen.")
 
             
             if siniestro_vehicular == "No" or auto_detectado:
