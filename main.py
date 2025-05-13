@@ -363,7 +363,7 @@ def autenticacion():
 
     if not st.session_state.autenticado:
         with st.container():
-            st.title("🔒 Inicio de Sesión")
+            st.title("Inicio de Sesión")
             usuario = st.text_input("Usuario")
             contraseña = st.text_input("Contraseña", type="password")
 
@@ -379,7 +379,7 @@ def autenticacion():
                     else:
                         st.error("❌ Credenciales incorrectas")
             with col2:
-                if st.button("⬅️ Volver"):
+                if st.button("Volver"):
                     st.session_state.mostrar_login = False
                     st.rerun()
         return False
@@ -603,8 +603,8 @@ def portal_cliente():
                             color_map = {
                                 'NUEVO': '🔵',
                                 'EN PROCESO': '🟡',
-                                'resuelto': '🟢',
-                                'cerrado': '✅',
+                                'RESUELTO': '🟢',
+                                'CERRADO': '✅',
                                 'DOCUMENTACION PENDIENTE': '🟠'
                             }
                             icono = color_map.get(estado, '⚫')
@@ -707,7 +707,11 @@ def portal_cliente():
                     mask_canvas = np.zeros_like(img_np)
                 
                     names = seg_model.names  # Diccionario de clases
+                    
                     if results.masks is not None and results.masks.data is not None:
+                        mask_canvas = np.zeros((img.height, img.width, 3), dtype=np.uint8)
+                        overlay_img = np.array(img).copy()
+                    
                         for i, mask in enumerate(results.masks.data):
                             # Procesar la máscara
                             mask_resized = cv2.resize(mask.cpu().numpy(), (img.width, img.height))
@@ -717,7 +721,7 @@ def portal_cliente():
                             contours, _ = cv2.findContours(mask_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                             cv2.drawContours(mask_canvas, contours, -1, (255, 0, 0), -1)
                     
-                            # Dibujar bounding box + clase si está disponible
+                            # Dibujar bounding box + clase
                             if results.boxes is not None and i < len(results.boxes):
                                 box = results.boxes.xyxy[i].cpu().numpy().astype(int)
                                 cls = int(results.boxes.cls[i].item())
@@ -728,11 +732,32 @@ def portal_cliente():
                                 cv2.putText(overlay_img, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
                                             0.6, (0, 255, 0), 2, cv2.LINE_AA)
                     
-                        # Mostrar resultados
+                        # Convertir a PIL
+                        pil_original = img.convert("RGBA")
+                        pil_mask = Image.fromarray(mask_canvas).convert("RGBA")
+                    
+                        # Canal alfa a partir de la máscara
+                        alpha = Image.fromarray((mask_canvas[:, :, 0] > 0).astype(np.uint8) * 100)
+                        pil_mask.putalpha(alpha)
+                    
+                        # Combinar imagen original + máscara
+                        overlay_masked_img = Image.alpha_composite(pil_original, pil_mask)
+                    
+                        # Añadir bounding boxes y etiquetas
+                        overlay_final = overlay_masked_img.convert("RGB").copy()
+                        draw = ImageDraw.Draw(overlay_final)
+                        for i, box in enumerate(results.boxes.xyxy):
+                            x1, y1, x2, y2 = box.int().tolist()
+                            cls = int(results.boxes.cls[i].item())
+                            label = names[cls] if cls in names else f"Clase {cls}"
+                            draw.rectangle([x1, y1, x2, y2], outline="green", width=2)
+                            draw.text((x1, y1 - 10), label, fill="green")
+                    
+                        # Mostrar
                         col1, col2, col3 = st.columns(3)
                         col1.image(img, caption="📷 Imagen Original", use_container_width=True)
-                        col2.image(mask_canvas, caption="🟥 Máscara de Daño", use_container_width=True)
-                        col3.image(overlay_img, caption="📦 Bounding Boxes y Clases", use_container_width=True)
+                        col2.image(mask_canvas, caption="🟥 Máscara", use_container_width=True)
+                        col3.image(overlay_final, caption="🎯 Imagen Final", use_container_width=True)
                     else:
                         st.warning("No se detectaron daños en la imagen.")
 
@@ -760,7 +785,7 @@ def portal_cliente():
                         unique_filename = f"reclamos/{str(uuid.uuid4())}.{extension}"
                         bucket_name = 'insurapp-fotos'
                         s3.upload_fileobj(
-                            foto_siniestro,
+                            overlay_final,
                             bucket_name,
                             unique_filename,
                             ExtraArgs={'ContentType': foto_siniestro.type, 'ACL': 'public-read'}
