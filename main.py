@@ -456,6 +456,14 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def cargar_modelo_yolo():
     return YOLO("best.pt")
 
+# 1. Carga del modelo (se cachea para no recargar en cada interacción)
+@st.cache_resource
+def load_detector():
+    # Puedes cambiar 'yolov8n.pt' por el checkpoint que prefieras
+    return YOLO('yolov8n.pt')
+
+model = load_detector()
+
 # 2. Función auxiliar para verificar si hay un auto
 def contiene_auto(pil_img: Image.Image, conf_threshold=0.25) -> bool:
     # Convertir a numpy array compatible
