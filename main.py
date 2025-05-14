@@ -155,7 +155,21 @@ def cargar_datos_dashboard_desde_sheets():
     return df_pagados, df_pendientes, df_asegurados
 
 df_pagados, df_pendientes, df_asegurados = cargar_datos_dashboard_desde_sheets()
+def verificar_variables_entorno():
+    st.sidebar.markdown("### 🔍 Verificación de configuración de correo")
 
+    email = os.environ.get("EMAIL_RECLAMOS")
+    password = os.environ.get("EMAIL_RECLAMOS_PASS")
+
+    if email:
+        st.sidebar.success(f"📨 EMAIL_RECLAMOS cargado: {email}")
+    else:
+        st.sidebar.error("❌ EMAIL_RECLAMOS no está definido")
+
+    if password:
+        st.sidebar.success(f"🔐 EMAIL_RECLAMOS_PASS cargado (longitud: {len(password)} caracteres)")
+    else:
+        st.sidebar.error("❌ EMAIL_RECLAMOS_PASS no está definido")
 
 def descargar_archivos_ticket(numero_ticket, nombre_cliente):
     hoja_adjuntos = spreadsheet.worksheet("archivos_adjuntos")
@@ -345,6 +359,7 @@ def landing_page():
     col1, col2 = st.columns([1, 1])
     with col1:
         if st.button("🔐 Mi Cuenta", use_container_width=True):
+            verificar_variables_entorno()
             st.session_state.mostrar_login = True
             st.session_state.mostrar_formulario_cotizacion = False
             st.rerun()
