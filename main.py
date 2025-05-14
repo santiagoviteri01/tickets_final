@@ -28,7 +28,8 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from PIL import ImageDraw
 import cv2
-
+import smtplib
+from email.message import EmailMessage
 
 st.set_page_config(
     page_title="Insurapp",
@@ -479,6 +480,24 @@ def contiene_auto(pil_img: Image.Image, conf_threshold=0.10) -> bool:
                 return True
     return False
 
+
+
+def enviar_correo_reclamo(destinatario, asunto, cuerpo):
+    msg = EmailMessage()
+    msg.set_content(cuerpo)
+    msg["Subject"] = asunto
+    msg["From"] = os.environ.get("EMAIL_RECLAMOS")
+    msg["To"] = destinatario
+
+    try:
+        with smtplib.SMTP("smtp.office365.com", 587) as smtp:
+            smtp.starttls()  # Importante para Outlook (TLS)
+            smtp.login(os.environ.get("EMAIL_RECLAMOS"), os.environ.get("EMAIL_RECLAMOS_PASS"))
+            smtp.send_message(msg)
+        return True
+    except Exception as e:
+        st.error(f"❌ Error al enviar el correo: {e}")
+        return False
     
 # Portal del Cliente
 def portal_cliente():
@@ -837,6 +856,24 @@ def portal_cliente():
                     nuevo_reclamos_serializable = {k: str(v) for k, v in nuevo_reclamos.items()}
                     sheet.append_row(list(nuevo_reclamos_serializable.values()))
                     st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente")
+                    # --- Enviar correo de notificación ---
+                    correo_destinatario = "sviteri@insuratlan.com"
+                    asunto = f"Nuevo Reclamo #{nuevo_numero} de {st.session_state.usuario_actual}"
+                    cuerpo = f"""
+                    Se ha creado un nuevo reclamo por parte del cliente {st.session_state.usuario_actual}.
+                    
+                    Título: {titulo}
+                    Descripción: {descripcion}
+                    Ciudad de Ocurrencia: {ciudad_ocurrencia}
+                    Fecha de Ocurrencia: {fecha_ocurrencia.strftime("%Y-%m-%d")}
+                    Área: {area}
+                    Aseguradora: {datos.get('ASEGURADORA')}
+                    Placa: {datos.get('PLACA')}
+                    
+                    Puedes revisar el reclamo en la plataforma.
+                    """
+                    
+                    enviar_correo_reclamo(correo_destinatario, asunto, cuerpo)
                 
     with tab4:
         st.header("📎 Subir Archivos Adicionales a un Reclamo")
