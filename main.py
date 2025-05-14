@@ -155,21 +155,7 @@ def cargar_datos_dashboard_desde_sheets():
     return df_pagados, df_pendientes, df_asegurados
 
 df_pagados, df_pendientes, df_asegurados = cargar_datos_dashboard_desde_sheets()
-def verificar_variables_entorno():
-    st.sidebar.markdown("### 🔍 Verificación de configuración de correo")
 
-    email = os.environ.get("EMAIL_RECLAMOS")
-    password = os.environ.get("EMAIL_RECLAMOS_PASS")
-
-    if email:
-        st.sidebar.success(f"📨 EMAIL_RECLAMOS cargado: {email}")
-    else:
-        st.sidebar.error("❌ EMAIL_RECLAMOS no está definido")
-
-    if password:
-        st.sidebar.success(f"🔐 EMAIL_RECLAMOS_PASS cargado (longitud: {len(password)} caracteres)")
-    else:
-        st.sidebar.error("❌ EMAIL_RECLAMOS_PASS no está definido")
 
 def descargar_archivos_ticket(numero_ticket, nombre_cliente):
     hoja_adjuntos = spreadsheet.worksheet("archivos_adjuntos")
@@ -497,6 +483,7 @@ def contiene_auto(pil_img: Image.Image, conf_threshold=0.10) -> bool:
 
 
 
+
 def enviar_correo_reclamo(destinatario, asunto, cuerpo):
     msg = EmailMessage()
     msg.set_content(cuerpo)
@@ -505,10 +492,11 @@ def enviar_correo_reclamo(destinatario, asunto, cuerpo):
     msg["To"] = destinatario
 
     try:
-        with smtplib.SMTP("smtp.office365.com", 587) as smtp:
+        with smtplib.SMTP("smtp.gmail.com", 587) as smtp:  # ← CAMBIADO
             smtp.starttls()
             smtp.login(os.environ["EMAIL_RECLAMOS"], os.environ["EMAIL_RECLAMOS_PASS"])
             smtp.send_message(msg)
+        return True
     except Exception as e:
         st.error(f"❌ Error al enviar el correo: {e}")
         return False
