@@ -857,7 +857,7 @@ def portal_cliente():
                     sheet.append_row(list(nuevo_reclamos_serializable.values()))
                     st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente")
                     # --- Enviar correo de notificación ---
-                    correo_destinatario = "sviteri@insuratlan.com"
+                    correo_destinatario = "reclamosinsuratlan@outlook.com"
                     asunto = f"Nuevo Reclamo #{nuevo_numero} de {st.session_state.usuario_actual}"
                     cuerpo = f"""
                     Se ha creado un nuevo reclamo por parte del cliente {st.session_state.usuario_actual}.
