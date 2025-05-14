@@ -345,7 +345,6 @@ def landing_page():
     col1, col2 = st.columns([1, 1])
     with col1:
         if st.button("🔐 Mi Cuenta", use_container_width=True):
-            verificar_variables_entorno()
             st.session_state.mostrar_login = True
             st.session_state.mostrar_formulario_cotizacion = False
             st.rerun()
