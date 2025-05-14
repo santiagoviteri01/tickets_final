@@ -491,10 +491,9 @@ def enviar_correo_reclamo(destinatario, asunto, cuerpo):
 
     try:
         with smtplib.SMTP("smtp.office365.com", 587) as smtp:
-            smtp.starttls()  # Importante para Outlook (TLS)
-            smtp.login(os.environ.get("EMAIL_RECLAMOS"), os.environ.get("EMAIL_RECLAMOS_PASS"))
+            smtp.starttls()
+            smtp.login(os.environ["EMAIL_RECLAMOS"], os.environ["EMAIL_RECLAMOS_PASS"])
             smtp.send_message(msg)
-        return True
     except Exception as e:
         st.error(f"❌ Error al enviar el correo: {e}")
         return False
