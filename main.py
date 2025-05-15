@@ -416,41 +416,29 @@ def obtener_ubicacion():
         st.success("🎉 Permiso concedido y ubicación obtenida.")
 
 
-    # 2) Construyo el mapa con la última posición guardada
-    lat, lon = st.session_state.ubicacion_coords.values()
+    # 2) Crear mapa y marcador
+    lat, lon = st.session_state.coords.values()
     m = folium.Map(location=[lat, lon], zoom_start=16)
-    LocateControl(auto_start=False, flyTo=True).add_to(m)
     folium.Marker(
         [lat, lon],
-        draggable=True,
-        icon=folium.Icon(color="red", icon="map-pin", prefix="fa"),
-        popup="📍 Arrastra para ajustar"
+        icon=folium.Icon(color="red", icon="map-pin", prefix="fa")
     ).add_to(m)
 
-    # 3) Renderizo con key fija y capturo solo 'last_clicked'
-    map_data = st_folium(
+    # 3) Mostrar y capturar clic
+    mapa_data = st_folium(
         m,
-        height=450,
-        width=700,
         returned_objects=["last_clicked"],
-        key="ubicacion_map"
+        key="map_click"
     )
-
-    # 4) Si hay arrastre, actualizo coords y fuerzo rerun
-    click = map_data.get("last_clicked")
+    click = mapa_data.get("last_clicked")
     if click:
-        nueva = {"lat": click["lat"], "lon": click["lng"]}
-        if nueva != st.session_state.ubicacion_coords:
-            st.session_state.ubicacion_coords = nueva
-            # Intento la API oficial
-            if hasattr(st, "experimental_request_rerun"):
-                st.experimental_request_rerun()
-            else:
-                # Fallback a excepción interna
-                raise RerunException()
+        new = {"lat": click["lat"], "lon": click["lng"]}
+        if new != st.session_state.coords:
+            st.session_state.coords = new
+            st.experimental_rerun()
 
-    # 5) Genero el link final
-    lat, lon = st.session_state.ubicacion_coords.values()
+    # 4) Mostrar link
+    lat, lon = st.session_state.coords.values()
     maps_link = f"https://www.google.com/maps?q={lat:.6f},{lon:.6f}"
     st.markdown(f"**[🔗 Ver en Google Maps]({maps_link})**")
     return maps_link
@@ -797,7 +785,7 @@ def portal_cliente():
                             draw.text((x1, y1 - 10), label, fill="green")
                     
                         # Mostrar
-                        col1 = st.columns(1)
+                        col1, = st.columns(1)
                         col1.image(img, caption="📷 Imagen Capturada", use_container_width=True)
                         #col2.image(mask_canvas, caption="🟥 Máscara", use_container_width=True)
                         #col3.image(overlay_final, caption="🎯 Imagen Final", use_container_width=True)
