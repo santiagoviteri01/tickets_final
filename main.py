@@ -524,6 +524,10 @@ def portal_cliente():
     
         cliente_id = st.session_state.usuario_actual
         cliente_data = asegurados_df[asegurados_df["NOMBRE COMPLETO"].astype(str) == cliente_id]
+
+        # Quedarse solo con el registro de mayor NÚMERO RENOVACIÓN por vehículo
+        cliente_data = cliente_data.sort_values("NÚMERO RENOVACIÓN", ascending=False)
+        cliente_data = cliente_data.drop_duplicates(subset=["PLACA"], keep="first")
         
         if not cliente_data.empty:
             st.subheader("Información Personal")
@@ -573,13 +577,31 @@ def portal_cliente():
                     st.subheader("📋 Ver Coberturas")
                     if aseguradora == "ZURICH SEGUROS":
                         with open("archivos_coberturas/certificado_zurich.pdf", "rb") as file:
-                            st.download_button(label="📥 Descargar Coberturas ZURICH", data=file, file_name="Coberturas_ZURICH.pdf", mime="application/pdf")
+                            st.download_button(
+                                label="📥 Descargar Coberturas ZURICH",
+                                data=file,
+                                file_name="Coberturas_ZURICH.pdf",
+                                mime="application/pdf",
+                                key=f"zurich_{datos['PLACA']}"
+                            )
                     elif aseguradora == "MAPFRE":
                         with open("archivos_coberturas/certificado_mapfre.pdf", "rb") as file:
-                            st.download_button(label="📥 Descargar Coberturas MAPFRE", data=file, file_name="Coberturas_MAPFRE.pdf", mime="application/pdf")
+                            st.download_button(
+                                label="📥 Descargar Coberturas MAPFRE",
+                                data=file,
+                                file_name="Coberturas_MAPFRE.pdf",
+                                mime="application/pdf",
+                                key=f"mapfre_{datos['PLACA']}"
+                            )
                     elif aseguradora == "AIG":
                         with open("archivos_coberturas/certificado_aig.pdf", "rb") as file:
-                            st.download_button(label="📥 Descargar Coberturas AIG", data=file, file_name="Coberturas_AIG.pdf", mime="application/pdf")
+                            st.download_button(
+                                label="📥 Descargar Coberturas AIG",
+                                data=file,
+                                file_name="Coberturas_AIG.pdf",
+                                mime="application/pdf",
+                                key=f"aig_{datos['PLACA']}"
+                            )
     
         else:
             st.error("No se encontró información para tu cuenta.")
