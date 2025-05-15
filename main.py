@@ -390,11 +390,10 @@ def autenticacion():
 from folium.plugins import LocateControl
 
 geolocator = Nominatim(user_agent="mi_app_insurapp")
-
-
+from streamlit.runtime.scriptrunner import RerunException
 # Si no necesitas reverse geocoding, puedes eliminar Geolocator
 def obtener_ubicacion():
-    # 1) Pedir permiso y guardar coords en session_state
+    # 1) Solo pedimos permiso UNA VEZ
     if "ubicacion_coords" not in st.session_state:
         st.subheader("📍 Solicitando permiso de ubicación…")
         js = '''
@@ -402,28 +401,23 @@ def obtener_ubicacion():
             navigator.geolocation.getCurrentPosition(
                 pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude}),
                 err => reject(err.message),
-                {enableHighAccuracy: true, timeout:10000, maximumAge:0}
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 600000 }
             );
         })
         '''
-        coords = streamlit_js_eval(js_expressions=js, key="get_geo", debounce=1.0)
-
+        coords = streamlit_js_eval(js_expressions=js, key="get_geo")
         if not coords or "lat" not in coords:
             st.warning(
                 "⚠️ Para continuar, **permite** el acceso a tu ubicación en el navegador "
                 "pulsar el botón permitir ubicación."
             )
             return ""
-
-        # Guardar coordenadas
         st.session_state.ubicacion_coords = {"lat": coords["lat"], "lon": coords["lon"]}
         st.success("🎉 Permiso concedido y ubicación obtenida.")
 
-    # 2) Usar coords guardadas
-    lat = st.session_state.ubicacion_coords["lat"]
-    lon = st.session_state.ubicacion_coords["lon"]
 
-    # 3) Mostrar mapa y marcador draggable
+    # 2) Construyo el mapa con la última posición guardada
+    lat, lon = st.session_state.ubicacion_coords.values()
     m = folium.Map(location=[lat, lon], zoom_start=16)
     LocateControl(auto_start=False, flyTo=True).add_to(m)
     folium.Marker(
@@ -433,20 +427,34 @@ def obtener_ubicacion():
         popup="📍 Arrastra para ajustar"
     ).add_to(m)
 
-    out = st_folium(m, height=450, width=700, returned_objects=["last_clicked"])
-    if out and out.get("last_clicked"):
-        p = out["last_clicked"]
-        lat, lon = p["lat"], p["lng"]
-        st.session_state.ubicacion_coords = {"lat": lat, "lon": lon}
-        st.success(f"🔄 Coordenadas ajustadas: {lat:.6f}, {lon:.6f}")
+    # 3) Renderizo con key fija y capturo solo 'last_clicked'
+    map_data = st_folium(
+        m,
+        height=450,
+        width=700,
+        returned_objects=["last_clicked"],
+        key="ubicacion_map"
+    )
 
-    # 4) Generar y mostrar link de Google Maps
+    # 4) Si hay arrastre, actualizo coords y fuerzo rerun
+    click = map_data.get("last_clicked")
+    if click:
+        nueva = {"lat": click["lat"], "lon": click["lng"]}
+        if nueva != st.session_state.ubicacion_coords:
+            st.session_state.ubicacion_coords = nueva
+            # Intento la API oficial
+            if hasattr(st, "experimental_request_rerun"):
+                st.experimental_request_rerun()
+            else:
+                # Fallback a excepción interna
+                raise RerunException()
+
+    # 5) Genero el link final
+    lat, lon = st.session_state.ubicacion_coords.values()
     maps_link = f"https://www.google.com/maps?q={lat:.6f},{lon:.6f}"
     st.markdown(f"**[🔗 Ver en Google Maps]({maps_link})**")
-
-    # 5) Devolver el link para guardar en tu sheet
     return maps_link
-
+  
 from PIL import Image
 from ultralytics import YOLO
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -479,8 +487,6 @@ def contiene_auto(pil_img: Image.Image, conf_threshold=0.10) -> bool:
             if model.names[c] == 'car':
                 return True
     return False
-
-
 
 
 def enviar_correo_reclamo(destinatario, asunto, cuerpo):
@@ -518,68 +524,63 @@ def portal_cliente():
     
         cliente_id = st.session_state.usuario_actual
         cliente_data = asegurados_df[asegurados_df["NOMBRE COMPLETO"].astype(str) == cliente_id]
-    
+        
         if not cliente_data.empty:
-            datos = cliente_data.iloc[0]
-    
-            # Mostrar en columnas
             st.subheader("Información Personal")
+            datos_personales = cliente_data.iloc[0]  # Asumimos que estos campos se repiten en todas las filas
             col1, col2 = st.columns(2)
             with col1:
-                st.write(f"**Nombre Completo:** {datos['NOMBRE COMPLETO']}")
-                st.write(f"**Género:** {datos['GENERO']}")
-                st.write(f"**Estado Civil:** {datos['ESTADO CIVIL']}")
-                st.write(f"**Ciudad:** {datos['CIUDAD CLIENTE']}")
-                st.write(f"**Fecha de Nacimiento:** {datos['FECHA NACIMIENTO']}")
-                st.write(f"**Correo:** {datos['CORREO ELECTRÓNICO']}")
-    
+                st.write(f"**Nombre Completo:** {datos_personales['NOMBRE COMPLETO']}")
+                st.write(f"**Género:** {datos_personales['GENERO']}")
+                st.write(f"**Estado Civil:** {datos_personales['ESTADO CIVIL']}")
+                st.write(f"**Ciudad:** {datos_personales['CIUDAD CLIENTE']}")
+                st.write(f"**Fecha de Nacimiento:** {datos_personales['FECHA NACIMIENTO']}")
+                st.write(f"**Correo:** {datos_personales['CORREO ELECTRÓNICO']}")
             with col2:
-                st.write(f"**Dirección Oficina:** {datos['DIRECCIÓN OFICINA']}")
-                st.write(f"**Teléfono Oficina:** {datos['TELÉFONO OFICINA']}")
-                st.write(f"**Dirección Domicilio:** {datos['DIRECCIÓN DOMICILIO']}")
-                st.write(f"**Teléfono Domicilio:** {datos['TELÉFONO DOMICILIO']}")
+                st.write(f"**Dirección Oficina:** {datos_personales['DIRECCIÓN OFICINA']}")
+                st.write(f"**Teléfono Oficina:** {datos_personales['TELÉFONO OFICINA']}")
+                st.write(f"**Dirección Domicilio:** {datos_personales['DIRECCIÓN DOMICILIO']}")
+                st.write(f"**Teléfono Domicilio:** {datos_personales['TELÉFONO DOMICILIO']}")
+                
+            st.subheader("🚗 Vehículos Asegurados")
+            
+            for idx, datos in cliente_data.iterrows():
+                with st.expander(f"🔹 Vehículo {idx + 1} — {datos['MARCA']} {datos['MODELO']} ({datos['PLACA']})"):
+                    col3, col4 = st.columns(2)
+                    with col3:
+                        st.write(f"**Marca:** {datos['MARCA']}")
+                        st.write(f"**Modelo:** {datos['MODELO']}")
+                        st.write(f"**Año:** {datos['AÑO']}")
+                        st.write(f"**Clase (Tipo):** {datos['CLASE (TIPO)']}")
+                    with col4:
+                        st.write(f"**Motor:** {datos['MOTOR']}")
+                        st.write(f"**Chasis:** {datos['CHASIS']}")
+                        st.write(f"**Color:** {datos['COLOR']}")
+                        st.write(f"**Tipo Placa:** {datos['TIPO PLACA']}")
+                        st.write(f"**Placa:** {datos['PLACA']}")
+            
+                    st.write(f"**Accesorios:** {datos['ACCESORIOS']}")
+                    st.write(f"**Valor Asegurado:** {datos['VALOR ASEGURADO']}")
+                    st.write(f"**Póliza Maestra:** {datos['POLIZA MAESTRA']}")
+                    st.write(f"**Número Certificado:** {datos['NÚMERO CERTIFICADO']}")
+                    st.write(f"**Fecha Vigencia:** {datos['FECHA VIGENCIA']}")
+                    st.write(f"**Fecha Expiración:** {datos['FECHA EXPIRACIÓN']}")
+                    st.write(f"**Aseguradora:** {datos['ASEGURADORA']}")
+                    st.write(f"**Plan:** {datos['PLAN']}")
+            
+                    # Coberturas
+                    aseguradora = datos["ASEGURADORA"].strip().upper()
+                    st.subheader("📋 Ver Coberturas")
+                    if aseguradora == "ZURICH SEGUROS":
+                        with open("archivos_coberturas/certificado_zurich.pdf", "rb") as file:
+                            st.download_button(label="📥 Descargar Coberturas ZURICH", data=file, file_name="Coberturas_ZURICH.pdf", mime="application/pdf")
+                    elif aseguradora == "MAPFRE":
+                        with open("archivos_coberturas/certificado_mapfre.pdf", "rb") as file:
+                            st.download_button(label="📥 Descargar Coberturas MAPFRE", data=file, file_name="Coberturas_MAPFRE.pdf", mime="application/pdf")
+                    elif aseguradora == "AIG":
+                        with open("archivos_coberturas/certificado_aig.pdf", "rb") as file:
+                            st.download_button(label="📥 Descargar Coberturas AIG", data=file, file_name="Coberturas_AIG.pdf", mime="application/pdf")
     
-            st.subheader("Información de la Póliza")
-            st.write(f"**Póliza Maestra:** {datos['POLIZA MAESTRA']}")
-            st.write(f"**Número Certificado:** {datos['NÚMERO CERTIFICADO']}")
-            st.write(f"**Fecha Vigencia:** {datos['FECHA VIGENCIA']}")
-            st.write(f"**Fecha Expiración:** {datos['FECHA EXPIRACIÓN']}")
-            st.write(f"**Aseguradora:** {datos['ASEGURADORA']}")
-            st.write(f"**Plan:** {datos['PLAN']}")
-    
-            st.subheader("Información del Vehículo")
-            col3, col4 = st.columns(2)
-            with col3:
-                st.write(f"**Marca:** {datos['MARCA']}")
-                st.write(f"**Modelo:** {datos['MODELO']}")
-                st.write(f"**Año:** {datos['AÑO']}")
-                st.write(f"**Clase (Tipo):** {datos['CLASE (TIPO)']}")
-            with col4:
-                st.write(f"**Motor:** {datos['MOTOR']}")
-                st.write(f"**Chasis:** {datos['CHASIS']}")
-                st.write(f"**Color:** {datos['COLOR']}")
-                st.write(f"**Tipo Placa:** {datos['TIPO PLACA']}")
-                st.write(f"**Placa:** {datos['PLACA']}")
-    
-            st.write(f"**Accesorios:** {datos['ACCESORIOS']}")
-            st.write(f"**Valor Asegurado:** {datos['VALOR ASEGURADO']}")
-    
-            # Mostrar coberturas según aseguradora
-            aseguradora = datos["ASEGURADORA"].strip().upper()
-    
-            st.subheader("📋 Ver Coberturas")
-            if aseguradora == "ZURICH SEGUROS":
-                st.info("Coberturas ZURICH")
-                with open("archivos_coberturas/certificado_zurich.pdf", "rb") as file:
-                    st.download_button(label="📥 Descargar Coberturas ZURICH", data=file, file_name="Coberturas_ZURICH.pdf", mime="application/pdf")
-            elif aseguradora == "MAPFRE":
-                st.info("Coberturas MAPFRE")
-                with open("archivos_coberturas/certificado_mapfre.pdf", "rb") as file:
-                    st.download_button(label="📥 Descargar Coberturas MAPFRE", data=file, file_name="Coberturas_MAPFRE.pdf", mime="application/pdf")
-            elif aseguradora == "AIG":
-                st.info("Coberturas AIG")
-                with open("archivos_coberturas/certificado_aig.pdf", "rb") as file:
-                    st.download_button(label="📥 Descargar Coberturas AIG", data=file, file_name="Coberturas_AIG.pdf", mime="application/pdf")
         else:
             st.error("No se encontró información para tu cuenta.")
     
@@ -774,10 +775,10 @@ def portal_cliente():
                             draw.text((x1, y1 - 10), label, fill="green")
                     
                         # Mostrar
-                        col1, col2, col3 = st.columns(3)
-                        col1.image(img, caption="📷 Imagen Original", use_container_width=True)
-                        col2.image(mask_canvas, caption="🟥 Máscara", use_container_width=True)
-                        col3.image(overlay_final, caption="🎯 Imagen Final", use_container_width=True)
+                        col1 = st.columns(1)
+                        col1.image(img, caption="📷 Imagen Capturada", use_container_width=True)
+                        #col2.image(mask_canvas, caption="🟥 Máscara", use_container_width=True)
+                        #col3.image(overlay_final, caption="🎯 Imagen Final", use_container_width=True)
                     else:
                         st.warning("No se detectaron daños en la imagen.")
 
