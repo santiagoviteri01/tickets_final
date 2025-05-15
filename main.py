@@ -393,7 +393,7 @@ geolocator = Nominatim(user_agent="mi_app_insurapp")
 from streamlit.runtime.scriptrunner import RerunException
 # Si no necesitas reverse geocoding, puedes eliminar Geolocator
 def obtener_ubicacion():
-    # 1) Solo pedimos permiso UNA VEZ
+    # 1) Pedir permiso y guardar coords una vez
     if "ubicacion_coords" not in st.session_state:
         st.subheader("📍 Solicitando permiso de ubicación…")
         js = '''
@@ -401,46 +401,48 @@ def obtener_ubicacion():
             navigator.geolocation.getCurrentPosition(
                 pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude}),
                 err => reject(err.message),
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 600000 }
+                {enableHighAccuracy: true, timeout:10000, maximumAge:0}
             );
         })
         '''
-        coords = streamlit_js_eval(js_expressions=js, key="get_geo")
+        coords = streamlit_js_eval(js_expressions=js, key="get_geo", debounce=1.0)
         if not coords or "lat" not in coords:
-            st.warning(
-                "⚠️ Para continuar, **permite** el acceso a tu ubicación en el navegador "
-                "pulsar el botón permitir ubicación."
-            )
+            st.warning("⚠️ Para continuar, permite el acceso a tu ubicación.")
             return ""
         st.session_state.ubicacion_coords = {"lat": coords["lat"], "lon": coords["lon"]}
         st.success("🎉 Permiso concedido y ubicación obtenida.")
 
+    # 2) Leer coords guardadas
+    lat = st.session_state.ubicacion_coords["lat"]
+    lon = st.session_state.ubicacion_coords["lon"]
 
-    # 2) Crear mapa y marcador
-    lat, lon = st.session_state.coords.values()
+    # 3) Mapa con marker draggable
     m = folium.Map(location=[lat, lon], zoom_start=16)
+    LocateControl(auto_start=False, flyTo=True).add_to(m)
     folium.Marker(
         [lat, lon],
-        icon=folium.Icon(color="red", icon="map-pin", prefix="fa")
+        draggable=True,
+        icon=folium.Icon(color="red", icon="map-pin", prefix="fa"),
+        popup="📍 Arrastra para ajustar"
     ).add_to(m)
 
-    # 3) Mostrar y capturar clic
-    mapa_data = st_folium(
+    salida = st_folium(
         m,
-        returned_objects=["last_clicked"],
-        key="map_click"
+        height=450,
+        width=700,
+        returned_objects=["last_clicked"]
     )
-    click = mapa_data.get("last_clicked")
-    if click:
-        new = {"lat": click["lat"], "lon": click["lng"]}
-        if new != st.session_state.coords:
-            st.session_state.coords = new
-            st.experimental_rerun()
+    if salida and salida.get("last_clicked"):
+        click = salida["last_clicked"]
+        nueva = {"lat": click["lat"], "lon": click["lng"]}
+        st.session_state.ubicacion_coords = nueva
+        st.success(f"🔄 Coordenadas ajustadas: {nueva['lat']:.6f}, {nueva['lon']:.6f}")
 
-    # 4) Mostrar link
-    lat, lon = st.session_state.coords.values()
+    # 4) Link a Google Maps
     maps_link = f"https://www.google.com/maps?q={lat:.6f},{lon:.6f}"
     st.markdown(f"**[🔗 Ver en Google Maps]({maps_link})**")
+
+    # 5) Devolver el link
     return maps_link
   
 from PIL import Image
@@ -815,11 +817,17 @@ def portal_cliente():
                         extension = foto_siniestro.name.split('.')[-1]
                         unique_filename = f"reclamos/{str(uuid.uuid4())}.{extension}"
                         bucket_name = 'insurapp-fotos'
+                        buffer = io.BytesIO()
+                        # Ajusta el formato según tu extensión (jpg, png…)
+                        overlay_final.save(buffer, format="JPEG")
+                        buffer.seek(0)
+                    
+                        # Sube el buffer, en lugar de overlay_final directamente
                         s3.upload_fileobj(
-                            overlay_final,
+                            buffer,
                             bucket_name,
                             unique_filename,
-                            ExtraArgs={'ContentType': foto_siniestro.type, 'ACL': 'public-read'}
+                            ExtraArgs={'ContentType': 'image/jpeg', 'ACL': 'public-read'}
                         )
                         foto_url = f"https://{bucket_name}.s3.us-east-1.amazonaws.com/{unique_filename}"
     
