@@ -437,7 +437,7 @@ def obtener_ubicacion():
         click = salida["last_clicked"]
         nueva = {"lat": click["lat"], "lon": click["lng"]}
         st.session_state.ubicacion_coords = nueva
-        st.experimental_rerun()
+        st.success(f"🔄 Coordenadas ajustadas: {nueva['lat']:.6f}, {nueva['lon']:.6f}")
 
     # 6) Generar URIs para app y web
     intent_uri = (
