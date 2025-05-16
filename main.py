@@ -439,7 +439,7 @@ def obtener_ubicacion():
         st.session_state.ubicacion_coords = nueva
         st.success(f"🔄 Coordenadas ajustadas: {nueva['lat']:.6f}, {nueva['lon']:.6f}")
     
-    if st.button("📌 Confirmar ubicación"):
+    if st.form_submit_button("📌 Confirmar ubicación", key="conf_btn")
         # Al hacer clic, Streamlit rerun ea función de arriba
         # y como session_state ya tiene las coords nuevas, el mapa se redibuja
         # No necesitas hacer nada más aquí.
