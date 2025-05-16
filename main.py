@@ -508,22 +508,27 @@ TEMPLATES = {
     "MAPFRE":  "archivos_coberturas/certificado_mapfre_temp.docx",
     "ZURICH":  "archivos_coberturas/certificado_zurich_temp.docx",
 }
+
+import subprocess
+import tempfile
 from docxtpl import DocxTemplate
 
-def generar_certificado_buffer(
+def generar_certificado_pdf_from_template(
     asegurados_df: pd.DataFrame,
     cliente_id: str,
     template_path: str
 ) -> io.BytesIO:
     """
-    Genera en memoria un archivo .docx rellenado con los datos del cliente
-    y devuelve un BytesIO listo para descargar.
+    1) Rellena la plantilla .docx en memoria.
+    2) Guarda un .docx temporal.
+    3) Llama a LibreOffice headless para convertirlo a PDF.
+    4) Devuelve un BytesIO con el PDF listo.
     """
-    # 1) Filtrar al cliente y preparar datos
-    df_cliente = asegurados_df[asegurados_df["NOMBRE COMPLETO"] == cliente_id].copy()
-    if df_cliente.empty:
-        raise ValueError(f"No se encontró registro para '{cliente_id}'")
-    df_cliente["NÚMERO RENOVACIÓN"] = df_cliente["NÚMERO RENOVACIÓN"].astype(int)
+    # Filtrar y preparar datos (idéntico a tu lógica)
+    df = asegurados_df[asegurados_df["NOMBRE COMPLETO"] == cliente_id].copy()
+    if df.empty:
+        raise ValueError(f"No encontrado '{cliente_id}'")
+    df["NÚMERO RENOVACIÓN"] = df["NÚMERO RENOVACIÓN"].astype(int)
 
     # Columnas numéricas a limpiar
     numeric_cols = [
@@ -536,10 +541,10 @@ def generar_certificado_buffer(
         "PRIMA VEHÍCULOS"
     ]
     for col in numeric_cols:
-        df_cliente[col] = pd.to_numeric(df_cliente[col], errors="coerce").fillna(0)
+        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
     # 2) Escoger la fila de mayor renovación
-    fila = df_cliente.loc[df_cliente["NÚMERO RENOVACIÓN"].idxmax()]
+    fila = df.loc[df["NÚMERO RENOVACIÓN"].idxmax()]
 
     # 3) Montar el contexto para la plantilla
     context = {
@@ -587,13 +592,34 @@ def generar_certificado_buffer(
         "prima_total":       f"${fila['PRIMA TOTAL VEHÍCULOS']:,.2f}",
     }
 
-    # 4) Renderizar la plantilla en memoria
+    # 1) Rellenar y volcar a buffer .docx
     doc = DocxTemplate(template_path)
     doc.render(context)
-    buffer = io.BytesIO()
-    doc.save(buffer)
-    buffer.seek(0)
-    return buffer
+    buf_docx = io.BytesIO()
+    doc.save(buf_docx)
+    buf_docx.seek(0)
+
+    # 2) Guardar DOCX temporal en disco
+    tmp_docx = tempfile.NamedTemporaryFile(delete=False, suffix=".docx")
+    tmp_docx.write(buf_docx.read())
+    tmp_docx.close()
+
+    # 3) Convertir a PDF con LibreOffice headless
+    tmp_pdf = tmp_docx.name.replace(".docx", ".pdf")
+    subprocess.run([
+        "libreoffice",
+        "--headless",
+        "--convert-to", "pdf",
+        "--outdir", os.path.dirname(tmp_docx.name),
+        tmp_docx.name
+    ], check=True)
+
+    # 4) Leer el PDF en buffer y limpiar
+    buf_pdf = io.BytesIO(open(tmp_pdf, "rb").read())
+    buf_pdf.seek(0)
+    os.remove(tmp_docx.name)
+    os.remove(tmp_pdf)
+    return buf_pdf
     
 def enviar_correo_reclamo(destinatario, asunto, cuerpo):
     msg = EmailMessage()
@@ -679,29 +705,23 @@ def portal_cliente():
                     st.write(f"**Plan:** {datos['PLAN']}")
             
                     aseguradora = datos["ASEGURADORA"].strip().upper()
-                    st.subheader("📄 Generar y Descargar Certificado")                
-                    tpl_path = TEMPLATES.get(aseguradora)
-                    if tpl_path:
-                        # Botón que genera el certificado en memoria
-                        if st.button(f"🖨️ Generar Certificado ({aseguradora})", key=f"gen_cert_{datos['PLACA']}"):
-                            try:
-                                buf = generar_certificado_buffer(
-                                    asegurados_df,
-                                    st.session_state.usuario_actual,
-                                    tpl_path
-                                )
-                                # Botón de descarga
-                                st.download_button(
-                                    label="📥 Descargar Certificado (.docx)",
-                                    data=buf,
-                                    file_name=f"Certificado_{datos['PLACA']}.docx",
-                                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                                    key=f"dl_cert_{datos['PLACA']}"
-                                )
-                            except Exception as e:
-                                st.error(f"No se pudo generar el certificado: {e}")
-                    else:
-                        st.info(f"No existe plantilla para {aseguradora}")
+                    tpl_path = TEMPLATES[aseguradora]  # tu mapeo a .docx
+                    if st.button("🖨️ Generar Certificado PDF", key=f"pdf_{datos['PLACA']}"):
+                        try:
+                            pdf_buf = generar_certificado_pdf_from_template(
+                                asegurados_df,
+                                st.session_state.usuario_actual,
+                                tpl_path
+                            )
+                            st.download_button(
+                                "📥 Descargar Certificado (PDF)",
+                                data=pdf_buf,
+                                file_name=f"Certificado_{datos['PLACA']}.pdf",
+                                mime="application/pdf",
+                                key=f"dl_pdf_{datos['PLACA']}"
+                            )
+                        except Exception as e:
+                            st.error(f"No se pudo generar el PDF: {e}")
     
         else:
             st.error("No se encontró información para tu cuenta.")
