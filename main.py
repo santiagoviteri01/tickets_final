@@ -514,7 +514,7 @@ import tempfile
 from docxtpl import DocxTemplate
 
 def generar_certificado_pdf_from_template(
-    asegurados_df: pd.DataFrame,
+    df_asegurados: pd.DataFrame,
     cliente_id: str,
     template_path: str
 ) -> io.BytesIO:
@@ -525,7 +525,7 @@ def generar_certificado_pdf_from_template(
     4) Devuelve un BytesIO con el PDF listo.
     """
     # Filtrar y preparar datos (idéntico a tu lógica)
-    df = asegurados_df[asegurados_df["NOMBRE COMPLETO"] == cliente_id].copy()
+    df = df_asegurados[df_asegurados["NOMBRE COMPLETO"] == cliente_id].copy()
     if df.empty:
         raise ValueError(f"No encontrado '{cliente_id}'")
     df["NÚMERO RENOVACIÓN"] = df["NÚMERO RENOVACIÓN"].astype(int)
@@ -709,7 +709,7 @@ def portal_cliente():
                     if st.button("🖨️ Generar Certificado PDF", key=f"pdf_{datos['PLACA']}"):
                         try:
                             pdf_buf = generar_certificado_pdf_from_template(
-                                asegurados_df,
+                                df_asegurados,
                                 st.session_state.usuario_actual,
                                 tpl_path
                             )
