@@ -456,12 +456,11 @@ def obtener_ubicacion():
       rel="noopener noreferrer"
       style="text-decoration:none; font-size:18px;"
     >
-      📍 Abrir en Google Maps
     </a>
     '''
     
     # 8) Renderizarlo como HTML
-    st.markdown(html, unsafe_allow_html=True)
+    #st.markdown(html, unsafe_allow_html=True)
     # 8) Devolver el link web (opcional, para guardar en tu sheet)
     return web_uri
   
@@ -725,6 +724,8 @@ def portal_cliente():
                 ubicacion_actual = obtener_ubicacion()
                 permiso_ubicacion = st.form_submit_button("permitir ubicación")
                 confirmar = st.form_submit_button("📌 Confirmar ubicación")
+                if confrimar: 
+                    obtener_ubicacion():
                 
 
             st.subheader("Información sobre el Siniestro")
