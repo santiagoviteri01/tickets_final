@@ -438,6 +438,12 @@ def obtener_ubicacion():
         nueva = {"lat": click["lat"], "lon": click["lng"]}
         st.session_state.ubicacion_coords = nueva
         st.success(f"🔄 Coordenadas ajustadas: {nueva['lat']:.6f}, {nueva['lon']:.6f}")
+    
+    if st.button("📌 Confirmar ubicación"):
+        # Al hacer clic, Streamlit rerun ea función de arriba
+        # y como session_state ya tiene las coords nuevas, el mapa se redibuja
+        # No necesitas hacer nada más aquí.
+        pass
 
     # 6) Generar URIs para app y web
 
@@ -723,9 +729,7 @@ def portal_cliente():
             if necesita_grua == "Sí" or asistencia_legal == "Sí":
                 ubicacion_actual = obtener_ubicacion()
                 permiso_ubicacion = st.form_submit_button("permitir ubicación")
-                confirmar = st.form_submit_button("📌 Confirmar ubicación")
-                if confrimar: 
-                    obtener_ubicacion():
+
                 
 
             st.subheader("Información sobre el Siniestro")
