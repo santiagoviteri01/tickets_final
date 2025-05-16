@@ -440,25 +440,28 @@ def obtener_ubicacion():
         st.success(f"🔄 Coordenadas ajustadas: {nueva['lat']:.6f}, {nueva['lon']:.6f}")
 
     # 6) Generar URIs para app y web
+
     intent_uri = (
         f"intent://maps.google.com/maps?q={lat},{lon}"
         "#Intent;scheme=https;package=com.google.android.apps.maps;end"
     )
     web_uri = f"https://maps.google.com/maps?q={lat},{lon}"
-
-    # 7) Mostrar enlace con intent y fallback
-    html = f"""
+    
+    # 7) Crear el HTML completo
+    html = f'''
     <a
       href="{intent_uri}"
       onclick="this.href='{web_uri}'"
       target="_blank"
       rel="noopener noreferrer"
+      style="text-decoration:none; font-size:18px;"
     >
       📍 Abrir en Google Maps
     </a>
-    """
+    '''
+    
+    # 8) Renderizarlo como HTML
     st.markdown(html, unsafe_allow_html=True)
-
     # 8) Devolver el link web (opcional, para guardar en tu sheet)
     return web_uri
   
@@ -717,9 +720,35 @@ def portal_cliente():
             
             # Sección de ubicación automática con GPS solo si es necesario
             ubicacion_actual = ""
+
             if necesita_grua == "Sí" or asistencia_legal == "Sí":
                 ubicacion_actual = obtener_ubicacion()
-                permiso_ubicacion = st.form_submit_button("permitir ubicación")
+                #permiso_ubicacion = st.form_submit_button("permitir ubicación")
+                #confirmar = st.form_submit_button("📌 Confirmar ubicación")
+                
+                # 1) Botón “Permitir ubicación” con key
+                permiso_ubicacion = st.form_submit_button(
+                    "📍 Permitir ubicación",
+                    key="perm_btn"
+                )
+            
+                # 2) Botón “Confirmar ubicación” que además dispara el permiso
+                confirmar = st.form_submit_button(
+                    "📌 Confirmar ubicación",
+                    key="conf_btn",
+                    on_click=lambda: st.session_state.update({"perm_btn": True})
+                )
+            
+                # 3) Ahora revisas el estado en session_state
+                if st.session_state.get("perm_btn"):
+                    # Aquí va la misma lógica que hacías cuando 'permiso_ubicacion' era True
+                    st.success("🎉 Permiso concedido y ubicación obtenida.")  # o tu mensaje
+            
+                if st.session_state.get("conf_btn"):
+                    # Lógica de confirmación de ubicación
+                    lat = st.session_state.ubicacion_coords["lat"]
+                    lon = st.session_state.ubicacion_coords["lon"]
+                    st.success(f"🔄 Ubicación confirmada: {lat:.6f}, {lon:.6f}")
     
             st.subheader("Información sobre el Siniestro")
             siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
