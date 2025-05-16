@@ -723,33 +723,10 @@ def portal_cliente():
 
             if necesita_grua == "Sí" or asistencia_legal == "Sí":
                 ubicacion_actual = obtener_ubicacion()
-                #permiso_ubicacion = st.form_submit_button("permitir ubicación")
-                #confirmar = st.form_submit_button("📌 Confirmar ubicación")
+                permiso_ubicacion = st.form_submit_button("permitir ubicación")
+                confirmar = st.form_submit_button("📌 Confirmar ubicación")
                 
-                # 1) Botón “Permitir ubicación” con key
-                permiso_ubicacion = st.form_submit_button(
-                    "📍 Permitir ubicación",
-                    key="perm_btn"
-                )
-            
-                # 2) Botón “Confirmar ubicación” que además dispara el permiso
-                confirmar = st.form_submit_button(
-                    "📌 Confirmar ubicación",
-                    key="conf_btn",
-                    on_click=lambda: st.session_state.update({"perm_btn": True})
-                )
-            
-                # 3) Ahora revisas el estado en session_state
-                if st.session_state.get("perm_btn"):
-                    # Aquí va la misma lógica que hacías cuando 'permiso_ubicacion' era True
-                    st.success("🎉 Permiso concedido y ubicación obtenida.")  # o tu mensaje
-            
-                if st.session_state.get("conf_btn"):
-                    # Lógica de confirmación de ubicación
-                    lat = st.session_state.ubicacion_coords["lat"]
-                    lon = st.session_state.ubicacion_coords["lon"]
-                    st.success(f"🔄 Ubicación confirmada: {lat:.6f}, {lon:.6f}")
-    
+
             st.subheader("Información sobre el Siniestro")
             siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
             enviar_vehiculos = st.form_submit_button("Enviar Foto")
