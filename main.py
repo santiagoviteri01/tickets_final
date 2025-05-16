@@ -506,7 +506,7 @@ def contiene_auto(pil_img: Image.Image, conf_threshold=0.10) -> bool:
 TEMPLATES = {
     "AIG":     "archivos_coberturas/certificado_aig_temp.docx",
     "MAPFRE":  "archivos_coberturas/certificado_mapfre_temp.docx",
-    "ZURICH":  "archivos_coberturas/certificado_zurich_temp.docx",
+    "ZURICH SEGUROS":  "archivos_coberturas/certificado_zurich_temp.docx",
 }
 
 import subprocess
