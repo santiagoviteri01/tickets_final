@@ -503,7 +503,98 @@ def contiene_auto(pil_img: Image.Image, conf_threshold=0.10) -> bool:
                 return True
     return False
 
+TEMPLATES = {
+    "AIG":     "archivos_coberturas/certificado_aig_temp.docx",
+    "MAPFRE":  "archivos_coberturas/certificado_mapfre_temp.docx",
+    "ZURICH":  "archivos_coberturas/certificado_zurich_temp.docx",
+}
+from docxtpl import DocxTemplate
 
+def generar_certificado_buffer(
+    asegurados_df: pd.DataFrame,
+    cliente_id: str,
+    template_path: str
+) -> io.BytesIO:
+    """
+    Genera en memoria un archivo .docx rellenado con los datos del cliente
+    y devuelve un BytesIO listo para descargar.
+    """
+    # 1) Filtrar al cliente y preparar datos
+    df_cliente = asegurados_df[asegurados_df["NOMBRE COMPLETO"] == cliente_id].copy()
+    if df_cliente.empty:
+        raise ValueError(f"No se encontró registro para '{cliente_id}'")
+    df_cliente["NÚMERO RENOVACIÓN"] = df_cliente["NÚMERO RENOVACIÓN"].astype(int)
+
+    # Columnas numéricas a limpiar
+    numeric_cols = [
+        "VALOR ASEGURADO",
+        "PRIMA TOTAL VEHÍCULOS",
+        "IMPUESTO VEHÍCULOS EMISIÓN",
+        "IMPUESTO VEHÍCULOS SUPER DE BANCOS",
+        "IMPUESTO VEHÍCULOS SEGURO CAMPESINO",
+        "IMPUESTO VEHÍCULOS IVA",
+        "PRIMA VEHÍCULOS"
+    ]
+    for col in numeric_cols:
+        df_cliente[col] = pd.to_numeric(df_cliente[col], errors="coerce").fillna(0)
+
+    # 2) Escoger la fila de mayor renovación
+    fila = df_cliente.loc[df_cliente["NÚMERO RENOVACIÓN"].idxmax()]
+
+    # 3) Montar el contexto para la plantilla
+    context = {
+        "tipo_id":     fila["TIPO IDENTIFICACIÓN"],
+        "numero_id":   fila["NÚMERO IDENTIFICACIÓN"],
+        "nombre1":     fila["NOMBRE1"],
+        "nombre2":     fila["NOMBRE2"],
+        "apellido1":   fila["APELLIDO1"],
+        "apellido2":   fila["APELLIDO2"],
+        "nombre":      fila["NOMBRE COMPLETO"],
+        "genero":      fila["GENERO"],
+        "estado_civil":fila["ESTADO CIVIL"],
+        "ciudad":            fila["CIUDAD CLIENTE"],
+        "direccion_oficina": fila["DIRECCIÓN OFICINA"],
+        "telefono_oficina":  fila["TELÉFONO OFICINA"],
+        "direccion_dom":     fila["DIRECCIÓN DOMICILIO"],
+        "telefono_dom":      fila["TELÉFONO DOMICILIO"],
+        "email":             fila["CORREO ELECTRÓNICO"],
+        "fecha_nac":         pd.to_datetime(fila["FECHA NACIMIENTO"]).strftime("%d/%m/%Y"),
+        "poliza_maestra":    fila["POLIZA MAESTRA"],
+        "poliza":            fila["NÚMERO PÓLIZA VEHÍCULOS"],
+        "liderseg":          fila["ID LIDERSEG"],
+        "marca":             fila["MARCA"],
+        "modelo":            fila["MODELO"],
+        "motor":             fila["MOTOR"],
+        "chasis":            fila["CHASIS"],
+        "color":             fila["COLOR"],
+        "ano":               fila["AÑO"],
+        "concesionario":     fila["CONCESIONARIO"],
+        "ano_carro":         fila["AÑOCARRO"],
+        "tipo":              fila["CLASE (TIPO)"],
+        "fecha_ini":         pd.to_datetime(fila["FECHA VIGENCIA"]).strftime("%d/%m/%Y"),
+        "fecha_ven":         pd.to_datetime(fila["FECHA EXPIRACIÓN"]).strftime("%d/%m/%Y"),
+        "fecha_emi":         pd.to_datetime(fila["FECHA"]).strftime("%d/%m/%Y"),
+        "tipo_placa":        fila["TIPO PLACA"],
+        "placa":             fila["PLACA"],
+        "accesorios":        fila["ACCESORIOS"],
+        "benef_acr":         fila["BENEFICIARIO ACREEDOR"],
+        "emision":           f"${fila['IMPUESTO VEHÍCULOS EMISIÓN']:,.2f}",
+        "imp_super":         f"${fila['IMPUESTO VEHÍCULOS SUPER DE BANCOS']:,.2f}",
+        "imp_camp":          f"${fila['IMPUESTO VEHÍCULOS SEGURO CAMPESINO']:,.2f}",
+        "iva":               f"${fila['IMPUESTO VEHÍCULOS IVA']:,.2f}",
+        "valor_asegurado":   f"${fila['VALOR ASEGURADO']:,.2f}",
+        "prima":             f"${fila['PRIMA VEHÍCULOS']:,.2f}",
+        "prima_total":       f"${fila['PRIMA TOTAL VEHÍCULOS']:,.2f}",
+    }
+
+    # 4) Renderizar la plantilla en memoria
+    doc = DocxTemplate(template_path)
+    doc.render(context)
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
+    
 def enviar_correo_reclamo(destinatario, asunto, cuerpo):
     msg = EmailMessage()
     msg.set_content(cuerpo)
@@ -587,36 +678,30 @@ def portal_cliente():
                     st.write(f"**Aseguradora:** {datos['ASEGURADORA']}")
                     st.write(f"**Plan:** {datos['PLAN']}")
             
-                    # Coberturas
                     aseguradora = datos["ASEGURADORA"].strip().upper()
-                    st.subheader("📋 Ver Coberturas")
-                    if aseguradora == "ZURICH SEGUROS":
-                        with open("archivos_coberturas/certificado_zurich.pdf", "rb") as file:
-                            st.download_button(
-                                label="📥 Descargar Coberturas ZURICH",
-                                data=file,
-                                file_name="Coberturas_ZURICH.pdf",
-                                mime="application/pdf",
-                                key=f"zurich_{datos['PLACA']}"
-                            )
-                    elif aseguradora == "MAPFRE":
-                        with open("archivos_coberturas/certificado_mapfre.pdf", "rb") as file:
-                            st.download_button(
-                                label="📥 Descargar Coberturas MAPFRE",
-                                data=file,
-                                file_name="Coberturas_MAPFRE.pdf",
-                                mime="application/pdf",
-                                key=f"mapfre_{datos['PLACA']}"
-                            )
-                    elif aseguradora == "AIG":
-                        with open("archivos_coberturas/certificado_aig.pdf", "rb") as file:
-                            st.download_button(
-                                label="📥 Descargar Coberturas AIG",
-                                data=file,
-                                file_name="Coberturas_AIG.pdf",
-                                mime="application/pdf",
-                                key=f"aig_{datos['PLACA']}"
-                            )
+                    st.subheader("📄 Generar y Descargar Certificado")                
+                    tpl_path = TEMPLATES.get(aseguradora)
+                    if tpl_path:
+                        # Botón que genera el certificado en memoria
+                        if st.button(f"🖨️ Generar Certificado ({aseguradora})", key=f"gen_cert_{datos['PLACA']}"):
+                            try:
+                                buf = generar_certificado_buffer(
+                                    asegurados_df,
+                                    st.session_state.usuario_actual,
+                                    tpl_path
+                                )
+                                # Botón de descarga
+                                st.download_button(
+                                    label="📥 Descargar Certificado (.docx)",
+                                    data=buf,
+                                    file_name=f"Certificado_{datos['PLACA']}.docx",
+                                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                    key=f"dl_cert_{datos['PLACA']}"
+                                )
+                            except Exception as e:
+                                st.error(f"No se pudo generar el certificado: {e}")
+                    else:
+                        st.info(f"No existe plantilla para {aseguradora}")
     
         else:
             st.error("No se encontró información para tu cuenta.")
