@@ -1,10 +1,11 @@
-FROM python:3.9-slim
+FROM python:3.9-slim 
 WORKDIR /app
 
-# Instala LibreOffice y dependencias del sistema
+# Instala LibreOffice, OpenCV deps y otras dependencias del sistema
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     libreoffice \
+    libgl1 \                          # ← esto resuelve tu error
     libpango-1.0-0 \
     libharfbuzz-dev \
     libcairo2 \
