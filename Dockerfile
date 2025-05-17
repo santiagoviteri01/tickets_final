@@ -4,11 +4,11 @@ WORKDIR /app
 # Instala LibreOffice, OpenCV deps y otras dependencias del sistema
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    libreoffice \
-    libgl1 \                          # ← esto resuelve tu error
-    libpango-1.0-0 \
-    libharfbuzz-dev \
-    libcairo2 \
+        libreoffice \
+        libgl1 \
+        libpango-1.0-0 \
+        libharfbuzz-dev \
+        libcairo2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copia TODO el contenido del repositorio al contenedor
