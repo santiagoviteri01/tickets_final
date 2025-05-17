@@ -13,8 +13,8 @@ RUN apt-get update && \
         libharfbuzz-dev \
         libcairo2 \
         fonts-liberation \
-        ttf-dejavu \
-        && rm -rf /var/lib/apt/lists/*
+        fonts-dejavu \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY . .
 
