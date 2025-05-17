@@ -1,0 +1,17 @@
+services:
+  - name: tickets_final
+    type: web
+    runtime: docker
+    repo: https://github.com/santiagoviteri01/tickets_final
+    branch: main
+    region: oregon
+    plan: standard  # usa el mismo plan actual (Standard)
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: STREAMLIT_SERVER_PORT
+        value: 8501
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
