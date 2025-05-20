@@ -792,6 +792,11 @@ def portal_cliente():
                                 st.info("No se adjuntó foto del siniestro.")
             else:
                 st.info("No se encontraron tickets con los filtros seleccionados.")
+            if isinstance(ubic, str) and ubic.startswith("http"):
+                st.markdown(
+                    f"[📍 Ver ubicación en Google Maps]({ubic})",
+                    unsafe_allow_html=True
+                )
         else:
             st.warning("No hay tickets registrados.")
 
