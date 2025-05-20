@@ -443,42 +443,20 @@ def obtener_ubicacion():
         nueva = {"lat": click["lat"], "lon": click["lng"]}
         st.session_state.ubicacion_coords = nueva
         st.success(f"🔄 Coordenadas ajustadas: {nueva['lat']:.6f}, {nueva['lon']:.6f}")
-        web_uri_1 = f"https://maps.google.com/maps?q={lat},{lon}"
-        st.markdown(
-            f"**Enlace Web:** {web_uri_1}",
-            unsafe_allow_html=True
-        )
-
-    
-    if st.form_submit_button("📌 Confirmar ubicación"):
-        # Al hacer clic, Streamlit rerun ea función de arriba
-        # y como session_state ya tiene las coords nuevas, el mapa se redibuja
-        # No necesitas hacer nada más aquí.
-        pass
-
-    # 6) Generar URIs para app y web
-
-    intent_uri = (
-        f"intent://maps.google.com/maps?q={lat},{lon}"
-        "#Intent;scheme=https;package=com.google.android.apps.maps;end"
+    # 6) Generar URIs siempre con las coords en session_state
+    lat_cur = st.session_state.ubicacion_coords["lat"]
+    lon_cur = st.session_state.ubicacion_coords["lon"]
+    web_uri = f"https://www.google.com/maps/search/?api=1&query={lat_cur},{lon_cur}"
+    # 7) Mostrar enlace para móvil y escritorio
+    st.markdown(
+        f"**Enlace Web:** {web_uri}",
+        unsafe_allow_html=True
     )
+
+    # 8) Confirmar ubicación
+    if st.form_submit_button("📌 Confirmar ubicación"):
+        pass
     web_uri = f"https://maps.google.com/maps?q={lat},{lon}"
-    
-    # 7) Crear el HTML completo
-    html = f'''
-    <a
-      href="{intent_uri}"
-      onclick="this.href='{web_uri}'"
-      target="_blank"
-      rel="noopener noreferrer"
-      style="text-decoration:none; font-size:18px;"
-    >
-    </a>
-    '''
-    
-    # 8) Renderizarlo como HTML
-    #st.markdown(html, unsafe_allow_html=True)
-    # 8) Devolver el link web (opcional, para guardar en tu sheet)
     return web_uri
   
 from PIL import Image
