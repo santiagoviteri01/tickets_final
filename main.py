@@ -792,6 +792,7 @@ def portal_cliente():
                                 st.info("No se adjuntó foto del siniestro.")
             else:
                 st.info("No se encontraron tickets con los filtros seleccionados.")
+            ubic = ticket.get('Ubicacion', '')
             if isinstance(ubic, str) and ubic.startswith("http"):
                 st.markdown(
                     f"[📍 Ver ubicación en Google Maps]({ubic})",
