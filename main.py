@@ -431,6 +431,11 @@ def obtener_ubicacion():
         width=700,
         returned_objects=["last_clicked"]
     )
+        # — Aquí el mensaje de ayuda —
+    st.info(
+        "Para ajustar tu ubicación, haz zoom al mapa "
+        "y dale doble click (o tap) a la pantalla."
+    )
 
     # 5) Si hubo clic, actualizamos coords y refrescamos
     if salida and salida.get("last_clicked"):
@@ -438,6 +443,12 @@ def obtener_ubicacion():
         nueva = {"lat": click["lat"], "lon": click["lng"]}
         st.session_state.ubicacion_coords = nueva
         st.success(f"🔄 Coordenadas ajustadas: {nueva['lat']:.6f}, {nueva['lon']:.6f}")
+        web_uri_1 = f"https://maps.google.com/maps?q={lat},{lon}"
+        st.markdown(
+            f"**Enlace Web:** {web_uri_1}",
+            unsafe_allow_html=True
+        )
+
     
     if st.form_submit_button("📌 Confirmar ubicación"):
         # Al hacer clic, Streamlit rerun ea función de arriba
