@@ -779,14 +779,15 @@ def portal_cliente():
                                     st.warning(f"⚠️ Error mostrando la imagen: {e}")
                             else:
                                 st.info("No se adjuntó foto del siniestro.")
+                            ubic = ticket.get('Ubicacion', '')
+                            if isinstance(ubic, str) and ubic.startswith("http"):
+                                st.markdown(
+                                    f"[📍 Ver ubicación en Google Maps]({ubic})",
+                                    unsafe_allow_html=True
+                                )
             else:
                 st.info("No se encontraron tickets con los filtros seleccionados.")
-            ubic = ticket.get('Ubicacion', '')
-            if isinstance(ubic, str) and ubic.startswith("http"):
-                st.markdown(
-                    f"[📍 Ver ubicación en Google Maps]({ubic})",
-                    unsafe_allow_html=True
-                )
+
         else:
             st.warning("No hay tickets registrados.")
 
