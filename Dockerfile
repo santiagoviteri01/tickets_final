@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY .streamlit /root/.streamlit
 
 # 4) Copia únicamente main.py
-COPY main.py .
+COPY main.py dashboard.py .
 
 # 5) Copia las carpetas que realmente existen en tu proyecto
 
