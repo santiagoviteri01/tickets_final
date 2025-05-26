@@ -376,7 +376,7 @@ def landing_page():
         """
         <div class="logo-bar">
           <div class="logo-text">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Insurance_icon.svg/1200px-Insurance_icon.svg.png" />
+            <img src="images/atlantida_logo.jpg" alt="Atlántida Insurance logo" />
             InsurApp
           </div>
         </div>
@@ -386,7 +386,12 @@ def landing_page():
     
     # 4) Contenedor principal
     st.markdown("<div class='main-container'>", unsafe_allow_html=True)
-    st.markdown("<div class='hero-title'>Bienvenido a InsurApp</div>", unsafe_allow_html=True)
+    st.markdown(
+    "<div class='hero-title' style='text-align:center; margin:1rem auto; width:100%'>"
+    "Bienvenido a InsurApp"
+    "</div>",
+    unsafe_allow_html=True
+    )
     st.markdown(
         "<div class='hero-subtitle'>"
         "Tu sistema inteligente de gestión de seguros y reclamos. "
