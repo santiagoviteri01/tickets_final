@@ -38,6 +38,31 @@ st.set_page_config(
 )
 st.markdown(
     """
+    <style>
+      /* Fondo general */
+      .css-1d391kg { background-color: #FFFFFF; }
+
+      /* Sidebar / contenedores */
+      .css-1v0mbdj { background-color: #BFBFBF; }
+
+      /* Texto */
+      .css-1d391kg, .css-1v0mbdj { color: #333333; }
+
+      /* Botones primarios */
+      button[kind="primary"] {
+        background-color: #D8272E !important;
+        color: #FFFFFF !important;
+      }
+      button[kind="primary"]:hover {
+        background-color: rgba(216,39,46,0.8) !important;
+      }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    """
     <link rel="manifest" href="/manifest.json">
     <script>
         if ('serviceWorker' in navigator) {
@@ -275,86 +300,117 @@ if 'recargar_tickets' not in st.session_state:
     st.session_state.recargar_tickets = False
     
 def landing_page():
-    st.markdown("""
+    # 2) Inyección de CSS con tu paleta y fuente
+    st.markdown(
+        """
         <style>
-            .main-container {
-                padding: 2rem;
-                text-align: center;
-                font-family: 'Segoe UI', sans-serif;
-            }
-            .logo-bar {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 1rem 2rem;
-                background-color: white;
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-                margin-bottom: 2rem;
-            }
-            .logo-text {
-                font-size: 1.8rem;
-                font-weight: bold;
-                color: #ff0083;
-                display: flex;
-                align-items: center;
-            }
-            .logo-text img {
-                height: 32px;
-                margin-right: 10px;
-            }
-            .hero-title {
-                font-size: 3rem;
-                color: #ff0083;
-                margin-bottom: 1rem;
-                text-align: center;
-            }
-            .hero-subtitle {
-                font-size: 1.2rem;
-                color: #444;
-                max-width: 700px;
-                margin: 0 auto 2rem auto;
-                text-align: center;
-            }
-            .hero-buttons button {
-                margin: 0 1rem;
-                padding: 0.8rem 2rem;
-                font-size: 1rem;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-            }
+          /* Contenedor principal */
+          .main-container {
+            padding: 2rem;
+            text-align: center;
+            font-family: 'Calibri', sans-serif;
+            background-color: #BFBFBF;
+            color: #333333;
+          }
+          /* Barra de logo */
+          .logo-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: #FFFFFF;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+          }
+          /* Texto del logo */
+          .logo-text {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #D8272E;
+            display: flex;
+            align-items: center;
+          }
+          .logo-text img {
+            height: 32px;
+            margin-right: 10px;
+          }
+          /* Título hero */
+          .hero-title {
+            font-size: 3rem;
+            color: #D8272E;
+            margin-bottom: 1rem;
+          }
+          /* Subtítulo hero */
+          .hero-subtitle {
+            font-size: 1.2rem;
+            color: #808080;
+            max-width: 700px;
+            margin: 0 auto 2rem auto;
+          }
+          /* Botones hero */
+          .hero-buttons .stButton>button {
+            margin: 0 1rem;
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+          }
+          /* Primer botón: primario */
+          .hero-buttons .stButton>button:first-of-type {
+            background-color: #D8272E !important;
+            color: #FFFFFF !important;
+          }
+          /* Segundo botón: secundario */
+          .hero-buttons .stButton>button:last-of-type {
+            background-color: #FBADA1 !important;
+            color: #FFFFFF !important;
+          }
         </style>
-    """, unsafe_allow_html=True)
-
-    # Barra superior con logo y botón de cuenta
-    st.markdown("""
-    <div class="logo-bar">
-        <div class="logo-text">
+        """,
+        unsafe_allow_html=True
+    )
+    
+    # 3) Barra superior con logo
+    st.markdown(
+        """
+        <div class="logo-bar">
+          <div class="logo-text">
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Insurance_icon.svg/1200px-Insurance_icon.svg.png" />
             InsurApp
+          </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Contenido principal
+        """,
+        unsafe_allow_html=True
+    )
+    
+    # 4) Contenedor principal
     st.markdown("<div class='main-container'>", unsafe_allow_html=True)
-
     st.markdown("<div class='hero-title'>Bienvenido a InsurApp</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hero-subtitle'>Tu sistema inteligente de gestión de seguros y reclamos. Rápido, seguro y accesible desde cualquier lugar.</div>", unsafe_allow_html=True)
-
-    col1, col2 = st.columns([1, 1])
+    st.markdown(
+        "<div class='hero-subtitle'>"
+        "Tu sistema inteligente de gestión de seguros y reclamos. "
+        "Rápido, seguro y accesible desde cualquier lugar."
+        "</div>",
+        unsafe_allow_html=True
+    )
+    
+    # 5) Botones de acción
+    st.markdown("<div class='hero-buttons'>", unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
     with col1:
         if st.button("🔐 Mi Cuenta", use_container_width=True):
             st.session_state.mostrar_login = True
             st.session_state.mostrar_formulario_cotizacion = False
             st.rerun()
-
     with col2:
         if st.button("📄 Cotiza con Nosotros", use_container_width=True):
             st.session_state.mostrar_login = False
             st.session_state.mostrar_formulario_cotizacion = True
             st.rerun()
-
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    # 6) Cierre del contenedor principal
     st.markdown("</div>", unsafe_allow_html=True)
 
        
