@@ -31,7 +31,7 @@ import cv2
 import smtplib
 from email.message import EmailMessage
 import base64
-
+os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
 
 st.set_page_config(
     page_title="Insurapp",
