@@ -1,6 +1,6 @@
 [theme]
 primaryColor = "#D8272E"              # color primario (botones, links)
-backgroundColor = "#FFFFFF"           # fondo principal (blanco)
-secondaryBackgroundColor = "#FBADA1"  # fondo de sidebar y contenedores
-textColor = "#FFFFFF"                 # color de texto (blanco)
+backgroundColor = "#FFFFFF"           
+secondaryBackgroundColor = "#BFBFBF"   # ¡este gris!
+textColor = "#333333"                 # texto principal (oscuro)
 font = "sans serif"                   # Calibri no está disponible, “sans serif” es lo más cercano
