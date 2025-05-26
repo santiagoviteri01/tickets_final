@@ -40,23 +40,69 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-      /* Fondo general */
-      .css-1d391kg { background-color: #FFFFFF; }
+      /* Fuente global: Calibri (o similar si no está disponible) */
+      html, body, .stApp {
+        font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+        font-size: 16px;
+        color: #333333;
+        background-color: #FFFFFF;
+      }
 
-      /* Sidebar / contenedores */
-      .css-1v0mbdj { background-color: #BFBFBF; }
+      /* Sidebar */
+      section[data-testid="stSidebar"] {
+        background-color: #BFBFBF !important;
+      }
 
-      /* Texto */
-      .css-1d391kg, .css-1v0mbdj { color: #333333; }
+      /* Títulos */
+      h1, h2, h3 {
+        color: #D8272E;
+        font-weight: bold;
+        font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+      }
 
       /* Botones primarios */
-      button[kind="primary"] {
+      button[kind="primary"], .stButton > button {
         background-color: #D8272E !important;
         color: #FFFFFF !important;
+        font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+        font-size: 15px !important;
+        font-weight: bold;
+        border-radius: 8px;
+        padding: 0.5rem 1.2rem;
+        border: none;
+        transition: background-color 0.3s ease;
       }
-      button[kind="primary"]:hover {
-        background-color: rgba(216,39,46,0.8) !important;
+
+      button[kind="primary"]:hover, .stButton > button:hover {
+        background-color: rgba(216, 39, 46, 0.85) !important;
       }
+
+      /* Inputs y selects */
+      input, textarea, select {
+        font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+        font-size: 15px !important;
+        padding: 6px 10px !important;
+        border-radius: 6px !important;
+      }
+
+      /* Métricas */
+      .element-container .stMetric {
+        font-size: 18px !important;
+        font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+      }
+
+      /* Expander headers */
+      .streamlit-expanderHeader {
+        font-size: 16px !important;
+        font-weight: bold;
+        font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+      }
+
+      /* Markdown refinado */
+      .stMarkdown {
+        font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+      }
+
     </style>
     """,
     unsafe_allow_html=True
