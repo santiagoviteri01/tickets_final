@@ -301,6 +301,108 @@ if 'recargar_tickets' not in st.session_state:
     st.session_state.recargar_tickets = False
     
 def landing_page():
+    logo_path = "images/atlantida_logo.jpg"
+    with open(logo_path, "rb") as f:
+        logo_b64 = base64.b64encode(f.read()).decode()
+
+    st.markdown(
+        f"""
+        <style>
+          /* Barra de logo centrada */
+          .logo-bar {{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem 0;
+            background-color: #FFFFFF;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+          }}
+          .logo-bar img {{
+            height: 50px;
+            object-fit: contain;
+          }}
+
+          /* Contenedor principal */
+          .main-container {{
+            padding: 2rem;
+            text-align: center;
+            font-family: 'Calibri', sans-serif;
+            background-color: #BFBFBF;
+            color: #333333;
+          }}
+
+          /* Título destacado */
+          .hero-title {{
+            font-size: 3rem;
+            color: #D8272E;
+            margin-bottom: 1rem;
+          }}
+
+          /* Subtítulo hero */
+          .hero-subtitle {{
+            font-size: 1.2rem;
+            color: #808080;
+            max-width: 700px;
+            margin: 0 auto 2rem auto;
+            text-align: center;
+          }}
+
+          /* Botones hero */
+          .hero-buttons .stButton>button {{
+            margin: 0 1rem;
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+          }}
+
+          .hero-buttons .stButton>button:first-of-type {{
+            background-color: #D8272E !important;
+            color: #FFFFFF !important;
+          }}
+
+          .hero-buttons .stButton>button:last-of-type {{
+            background-color: #FBADA1 !important;
+            color: #FFFFFF !important;
+          }}
+        </style>
+
+        <!-- Barra superior con logo -->
+        <div class="logo-bar">
+          <img src="data:image/jpeg;base64,{logo_b64}" alt="Atlántida Insurance logo" />
+        </div>
+
+        <!-- Contenedor principal -->
+        <div class="main-container">
+          <!-- Hero Title -->
+          <div class='hero-title'>
+            Bienvenido a InsurApp
+          </div>
+
+          <!-- Hero Subtitle -->
+          <div class='hero-subtitle'>
+            Tu sistema inteligente de gestión de seguros y reclamos. Rápido, seguro y accesible desde cualquier lugar.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Botones de acción
+    st.markdown("<div class='hero-buttons'>", unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🔐 Mi Cuenta", use_container_width=True):
+            st.session_state.mostrar_login = True
+            st.session_state.mostrar_formulario_cotizacion = False
+            st.rerun()
+    with col2:
+        if st.button("📄 Cotiza con Nosotros", use_container_width=True):
+            st.session_state.mostrar_login = False
+            st.session_state.mostrar_formulario_cotizacion = True
+            st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
        
 def autenticacion():
