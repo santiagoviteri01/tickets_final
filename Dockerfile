@@ -19,9 +19,10 @@ COPY .streamlit /root/.streamlit
 # 4) Copia únicamente main.py
 COPY main.py .
 
-# 5) (Opcional) Copia el resto del código que rara vez cambies
-COPY helpers/ ./helpers/
-COPY src/ ./src/
+# 5) Copia las carpetas que realmente existen en tu proyecto
+
+COPY archivos_coberturas ./archivos_coberturas
+COPY images ./images
 
 # 6) Arranque
 CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
