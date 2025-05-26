@@ -1,8 +1,13 @@
 [theme]
-primaryColor = "#D8272E"              # color primario (botones, links)
-backgroundColor = "#FFFFFF"           
-secondaryBackgroundColor = "#BFBFBF"   # ¡este gris!
-textColor = "#333333"                 # texto principal (oscuro)
-font = "sans serif"                   # Calibri no está disponible, “sans serif” es lo más cercano
+primaryColor = "#D8272E"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#BFBFBF"
+textColor = "#333333"
+font = "sans serif"
+
 [server]
+headless = true
+port = 8501
+enableCORS = false
+enableXsrfProtection = false
 fileWatcherType = "none"
