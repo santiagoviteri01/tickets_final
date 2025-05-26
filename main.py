@@ -302,12 +302,6 @@ if 'recargar_tickets' not in st.session_state:
     st.session_state.recargar_tickets = False
     
 def landing_page():
-    # 1) Configuración básica de la página
-    st.set_page_config(
-        page_title="InsurApp",
-        layout="wide"
-    )
-
     # 2) Carga y codifica el logo en Base64
     logo_path = "images/atlantida_logo.jpg"  # Ajusta la ruta si hace falta
     with open(logo_path, "rb") as f:
