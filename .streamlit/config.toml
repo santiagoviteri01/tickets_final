@@ -4,3 +4,5 @@ backgroundColor = "#FFFFFF"
 secondaryBackgroundColor = "#BFBFBF"   # ¡este gris!
 textColor = "#333333"                 # texto principal (oscuro)
 font = "sans serif"                   # Calibri no está disponible, “sans serif” es lo más cercano
+[server]
+fileWatcherType = "none"
