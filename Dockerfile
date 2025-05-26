@@ -15,9 +15,14 @@ RUN apt-get update && \
         fonts-liberation \
         fonts-dejavu \
     && rm -rf /var/lib/apt/lists/*
-
-COPY . .
-
+# 2) Instalamos pip (cacheado)
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+# 3) Copiamos la configuración de tema de Streamlit
+#    (tu .streamlit/config.toml con los colores)
+COPY .streamlit /app/.streamlit
 
+# 4) Copiamos el resto de tu código
+COPY . .
+# 5) Arranque
 CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
