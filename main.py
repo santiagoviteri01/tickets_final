@@ -1490,9 +1490,9 @@ def visualizar_tickets():
                     else:
                         st.info("No se adjuntó foto del siniestro.")
 # Versión cacheada para uso general
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def _cargar_tickets():
-    data = cargar_worksheet("hoja")
+    data = cargar_df("hoja")
     return data
 
 # Función pública para permitir limpieza de caché
@@ -1964,6 +1964,7 @@ def manejar_tickets():
         st.subheader("📎 Subir documentación a un reclamo existente")
     
         tickets_df = cargar_tickets()
+        
         if tickets_df.empty:
             st.warning("No hay reclamos disponibles.")
             return
