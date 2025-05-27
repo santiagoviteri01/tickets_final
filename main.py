@@ -202,7 +202,7 @@ for _, row in asegurados_df.iterrows():
 @st.cache_data(ttl=300) 
 def cargar_datos():
     try:
-        df = sheet_df
+        df = cargar_df("hoja")
         # 🔥 Aseguramos que siempre existan estas columnas, aunque vengan vacías
         for col in ['Grua', 'Asistencia_Legal', 'Ubicacion', 'Foto_URL']:
             if col not in df.columns:
@@ -215,7 +215,7 @@ def cargar_datos():
                                      'Usuario_Modificacion','Tiempo_Cambio','Cliente',
                                      'Grua','Asistencia_Legal','Ubicacion','Foto_URL'])
 
-@st.cache_data(ttl=60)
+@st.cache_data
 def cargar_datos_dashboard_desde_sheets():
     # Asegúrate de que ya tengas una variable global `spreadsheet` definida con gspread
     hoja_pagados = spreadsheet.worksheet("pagados")
@@ -1492,8 +1492,8 @@ def visualizar_tickets():
 # Versión cacheada para uso general
 @st.cache_data(ttl=300)
 def _cargar_tickets():
-    data = sheet.get_all_records()
-    return pd.DataFrame(data)
+    data = cargar_worksheet("hoja")
+    return data
 
 # Función pública para permitir limpieza de caché
 def cargar_tickets(clear_cache=False):
