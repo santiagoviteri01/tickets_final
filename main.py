@@ -210,12 +210,10 @@ def mostrar_encabezado(texto_derecha=""):
         <div style="display: flex; justify-content: space-between; align-items: center;
                     background-color: #FFFFFF; padding: 0.5rem 1rem;
                     box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 1.5rem; height: 60px;">
-            
-            <!-- Logo a la izquierda -->
+
             <img src="data:image/jpeg;base64,{logo_b64}" alt="Atlántida Logo"
                  style="height: 50px;">
 
-            <!-- Texto alineado a la derecha -->
             <div style="font-family: 'Calibri', 'Segoe UI', sans-serif;
                         color: #333333; font-weight: bold; font-size: 16px;">
                 {texto_derecha}
