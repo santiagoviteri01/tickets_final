@@ -199,6 +199,8 @@ for _, row in asegurados_df.iterrows():
     }
     
 def mostrar_encabezado(texto_derecha=""):
+    import base64
+
     logo_path = "images/atlantida_logo.jpg"
     with open(logo_path, "rb") as f:
         logo_b64 = base64.b64encode(f.read()).decode()
@@ -206,12 +208,16 @@ def mostrar_encabezado(texto_derecha=""):
     st.markdown(
         f"""
         <div style="display: flex; justify-content: space-between; align-items: center;
-                    background-color: #FFFFFF; padding: 0.5rem 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-                    margin-bottom: 1.5rem; height: 60px;">
+                    background-color: #FFFFFF; padding: 0.5rem 1rem;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 1.5rem; height: 60px;">
+            
+            <!-- Logo a la izquierda -->
             <img src="data:image/jpeg;base64,{logo_b64}" alt="Atlántida Logo"
                  style="height: 50px;">
 
-            <div style="font-family: 'Calibri', 'Segoe UI', sans-serif; color: #333333; font-weight: bold;">
+            <!-- Texto alineado a la derecha -->
+            <div style="font-family: 'Calibri', 'Segoe UI', sans-serif;
+                        color: #333333; font-weight: bold; font-size: 16px;">
                 {texto_derecha}
             </div>
         </div>
