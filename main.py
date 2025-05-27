@@ -377,12 +377,13 @@ def landing_page():
             background-color: #BFBFBF;
             color: #333333;
           }}
-
           /* Título destacado */
           .hero-title {{
-            font-size: 3rem;
+            font-size: 5rem;
             color: #D8272E;
+            font-weight: bold;
             margin-bottom: 1rem;
+            font-family: 'Calibri', 'Segoe UI', sans-serif;
           }}
 
           /* Subtítulo hero */
