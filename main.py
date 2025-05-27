@@ -1306,6 +1306,7 @@ def portal_administracion():
     st.sidebar.title("Menú Admin")
     opciones = [
         "Inicio", 
+        "Dashboard",
         "Gestión de Reclamos y Tickets", 
         "Ver Reclamos", 
         "Descargar Datos"
@@ -1325,6 +1326,8 @@ def portal_administracion():
         **Bienvenido al panel de administración**
         Selecciona una opción del menú lateral para comenzar.
         """)
+        
+    elif opcion == "Dashboard":
         df_pagados, df_pendientes, df_asegurados = cargar_datos_dashboard_desde_sheets()
         mostrar_dashboard_analisis(df_pagados, df_pendientes, df_asegurados)
 
