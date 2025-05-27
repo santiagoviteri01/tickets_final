@@ -44,7 +44,7 @@ st.markdown(
       html, body, .stApp {
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
         font-size: 16px;
-        color: #333333;
+        color: #D8272E;
         background-color: #FFFFFF;
       }
 
@@ -56,7 +56,7 @@ st.markdown(
       /* Títulos */
       h1, h2, h3 {
         color: #D8272E;
-        font-weight: bold;
+        #font-weight: bold;
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
       }
 
@@ -374,7 +374,7 @@ def landing_page():
             padding: 2rem;
             text-align: center;
             font-family: 'Calibri', sans-serif;
-            background-color: #BFBFBF;
+            background-color: #FFFFFF;
             color: #333333;
           }}
           /* Título destacado */
