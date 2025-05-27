@@ -9,7 +9,7 @@ import io
 
 # Configuración inicial
 def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
-    st.title("📊 Dashboard Optimizado de Análisis de Seguros")
+    st.title("📊 Análisis de la Cuenta")
 
     if any(df is None or df.empty for df in [pagados, pendientes, asegurados]):
         st.warning("Por favor verifica que los DataFrames no estén vacíos.")
@@ -148,8 +148,6 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         with st.sidebar:
             st.header("⚙️ Configuración del Análisis de Reclamos")
             año_analisis = st.selectbox("Seleccionar Año", [2024, 2025], key="año_reclamos")
-            top_n = st.slider("Top N Marcas", 3, 10, 5, key="top_n")
-            bins_hist = st.slider("Bins para Histograma", 10, 100, 30, key="bins_hist")
             if len(resumen_aseguradoras_total) >= 1:
                 aseguradoras_seleccionadas = st.multiselect(
                     "Selecciona las aseguradoras para comparar",
@@ -183,6 +181,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         st.header("💰 Análisis de Valores")
         grafico_valores = st.radio("Elegir gráfico de análisis de valores", ["Histograma", "Boxplot", "Por Rangos"], horizontal=True)
         if grafico_valores == "Histograma":
+            bins_hist = st.slider("📊 Número de Bins para Histograma", min_value=10, max_value=100, value=30, step=5, key="bins_hist")
+
             fig = plt.figure(figsize=(10, 4))
             sns.histplot(pagos_aseguradora_data['VALOR RECLAMO'], bins=bins_hist, kde=True)
             st.pyplot(fig)
@@ -192,7 +192,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.pyplot(fig)
         elif grafico_valores == "Por Rangos":
             max_val = int(pagos_aseguradora_data['VALOR RECLAMO'].max())
-            bin_size = st.slider("Tamaño del bin ($)", 500, max_val, 500, step=500)
+            bin_size = st.slider("Tamaño del bin ($)", 2000, max_val, 500, step=500)
             bins = list(range(0, max_val + bin_size, bin_size))
             labels = [f"{bins[i]}-{bins[i+1]}" for i in range(len(bins)-1)]
             pagos_aseguradora_data['Rango'] = pd.cut(pagos_aseguradora_data['VALOR RECLAMO'], bins=bins, labels=labels, right=False)
