@@ -168,8 +168,16 @@ creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
 # Autenticarse con Google
 client = gspread.authorize(creds)
 spreadsheet = client.open_by_key("13hY8la9Xke5-wu3vmdB-tNKtY5D6ud4FZrJG2_HtKd8")
-sheet = spreadsheet.worksheet("hoja")      
+@st.cache_data(ttl=60)
+def cargar_df(nombre_hoja):
+    hoja = spreadsheet.worksheet(nombre_hoja)
+    return pd.DataFrame(hoja.get_all_records())
 
+@st.cache_data(ttl=60)
+def cargar_worksheet(nombre_hoja):
+    return spreadsheet.worksheet(nombre_hoja)
+
+sheet = cargar_worksheet("hoja")
 
 # Configuración de usuarios y contraseñas
 USUARIOS = {
@@ -180,13 +188,8 @@ USUARIOS = {
     "santiagoviteri": {"password": "insuratlan2", "rol": "admin"},
 }
 # Mantienes el acceso al worksheet
-talleres_ws = spreadsheet.worksheet("talleres")
-asegurados_ws = spreadsheet.worksheet("asegurados")
-
-# Cargar los datos como DataFrame
-asegurados_df = pd.DataFrame(asegurados_ws.get_all_records())
-talleres_df = pd.DataFrame(talleres_ws.get_all_records())
-
+talleres_df = cargar_df("talleres")
+asegurados_df = cargar_df("asegurados")
 
 for _, row in asegurados_df.iterrows():
     client_id = str(row["NOMBRE COMPLETO"])
@@ -199,8 +202,7 @@ for _, row in asegurados_df.iterrows():
 @st.cache_data(ttl=300) 
 def cargar_datos():
     try:
-        data = sheet.get_all_records()
-        df = pd.DataFrame(data)
+        df = sheet_df
         # 🔥 Aseguramos que siempre existan estas columnas, aunque vengan vacías
         for col in ['Grua', 'Asistencia_Legal', 'Ubicacion', 'Foto_URL']:
             if col not in df.columns:
@@ -213,7 +215,7 @@ def cargar_datos():
                                      'Usuario_Modificacion','Tiempo_Cambio','Cliente',
                                      'Grua','Asistencia_Legal','Ubicacion','Foto_URL'])
 
-@st.cache_data
+@st.cache_data(ttl=60)
 def cargar_datos_dashboard_desde_sheets():
     # Asegúrate de que ya tengas una variable global `spreadsheet` definida con gspread
     hoja_pagados = spreadsheet.worksheet("pagados")
@@ -230,9 +232,7 @@ df_pagados, df_pendientes, df_asegurados = cargar_datos_dashboard_desde_sheets()
 
 
 def descargar_archivos_ticket(numero_ticket, nombre_cliente):
-    hoja_adjuntos = spreadsheet.worksheet("archivos_adjuntos")
-    registros = hoja_adjuntos.get_all_records()
-    df_adjuntos = pd.DataFrame(registros)
+    df_adjuntos = cargar_df("archivos_adjuntos")
     archivos_ticket = df_adjuntos[df_adjuntos["Número Ticket"] == numero_ticket]
 
     if archivos_ticket.empty:
@@ -330,7 +330,7 @@ def formulario_cotizacion():
             if not all([tipo_seguro, nombre, apellidos, correo, telefono]):
                 st.warning("Por favor completa todos los campos.")
             else:
-                hoja_cotizaciones = spreadsheet.worksheet("cotizaciones")
+                hoja_cotizaciones = cargar_worksheet("cotizaciones")
                 nueva_fila = [datetime.now().strftime("%Y-%m-%d %H:%M:%S"), tipo_seguro, nombre, apellidos, correo, telefono, "NO COTIZADA"]
                 hoja_cotizaciones.append_row(nueva_fila)
                 st.success("🎉 Tu solicitud ha sido enviada exitosamente. Pronto nos contactaremos contigo.")
@@ -1101,6 +1101,7 @@ def portal_cliente():
     
                     # Serializar y guardar
                     nuevo_reclamos_serializable = {k: str(v) for k, v in nuevo_reclamos.items()}
+                    sheet = cargar_worksheet("hoja")
                     sheet.append_row(list(nuevo_reclamos_serializable.values()))
                     st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente")
                     # --- Enviar correo de notificación ---
@@ -1149,7 +1150,7 @@ def portal_cliente():
                     region_name='us-east-1'
                 )
     
-                hoja_adjuntos = spreadsheet.worksheet("archivos_adjuntos")
+                hoja_adjuntos = cargar_worksheet("archivos_adjuntos")
     
                 for archivo in archivos:
                     file_type = archivo.type
@@ -1189,10 +1190,7 @@ def portal_cliente():
             
 def modulo_cotizaciones_mauricio():
     st.title("📋 Gestión de Cotizaciones")
-
-    hoja_cotizaciones = spreadsheet.worksheet("cotizaciones")
-    cotizaciones_data = hoja_cotizaciones.get_all_records()
-    cotizaciones_df = pd.DataFrame(cotizaciones_data)
+    cotizaciones_df = cargar_df("cotizaciones")
     # 🔥 Aquí agregas la recarga automática
     if st.session_state.get("recargar_cotizaciones"):
         cotizaciones_df = pd.DataFrame(hoja_cotizaciones.get_all_records())
@@ -1521,11 +1519,11 @@ def actualizar_bases_reclamos(todos_df, spreadsheet):
     todos_df_ultimos = todos_df.sort_values("Fecha_Modificacion").drop_duplicates(subset=["Número"], keep="last")
 
     # Leer y conservar histórico de pagados y pendientes
-    pagados_ws = spreadsheet.worksheet("pagados")
-    pagados_hist = pd.DataFrame(pagados_ws.get_all_records())
+    pagados_ws = cargar_worksheet("pagados")
+    pagados_hist = cargar_df("pagados")
 
-    pendientes_ws = spreadsheet.worksheet("pendientes")
-    pendientes_hist = pd.DataFrame(pendientes_ws.get_all_records())
+    pendientes_ws = cargar_worksheet("pendientes")
+    pendientes_hist = cargar_df("pendientes")
 
     # Convertir campos de fecha si existen
     #Fecha Siniestro
@@ -1777,10 +1775,9 @@ def manejar_tickets():
         
                     sheet.append_row([str(v) for v in nuevo_reclamos.values()])
                     st.success(f"✅ Reclamo #{nuevo_numero} guardado exitosamente.")
-                    pendientes_ws = spreadsheet.worksheet("pendientes")
-                    pagados_ws = spreadsheet.worksheet("pagados")
-                    todos_tickets = sheet.get_all_records()
-                    todos_df = pd.DataFrame(todos_tickets)
+                    pendientes_ws =cargar_worksheet("pendientes")
+                    pagados_ws = cargar_worksheet("pagados")
+                    todos_df =cargar_df("hoja")
                     actualizar_bases_reclamos(todos_df, spreadsheet)
                     del st.session_state.coincidencias
                     del st.session_state.busqueda_exitosa
@@ -1949,12 +1946,12 @@ def manejar_tickets():
                     }
         
                     with st.spinner("Actualizando ticket..."):
+                        sheet = cargar_worksheet("hoja")
                         sheet.append_row(list(ticket_actualizado_serializable.values()))
                         # Cargar datos actuales
-                        pendientes_ws = spreadsheet.worksheet("pendientes")
-                        pagados_ws = spreadsheet.worksheet("pagados")
-                        todos_tickets = sheet.get_all_records()
-                        todos_df = pd.DataFrame(todos_tickets)
+                        pendientes_ws = cargar_worksheet("pendientes")
+                        pagados_ws =cargar_worksheet("pagados")
+                        todos_df = cargar_df("hoja")
                         actualizar_bases_reclamos(todos_df, spreadsheet)
                         st.success("Base actualizado correctamente ✅")
                         st.session_state.recargar_tickets = True
@@ -2012,10 +2009,7 @@ def manejar_tickets():
         if st.button("📥 Descargar todos los archivos del reclamo"):
             import zipfile
             import requests
-    
-            hoja_adjuntos = spreadsheet.worksheet("archivos_adjuntos")
-            registros = hoja_adjuntos.get_all_records()
-            df_adjuntos = pd.DataFrame(registros)
+            df_adjuntos = cargar_df("archivos_adjuntos")
             archivos_ticket = df_adjuntos[df_adjuntos["Número Ticket"] == numero_ticket]
     
             if archivos_ticket.empty:
