@@ -383,8 +383,12 @@ def landing_page():
             color: #D8272E;
             font-weight: bold;
             margin-bottom: 1rem;
-            font-family: 'Calibri', 'Segoe UI', sans-serif;
           }}
+
+          @media (max-width: 768px) {{
+            .hero-title {{
+              font-size: 2.2rem;
+            }}
 
           /* Subtítulo hero */
           .hero-subtitle {{
@@ -1314,7 +1318,7 @@ def portal_administracion():
     
     
     if st.session_state.usuario_actual == "mauriciodavila":
-        opciones.insert(1, "Gestión de Cotizaciones")
+        opciones.insert(2, "Gestión de Cotizaciones")
 
     opciones.append("Cerrar Sesión")
     
