@@ -4,6 +4,7 @@ backgroundColor = "#FFFFFF"
 secondaryBackgroundColor = "#BFBFBF"
 textColor = "#333333"
 font = "sans serif"
+base="light"
 
 [server]
 headless = true
@@ -14,12 +15,6 @@ fileWatcherType = "none"
 
 [browser]
 gatherUsageStats = false
-
-[server]
-enableStaticServing = true
-
-[theme]
-base="light"
 
 [ui]
 hideTopBar = true
