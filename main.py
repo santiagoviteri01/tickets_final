@@ -198,7 +198,26 @@ for _, row in asegurados_df.iterrows():
         "rol": "cliente"
     }
     
+def mostrar_encabezado(texto_derecha=""):
+    logo_path = "images/atlantida_logo.jpg"
+    with open(logo_path, "rb") as f:
+        logo_b64 = base64.b64encode(f.read()).decode()
 
+    st.markdown(
+        f"""
+        <div style="display: flex; justify-content: space-between; align-items: center;
+                    background-color: #FFFFFF; padding: 0.5rem 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+                    margin-bottom: 1.5rem; height: 60px;">
+            <img src="data:image/jpeg;base64,{logo_b64}" alt="Atlántida Logo"
+                 style="height: 50px;">
+
+            <div style="font-family: 'Calibri', 'Segoe UI', sans-serif; color: #333333; font-weight: bold;">
+                {texto_derecha}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 @st.cache_data(ttl=300) 
 def cargar_datos():
     try:
@@ -727,7 +746,8 @@ def enviar_correo_reclamo(destinatario, asunto, cuerpo):
     
 # Portal del Cliente
 def portal_cliente():
-    st.title(f"👤 Portal del Cliente - {st.session_state.usuario_actual}")
+    mostrar_encabezado(f"Cliente: {st.session_state.usuario_actual}")
+    st.title(f"Portal del Cliente - {st.session_state.usuario_actual}")
         # Botón de cerrar sesión en el sidebar
     st.sidebar.title("Menú Cliente")
     if st.sidebar.button("Cerrar Sesión"):
@@ -1305,6 +1325,7 @@ def visualizar_ticket_modificar(ticket=None):
 
 # Portal de Administración (Usuarios)
 def portal_administracion():
+    mostrar_encabezado("🛠️ Portal Administrativo")
     st.sidebar.title("Menú Admin")
     opciones = [
         "Inicio", 
