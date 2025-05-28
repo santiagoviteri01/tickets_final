@@ -176,9 +176,17 @@ def get_spreadsheet():
 
 spreadsheet = get_spreadsheet()
 
+@st.cache_data(ttl=60) 
+def cargar_worksheet(nombre_hoja):
+    return spreadsheet.worksheet(nombre_hoja)
+
+@st.cache_resource
+def get_worksheet(nombre_hoja):
+    return get_spreadsheet().worksheet(nombre_hoja)
+    
 @st.cache_data(ttl=60)
 def cargar_df(nombre_hoja):
-    hoja = spreadsheet.worksheet(nombre_hoja)
+    hoja = get_worksheet(nombre_hoja)  # ✅ esta SÍ usa la función cacheada
     return pd.DataFrame(hoja.get_all_records())
 
 @st.cache_data(ttl=60)
@@ -187,9 +195,7 @@ def cargar_df_seguro(nombre_hoja):
     hoja = spreadsheet.worksheet(nombre_hoja)
     return pd.DataFrame(hoja.get_all_records())
 
-@st.cache_resource    
-def cargar_worksheet(nombre_hoja):
-    return spreadsheet.worksheet(nombre_hoja)
+
 
 sheet = cargar_worksheet("hoja")
 
@@ -202,6 +208,7 @@ USUARIOS = {
     "santiagoviteri": {"password": "insuratlan2", "rol": "admin"},
 }
 # Mantienes el acceso al worksheet
+
 talleres_df = cargar_df("talleres")
 asegurados_df = cargar_df("asegurados")
 
@@ -291,16 +298,11 @@ def cargar_datos():
                                      'Grua','Asistencia_Legal','Ubicacion','Foto_URL'])
 
 
+@st.cache_data(ttl=60)
 def cargar_datos_dashboard_desde_sheets():
-    # Asegúrate de que ya tengas una variable global `spreadsheet` definida con gspread
-    hoja_pagados = spreadsheet.worksheet("pagados")
-    hoja_pendientes = spreadsheet.worksheet("pendientes")
-    hoja_asegurados = spreadsheet.worksheet("aseguradosfiltrados")
-    # Convertir a DataFrame
-    df_pagados = pd.DataFrame(hoja_pagados.get_all_records())
-    df_pendientes = pd.DataFrame(hoja_pendientes.get_all_records())
-    df_asegurados = pd.DataFrame(hoja_asegurados.get_all_records())
-
+    df_pagados = cargar_df("pagados")
+    df_pendientes = cargar_df("pendientes")
+    df_asegurados = cargar_df("aseguradosfiltrados")
     return df_pagados, df_pendientes, df_asegurados
 
 df_pagados, df_pendientes, df_asegurados = cargar_datos_dashboard_desde_sheets()
