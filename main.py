@@ -170,13 +170,24 @@ creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
 # Autenticarse con Google
 client = gspread.authorize(creds)
 
-spreadsheet = client.open_by_key("13hY8la9Xke5-wu3vmdB-tNKtY5D6ud4FZrJG2_HtKd8")
+@st.cache_resource
+def get_spreadsheet():
+    return client.open_by_key("13hY8la9Xke5-wu3vmdB-tNKtY5D6ud4FZrJG2_HtKd8")
 
+spreadsheet = get_spreadsheet()
+
+@st.cache_data(ttl=60)
 def cargar_df(nombre_hoja):
     hoja = spreadsheet.worksheet(nombre_hoja)
     return pd.DataFrame(hoja.get_all_records())
 
+@st.cache_data(ttl=60)
+def cargar_df_seguro(nombre_hoja):
+    st.cache_data.clear()
+    hoja = spreadsheet.worksheet(nombre_hoja)
+    return pd.DataFrame(hoja.get_all_records())
 
+@st.cache_resource    
 def cargar_worksheet(nombre_hoja):
     return spreadsheet.worksheet(nombre_hoja)
 
@@ -365,6 +376,7 @@ def subir_y_mostrar_archivo(archivo, bucket_name, numero_ticket, hoja_adjuntos, 
         file_type,
         archivo_url
     ])
+    st.cache_data.clear()  # ← LIMPIA CACHE
 
     # ✅ Mostrar feedback visual
     st.success(f"✅ `{archivo.name}` subido correctamente al ticket #{numero_ticket}")
@@ -397,6 +409,7 @@ def formulario_cotizacion():
                 hoja_cotizaciones = cargar_worksheet("cotizaciones")
                 nueva_fila = [datetime.now().strftime("%Y-%m-%d %H:%M:%S"), tipo_seguro, nombre, apellidos, correo, telefono, "NO COTIZADA"]
                 hoja_cotizaciones.append_row(nueva_fila)
+                st.cache_data.clear()  # ← LIMPIA CACHE
                 st.success("🎉 Tu solicitud ha sido enviada exitosamente. Pronto nos contactaremos contigo.")
                 time.sleep(1.5)
                 st.session_state.mostrar_formulario_cotizacion = False
@@ -890,6 +903,9 @@ def gestionar_asegurados():
 
             st.session_state["df_original"] = df_original
             persistir_en_sheet(df_original)
+            st.cache_data.clear()  # ✅ limpia cache después de guardar
+
+            
             st.success("✅ Cambios guardados")
 
             registro_act = df_original[mask_upd].iloc[0]
@@ -1292,6 +1308,7 @@ def portal_cliente():
                     nuevo_reclamos_serializable = {k: str(v) for k, v in nuevo_reclamos.items()}
                     sheet = cargar_worksheet("hoja")
                     sheet.append_row(list(nuevo_reclamos_serializable.values()))
+                    st.cache_data.clear()  # ← LIMPIA CACHE
                     st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente")
                     # --- Enviar correo de notificación ---
                     correo_destinatario = "reclamosinsuratlan@outlook.com"
@@ -1363,6 +1380,7 @@ def portal_cliente():
                         file_type,
                         archivo_url
                     ])
+                    st.cache_data.clear()  # ← LIMPIA CACHE
     
                     st.success(f"✅ Archivo `{archivo.name}` subido y vinculado al reclamo #{numero_reclamo}")
     
@@ -1398,6 +1416,7 @@ def modulo_cotizaciones_mauricio():
 
     def actualizar_estado(index, nuevo_estado):
         hoja_cotizaciones.update_cell(index + 2, cotizaciones_df.columns.get_loc('Estado') + 1, nuevo_estado)
+        st.cache_data.clear()  # ← LIMPIA CACHE
         st.success(f"Cotización actualizada a '{nuevo_estado}'.")
         time.sleep(1)
         st.session_state.recargar_cotizaciones = True
@@ -1766,6 +1785,7 @@ def actualizar_bases_reclamos(todos_df, spreadsheet):
     pagados_ws.update(
         [df_pagados_final.columns.tolist()] + df_pagados_final.astype(str).values.tolist()
     )
+    st.cache_data.clear()  # ← LIMPIA CACHE
 
     # === PENDIENTES ===
     nuevos_pendientes = []
@@ -1799,6 +1819,7 @@ def actualizar_bases_reclamos(todos_df, spreadsheet):
     pendientes_ws.update(
         [df_pendientes_final.columns.tolist()] + df_pendientes_final.astype(str).values.tolist()
     )
+    st.cache_data.clear()  # ← LIMPIA CACHE
         
 def manejar_tickets():
     # ✅ Nuevo bloque más limpio y eficiente
@@ -1968,6 +1989,7 @@ def manejar_tickets():
                     }
         
                     sheet.append_row([str(v) for v in nuevo_reclamos.values()])
+                    st.cache_data.clear()  # ← LIMPIA CACHE
                     st.success(f"✅ Reclamo #{nuevo_numero} guardado exitosamente.")
                     pendientes_ws =cargar_worksheet("pendientes")
                     pagados_ws = cargar_worksheet("pagados")
@@ -2066,6 +2088,7 @@ def manejar_tickets():
                     if nuevo_taller and nuevo_taller not in talleres_unicos:
                         if st.button("Guardar nuevo taller"):
                             talleres_ws.append_row([nuevo_taller])
+                            st.cache_data.clear()  # ← LIMPIA CACHE
                             st.success(f"Taller '{nuevo_taller}' guardado exitosamente.")
                             taller_seleccionado = nuevo_taller
                         else:
@@ -2142,6 +2165,7 @@ def manejar_tickets():
                     with st.spinner("Actualizando ticket..."):
                         sheet = cargar_worksheet("hoja")
                         sheet.append_row(list(ticket_actualizado_serializable.values()))
+                        st.cache_data.clear()  # ← LIMPIA CACHE
                         # Cargar datos actuales
                         pendientes_ws = cargar_worksheet("pendientes")
                         pagados_ws =cargar_worksheet("pagados")
