@@ -815,7 +815,7 @@ def gestionar_asegurados():
 
     EDITABLE_COLS = [
         "TELÉFONO DOMICILIO",
-        "CORREO ELECTRONICO",
+        "CORREO ELECTRÓNICO",
         "OBSERVACIÓN",
         "BENEFICIARIO ACREEDOR",
         "ESTADO PÓLIZA",
@@ -855,7 +855,7 @@ def gestionar_asegurados():
         st.subheader("✏️ Editar Campos")
         with st.form("editar_aseg_form"):
             telefono        = st.text_input("Teléfono", registro["TELÉFONO DOMICILIO"])
-            correo          = st.text_input("Correo Electrónico", registro["CORREO ELECTRONICO"])
+            correo          = st.text_input("Correo Electrónico", registro["CORREO ELECTRÓNICO"])
             observacion     = st.text_area("Observación", registro["OBSERVACIÓN"])
             beneficiario     = st.text_area("Beneficiario Acreedor", registro["BENEFICIARIO ACREEDOR"])
             estado_poliza   = st.selectbox(
@@ -869,7 +869,7 @@ def gestionar_asegurados():
         if submitted:
             mask_upd = df_original["ID LIDERSEG"] == registro["ID LIDERSEG"]
             df_original.loc[mask_upd, "TELÉFONO DOMICILIO"]                = telefono
-            df_original.loc[mask_upd, "CORREO ELECTRONICO"]      = correo
+            df_original.loc[mask_upd, "CORREO ELECTRÓNICO"]      = correo
             df_original.loc[mask_upd, "OBSERVACIÓN"]             = observacion
             df_original.loc[mask_upd, "BENEFICIARIO ACREEDOR"]             = beneficiario
             df_original.loc[mask_upd, "ESTADO PÓLIZA"]           = estado_poliza
