@@ -168,6 +168,7 @@ if missing_keys:
 creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
 
 # Autenticarse con Google
+client = gspread.authorize(creds)
 
 spreadsheet = client.open_by_key("13hY8la9Xke5-wu3vmdB-tNKtY5D6ud4FZrJG2_HtKd8")
 
