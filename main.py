@@ -168,14 +168,14 @@ if missing_keys:
 creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
 
 # Autenticarse con Google
-client = gspread.authorize(creds)
+
 spreadsheet = client.open_by_key("13hY8la9Xke5-wu3vmdB-tNKtY5D6ud4FZrJG2_HtKd8")
-@st.cache_data(ttl=60)
+
 def cargar_df(nombre_hoja):
     hoja = spreadsheet.worksheet(nombre_hoja)
     return pd.DataFrame(hoja.get_all_records())
 
-@st.cache_data(ttl=60)
+
 def cargar_worksheet(nombre_hoja):
     return spreadsheet.worksheet(nombre_hoja)
 
@@ -262,7 +262,7 @@ def mostrar_encabezado(texto_derecha=""):
     html = html_template.substitute(logo_b64=logo_b64, texto_derecha=texto_derecha)
     st.markdown(html, unsafe_allow_html=True)
     
-@st.cache_data(ttl=300) 
+
 def cargar_datos():
     try:
         df = cargar_df("hoja")
@@ -278,7 +278,7 @@ def cargar_datos():
                                      'Usuario_Modificacion','Tiempo_Cambio','Cliente',
                                      'Grua','Asistencia_Legal','Ubicacion','Foto_URL'])
 
-@st.cache_data
+
 def cargar_datos_dashboard_desde_sheets():
     # Asegúrate de que ya tengas una variable global `spreadsheet` definida con gspread
     hoja_pagados = spreadsheet.worksheet("pagados")
