@@ -206,22 +206,21 @@ def mostrar_encabezado(texto_derecha=""):
         logo_b64 = base64.b64encode(f.read()).decode()
 
     st.markdown(
-        f"""
+        """
         <div style="display: flex; justify-content: space-between; align-items: center;
                     background-color: #FFFFFF; padding: 0.5rem 1rem;
                     box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 1.5rem; height: 60px;">
-
-            <img src="data:image/jpeg;base64,{logo_b64}" alt="Atlántida Logo"
+            <img src="data:image/jpeg;base64:%s" alt="Atlántida Logo"
                  style="height: 50px;">
-
             <div style="font-family: 'Calibri', 'Segoe UI', sans-serif;
                         color: #333333; font-weight: bold; font-size: 16px;">
-                {texto_derecha}
+                %s
             </div>
         </div>
-        """,
+        """ % (logo_b64, texto_derecha),
         unsafe_allow_html=True
     )
+
 @st.cache_data(ttl=300) 
 def cargar_datos():
     try:
@@ -485,7 +484,7 @@ def autenticacion():
 
     if not st.session_state.autenticado:
         with st.container():
-            st.title("Inicio de Sesión")
+            st.header("Bienvenido de Nuevo!")
             usuario = st.text_input("Usuario")
             contraseña = st.text_input("Contraseña", type="password")
 
