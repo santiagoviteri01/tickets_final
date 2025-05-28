@@ -814,9 +814,10 @@ def gestionar_asegurados():
         buscar_nombre = col2.text_input("Nombre Completo (o parte)")
 
     EDITABLE_COLS = [
-        "TELEFONO",
+        "TELÉFONO DOMICILIO",
         "CORREO ELECTRONICO",
         "OBSERVACIÓN",
+        "BENEFICIARIO ACREEDOR",
         "ESTADO PÓLIZA",
         "NÚMERO FACTURA VEHÍCULOS"
     ]
@@ -850,28 +851,13 @@ def gestionar_asegurados():
         st.info(f"**Cédula:** {registro['NÚMERO IDENTIFICACIÓN']}")
         st.info(f"**Póliza:** {registro['NÚMERO PÓLIZA VEHÍCULOS']}")
 
-        if st.button("📄 Emitir Certificado de Cobertura"):
-            try:
-                buffer_pdf = generar_certificado_pdf_from_template(
-                    df_asegurados=df_original,
-                    cliente_id=registro["NOMBRE COMPLETO"],
-                    template_path="plantillas/plantilla_certificado.docx"
-                )
-                st.download_button(
-                    label="⬇️ Descargar Certificado PDF",
-                    data=buffer_pdf,
-                    file_name=f"Certificado_{registro['NOMBRE COMPLETO'].replace(' ', '_')}.pdf",
-                    mime="application/pdf"
-                )
-            except Exception as e:
-                st.error(f"❌ No se pudo generar el certificado: {e}")
-
     with right:
         st.subheader("✏️ Editar Campos")
         with st.form("editar_aseg_form"):
-            telefono        = st.text_input("Teléfono", registro["TELEFONO"])
+            telefono        = st.text_input("Teléfono", registro["TELÉFONO DOMICILIO"])
             correo          = st.text_input("Correo Electrónico", registro["CORREO ELECTRONICO"])
             observacion     = st.text_area("Observación", registro["OBSERVACIÓN"])
+            beneficiario     = st.text_area("Beneficiario Acreedor", registro["BENEFICIARIO ACREEDOR"])
             estado_poliza   = st.selectbox(
                 "Estado de Póliza",
                 options=["POLIZA CREADA", "EN PROCESO", "CERRADA", "RECHAZADA"],
@@ -882,9 +868,10 @@ def gestionar_asegurados():
 
         if submitted:
             mask_upd = df_original["ID LIDERSEG"] == registro["ID LIDERSEG"]
-            df_original.loc[mask_upd, "TELEFONO"]                = telefono
+            df_original.loc[mask_upd, "TELÉFONO DOMICILIO"]                = telefono
             df_original.loc[mask_upd, "CORREO ELECTRONICO"]      = correo
             df_original.loc[mask_upd, "OBSERVACIÓN"]             = observacion
+            df_original.loc[mask_upd, "BENEFICIARIO ACREEDOR"]             = beneficiario
             df_original.loc[mask_upd, "ESTADO PÓLIZA"]           = estado_poliza
             df_original.loc[mask_upd, "NÚMERO FACTURA VEHÍCULOS"] = num_factura
 
@@ -894,6 +881,24 @@ def gestionar_asegurados():
 
             registro_act = df_original[mask_upd].iloc[0]
             st.dataframe(registro_act.to_frame().T)
+            aseguradora = datos["ASEGURADORA"].strip().upper()
+            tpl_path = TEMPLATES[aseguradora]  # tu mapeo a .docx
+        if st.button("📄 Emitir Certificado de Cobertura"):
+            try:
+                buffer_pdf = generar_certificado_pdf_from_template(
+                    df_asegurados=df_original,
+                    cliente_id=registro["NOMBRE COMPLETO"],
+                    template_path=tpl_path
+                )
+                st.download_button(
+                    label="⬇️ Descargar Certificado PDF",
+                    data=buffer_pdf,
+                    file_name=f"Certificado_{registro['NOMBRE COMPLETO'].replace(' ', '_')}.pdf",
+                    mime="application/pdf"
+                )
+            except Exception as e:
+                st.error(f"❌ No se pudo generar el certificado: {e}")
+
             
 # Portal del Cliente
 def portal_cliente():
