@@ -858,10 +858,22 @@ def gestionar_asegurados():
             correo          = st.text_input("Correo Electrónico", registro["CORREO ELECTRÓNICO"])
             observacion     = st.text_area("Observación", registro["OBSERVACIÓN"])
             beneficiario     = st.text_area("Beneficiario Acreedor", registro["BENEFICIARIO ACREEDOR"])
-            estado_poliza   = st.selectbox(
+            estado_poliza = st.selectbox(
                 "Estado de Póliza",
-                options=["POLIZA CREADA", "EN PROCESO", "CERRADA", "RECHAZADA"],
-                index=["POLIZA CREADA","EN PROCESO","CERRADA","RECHAZADA"].index(registro["ESTADO PÓLIZA"])
+                options=[
+                    "DOCUMENTOS AUDITADOS",
+                    "PÓLIZA CREADA",
+                    "PÓLIZA VENCIDA",
+                    "RENOVADA",
+                    "CANCELADA"
+                ],
+                index=[
+                    "DOCUMENTOS AUDITADOS",
+                    "PÓLIZA CREADA",
+                    "PÓLIZA VENCIDA",
+                    "RENOVADA",
+                    "CANCELADA"
+                ].index(registro["ESTADO PÓLIZA"])
             )
             num_factura     = st.text_input("Número Factura Vehículos", registro["NÚMERO FACTURA VEHÍCULOS"])
             submitted = st.form_submit_button("💾 Guardar Cambios")
