@@ -31,6 +31,8 @@ import cv2
 import smtplib
 from email.message import EmailMessage
 import base64
+from string import Template
+
 
 st.set_page_config(
     page_title="Insurapp",
@@ -199,28 +201,67 @@ for _, row in asegurados_df.iterrows():
     }
     
 def mostrar_encabezado(texto_derecha=""):
-    import base64
+    logo_path = Path("images/atlantida_logo.jpg")
 
-    logo_path = "images/atlantida_logo.jpg"
+    if not logo_path.exists():
+        st.warning("⚠️ Logo no encontrado en 'images/atlantida_logo.jpg'")
+        return
+
     with open(logo_path, "rb") as f:
         logo_b64 = base64.b64encode(f.read()).decode()
 
-    st.markdown(
-        """
-        <div style="display: flex; justify-content: space-between; align-items: center;
-                    background-color: #FFFFFF; padding: 0.5rem 1rem;
-                    box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 1.5rem; height: 60px;">
-            <img src="data:image/jpeg;base64:%s" alt="Atlántida Logo"
-                 style="height: 50px;">
-            <div style="font-family: 'Calibri', 'Segoe UI', sans-serif;
-                        color: #333333; font-weight: bold; font-size: 16px;">
-                %s
-            </div>
-        </div>
-        """ % (logo_b64, texto_derecha),
-        unsafe_allow_html=True
-    )
+    html_template = Template("""
+    <style>
+        .encabezado-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #FFFFFF;
+            padding: 0.5rem 1rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+            height: auto;
+            flex-wrap: wrap;
+        }
 
+        .encabezado-container img {
+            height: 50px;
+            margin-bottom: 0.5rem;
+        }
+
+        .encabezado-texto {
+            font-family: 'Calibri', 'Segoe UI', sans-serif;
+            color: #333333;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: right;
+            flex-grow: 1;
+        }
+
+        @media (max-width: 768px) {
+            .encabezado-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .encabezado-texto {
+                text-align: left;
+                font-size: 14px;
+                margin-top: 0.5rem;
+            }
+        }
+    </style>
+
+    <div class="encabezado-container">
+        <img src="data:image/jpeg;base64,$logo_b64" alt="Atlántida Logo">
+        <div class="encabezado-texto">$texto_derecha</div>
+    </div>
+    """)
+
+    html = html_template.substitute(logo_b64=logo_b64, texto_derecha=texto_derecha)
+    st.markdown(html, unsafe_allow_html=True)
+    
 @st.cache_data(ttl=300) 
 def cargar_datos():
     try:
