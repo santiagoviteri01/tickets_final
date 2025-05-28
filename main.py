@@ -1506,7 +1506,7 @@ def portal_administracion():
         df_pagados, df_pendientes, df_asegurados = cargar_datos_dashboard_desde_sheets()
         mostrar_dashboard_analisis(df_pagados, df_pendientes, df_asegurados)
    
-    elif opcion == "🔍 Polizas y Asegurados":
+    elif opcion == "Polizas y Asegurados":
         gestionar_asegurados()
 
     elif opcion == "Gestión de Reclamos y Tickets":
