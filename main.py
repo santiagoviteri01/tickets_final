@@ -787,7 +787,114 @@ def enviar_correo_reclamo(destinatario, asunto, cuerpo):
     except Exception as e:
         st.error(f"❌ Error al enviar el correo: {e}")
         return False
+
+def persistir_en_sheet(df: pd.DataFrame):
+    # Formateo de fechas a string
+    for c in df.select_dtypes(include=["datetime64", "datetime64[ns]"]):
+        df[c] = df[c].dt.strftime("%Y-%m-%d")
+
+    # Reemplaza NaN/NaT con cadenas vacías
+    df = df.fillna("").astype(str)
+
+    # Prepara la matriz de valores (incluyendo cabecera)
+    values = [df.columns.tolist()] + df.values.tolist()
+
+    # Limpia la hoja y sube todo
+    hoja.clear()
+    hoja.update(values)
     
+def gestionar_asegurados():
+    st.header("🔍 Buscar y Editar Asegurados")
+
+    with st.expander("🔎 Filtros de Búsqueda", expanded=True):
+        col1, col2 = st.columns(2)
+        buscar_id     = col1.text_input("ID LIDERSEG")
+        buscar_poliza = col2.text_input("Número de Póliza")
+        buscar_cedula = col1.text_input("Número de Cédula")
+        buscar_nombre = col2.text_input("Nombre Completo (o parte)")
+
+    EDITABLE_COLS = [
+        "TELEFONO",
+        "CORREO ELECTRONICO",
+        "OBSERVACIÓN",
+        "ESTADO PÓLIZA",
+        "NÚMERO FACTURA VEHÍCULOS"
+    ]
+    st.session_state["df_original"] = df_asegurados
+    df_original = st.session_state["df_original"]
+
+    mask = pd.Series(True, index=df_original.index)
+
+    if buscar_id:
+        mask &= df_original["ID LIDERSEG"].astype(str) == buscar_id.strip()
+    if buscar_poliza:
+        mask &= df_original["NÚMERO PÓLIZA VEHÍCULOS"].astype(str) == buscar_poliza.strip()
+    if buscar_cedula:
+        mask &= df_original["NÚMERO IDENTIFICACIÓN"].astype(str) == buscar_cedula.strip()
+    if buscar_nombre:
+        mask &= df_original["NOMBRE COMPLETO"].str.contains(buscar_nombre.strip(), case=False, na=False)
+
+    df_filtrado = df_original[mask]
+
+    if df_filtrado.empty:
+        st.warning("No se encontró ningún asegurado con esos criterios.")
+        return
+
+    registro = df_filtrado.iloc[0]
+    st.markdown("### Detalles del Asegurado")
+    left, right = st.columns([1, 2])
+
+    with left:
+        st.info(f"**Nombre:** {registro['NOMBRE COMPLETO']}")
+        st.info(f"**ID:** {registro['ID LIDERSEG']}")
+        st.info(f"**Cédula:** {registro['NÚMERO IDENTIFICACIÓN']}")
+        st.info(f"**Póliza:** {registro['NÚMERO PÓLIZA VEHÍCULOS']}")
+
+        if st.button("📄 Emitir Certificado de Cobertura"):
+            try:
+                buffer_pdf = generar_certificado_pdf_from_template(
+                    df_asegurados=df_original,
+                    cliente_id=registro["NOMBRE COMPLETO"],
+                    template_path="plantillas/plantilla_certificado.docx"
+                )
+                st.download_button(
+                    label="⬇️ Descargar Certificado PDF",
+                    data=buffer_pdf,
+                    file_name=f"Certificado_{registro['NOMBRE COMPLETO'].replace(' ', '_')}.pdf",
+                    mime="application/pdf"
+                )
+            except Exception as e:
+                st.error(f"❌ No se pudo generar el certificado: {e}")
+
+    with right:
+        st.subheader("✏️ Editar Campos")
+        with st.form("editar_aseg_form"):
+            telefono        = st.text_input("Teléfono", registro["TELEFONO"])
+            correo          = st.text_input("Correo Electrónico", registro["CORREO ELECTRONICO"])
+            observacion     = st.text_area("Observación", registro["OBSERVACIÓN"])
+            estado_poliza   = st.selectbox(
+                "Estado de Póliza",
+                options=["POLIZA CREADA", "EN PROCESO", "CERRADA", "RECHAZADA"],
+                index=["POLIZA CREADA","EN PROCESO","CERRADA","RECHAZADA"].index(registro["ESTADO PÓLIZA"])
+            )
+            num_factura     = st.text_input("Número Factura Vehículos", registro["NÚMERO FACTURA VEHÍCULOS"])
+            submitted = st.form_submit_button("💾 Guardar Cambios")
+
+        if submitted:
+            mask_upd = df_original["ID LIDERSEG"] == registro["ID LIDERSEG"]
+            df_original.loc[mask_upd, "TELEFONO"]                = telefono
+            df_original.loc[mask_upd, "CORREO ELECTRONICO"]      = correo
+            df_original.loc[mask_upd, "OBSERVACIÓN"]             = observacion
+            df_original.loc[mask_upd, "ESTADO PÓLIZA"]           = estado_poliza
+            df_original.loc[mask_upd, "NÚMERO FACTURA VEHÍCULOS"] = num_factura
+
+            st.session_state["df_original"] = df_original
+            persistir_en_sheet(df_original)
+            st.success("✅ Cambios guardados")
+
+            registro_act = df_original[mask_upd].iloc[0]
+            st.dataframe(registro_act.to_frame().T)
+            
 # Portal del Cliente
 def portal_cliente():
     mostrar_encabezado(f"Cliente: {st.session_state.usuario_actual}")
@@ -1374,6 +1481,7 @@ def portal_administracion():
     opciones = [
         "Inicio", 
         "Dashboard",
+        "Polizas y Asegurados",
         "Gestión de Reclamos y Tickets", 
         "Ver Reclamos", 
         "Descargar Datos"
@@ -1397,6 +1505,9 @@ def portal_administracion():
     elif opcion == "Dashboard":
         df_pagados, df_pendientes, df_asegurados = cargar_datos_dashboard_desde_sheets()
         mostrar_dashboard_analisis(df_pagados, df_pendientes, df_asegurados)
+   
+    elif opcion == "🔍 Buscar Asegurados":
+        gestionar_asegurados()
 
     elif opcion == "Gestión de Reclamos y Tickets":
         st.title("📋Gestión de Reclamos y Tickets")
