@@ -910,7 +910,7 @@ def gestionar_asegurados():
 
             registro_act = df_original[mask_upd].iloc[0]
             st.dataframe(registro_act.to_frame().T)
-            aseguradora = df_original["ASEGURADORA"].strip().upper()
+            aseguradora = registro_act["ASEGURADORA"].strip().upper()
             tpl_path = TEMPLATES[aseguradora]  # tu mapeo a .docx
         if st.button("📄 Emitir Certificado de Cobertura"):
             try:
@@ -941,7 +941,7 @@ def portal_cliente():
         st.success("Sesión cerrada exitosamente")
         time.sleep(1)
         st.rerun()
-    
+    asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
     tab1, tab2, tab3, tab4 = st.tabs(["Mis Datos y Coberturas", "Mis Tickets", "Nuevo Reclamo", "📎 Subir Archivos"])
     with tab1:
         st.header("🧾 Mis Datos Personales y del Vehículo")
@@ -1099,7 +1099,6 @@ def portal_cliente():
         os.makedirs(UPLOAD_DIR)
     
     with tab3:
-        asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
         st.header("Nuevo Reclamo")
         enviar_reclamo = False  
         cliente_id = st.session_state.usuario_actual
