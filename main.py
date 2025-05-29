@@ -911,9 +911,15 @@ def gestionar_asegurados():
             registro_act = df_original[mask_upd].iloc[0]
             st.dataframe(registro_act.to_frame().T)
             aseguradora = registro_act["ASEGURADORA"].strip().upper()
-            tpl_path = TEMPLATES[aseguradora]  # tu mapeo a .docx
         if st.button("📄 Emitir Certificado de Cobertura"):
             try:
+                TEMPLATES = {
+                    "MAPFRE": "templates/mapfre_template.docx",
+                    "ZURICH": "templates/zurich_template.docx",
+                    "AIG": "templates/aig_template.docx",
+                }
+                aseguradora = registro_act["ASEGURADORA"].strip().upper()
+                tpl_path = TEMPLATES[aseguradora]  # tu mapeo a .docx
                 buffer_pdf = generar_certificado_pdf_from_template(
                     df_asegurados=df_original,
                     cliente_id=registro["NOMBRE COMPLETO"],
@@ -1785,7 +1791,7 @@ def actualizar_bases_reclamos(todos_df, spreadsheet_sin_cache):
     )
         
 def manejar_tickets():
-    talleres_df = cargar_worksheet_sin_cache("talleres")  # o como corresponda según tu sistema
+    talleres_df = cargar_df_sin_cache("talleres")  # o como corresponda según tu sistema
     talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
     # ✅ Nuevo bloque más limpio y eficiente
     df = cargar_tickets(clear_cache=st.session_state.get("recargar_tickets", False))
