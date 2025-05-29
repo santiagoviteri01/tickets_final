@@ -308,7 +308,7 @@ def cargar_datos():
                                      'Grua','Asistencia_Legal','Ubicacion','Foto_URL'])
 
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=240)
 def cargar_datos_dashboard_desde_sheets():
     df_pagados = cargar_df("pagados")
     df_pendientes = cargar_df("pendientes")
@@ -839,7 +839,7 @@ def gestionar_asegurados():
         "ESTADO PÓLIZA",
         "NÚMERO FACTURA VEHÍCULOS"
     ]
-    df_asegurados=cargas_datos_sin_cache("aseguradasfiltrados")
+    df_asegurados=cargar_df_sin_cache("aseguradasfiltrados")
     st.session_state["df_original"] = df_asegurados
     df_original = st.session_state["df_original"]
 
@@ -1001,7 +1001,7 @@ def portal_cliente():
                     if st.button("🖨️ Generar Certificado PDF", key=f"pdf_{datos['PLACA']}"):
                         try:
                             pdf_buf = generar_certificado_pdf_from_template(
-                                df_asegurados,
+                                asegurados_df,
                                 st.session_state.usuario_actual,
                                 tpl_path
                             )
@@ -1355,49 +1355,16 @@ def portal_cliente():
                 )
     
                 hoja_adjuntos = cargar_worksheet_sin_cache("archivos_adjuntos")
-    
+                bucket_name = 'insurapp-fotos'
                 for archivo in archivos:
-                    file_type = archivo.type
-                    extension = archivo.name.split('.')[-1]
-                    unique_filename = f"adjuntos/{str(uuid.uuid4())}.{extension}"
-    
-                    archivo.seek(0)
-                    s3.upload_fileobj(
-                        archivo,
-                        bucket_name,
-                        unique_filename,
-                        ExtraArgs={'ContentType': file_type, 'ACL': 'public-read'}
-                    )
-                    archivo_url = f"https://{bucket_name}.s3.amazonaws.com/{unique_filename}"
-    
-                    hoja_adjuntos.append_row([
-                        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        st.session_state.usuario_actual,
-                        numero_reclamo,
-                        archivo.name,
-                        file_type,
-                        archivo_url
-                    ])
-    
-                    st.success(f"✅ Archivo `{archivo.name}` subido y vinculado al reclamo #{numero_reclamo}")
-    
-                    if file_type == "application/pdf":
-                        archivo.seek(0)
-                        base64_pdf = base64.b64encode(archivo.read()).decode("utf-8")
-                        pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600px" type="application/pdf"></iframe>'
-                        st.markdown(pdf_display, unsafe_allow_html=True)
-                    else:
-                        st.image(archivo, caption=f"Vista previa: {archivo.name}", use_container_width=True)
-    
-                    st.markdown(f"🔗 **[Ver archivo en S3]({archivo_url})**")
-                    st.markdown("---")
+                    subir_y_mostrar_archivo(archivo=archivo, bucket_name=bucket_name, numero_ticket=numero_reclamo, hoja_adjuntos=hoja_adjuntos,  st.session_state.usuario_actual)
             
 def modulo_cotizaciones_mauricio():
     st.title("📋 Gestión de Cotizaciones")
-    cotizaciones_df = cargar_df("cotizaciones")
+    cotizaciones_df = cargar_df_sin_cache("cotizaciones")
     # 🔥 Aquí agregas la recarga automática
     if st.session_state.get("recargar_cotizaciones"):
-        cotizaciones_df = pd.DataFrame(hoja_cotizaciones.get_all_records())
+        cotizaciones_df = cargar_df_sin_cache("cotizaciones")
         st.session_state.recargar_cotizaciones = False
 
     if cotizaciones_df.empty:
@@ -1412,6 +1379,7 @@ def modulo_cotizaciones_mauricio():
     
 
     def actualizar_estado(index, nuevo_estado):
+        hoja_cotizaciones = cargar_worksheet_sin_cache("cotizaciones")
         hoja_cotizaciones.update_cell(index + 2, cotizaciones_df.columns.get_loc('Estado') + 1, nuevo_estado)
         st.success(f"Cotización actualizada a '{nuevo_estado}'.")
         time.sleep(1)
@@ -2064,6 +2032,7 @@ def manejar_tickets():
                 lista_causas = ["ROBO TOTAL", "CHOQUE PARCIAL + RC","PERDIDA TOTAL","DAÑOS MALICIOSOS","CHOQUE PARCIAL","ROBO PARCIAL","ROTURA DE PARABRISAS","SOLO RC","DESGRAVAMEN","CHOQUE PARCIAL","PERDIDA TOTAL","ASISTENCIA"]
                 causa_actual = ticket_actual.get("CAUSA", lista_causas[0])  # ✅ PREVIENE ERROR SI NO EXISTE
                 causa = st.selectbox("Causa del siniestro:", lista_causas, index=lista_causas.index(causa_actual))
+                talleres_df=cargar_df("talleres")
 
                 
                 if "Taller" in talleres_df.columns:
@@ -2080,8 +2049,8 @@ def manejar_tickets():
                     nuevo_taller = st.text_input("Escribe el nombre del nuevo taller")
                     if nuevo_taller and nuevo_taller not in talleres_unicos:
                         if st.button("Guardar nuevo taller"):
+                            talleres_ws = cargar_worksheet_sin_cache("talleres")
                             talleres_ws.append_row([nuevo_taller])
-                            st.cache_data.clear()  # ← LIMPIA CACHE
                             st.success(f"Taller '{nuevo_taller}' guardado exitosamente.")
                             taller_seleccionado = nuevo_taller
                         else:
