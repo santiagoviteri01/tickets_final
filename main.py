@@ -646,7 +646,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # 1. Carga del modelo (se cachea para no recargar en cada interacción)
 @st.cache_resource
 def cargar_modelo_yolo():
-    return YOLO("best.pt")
+    return YOLO("modelos/best.pt")
 
 # 1. Carga del modelo (se cachea para no recargar en cada interacción)
 @st.cache_resource
