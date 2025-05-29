@@ -163,12 +163,15 @@ missing_keys = [key for key in required_keys if not creds_dict.get(key)]
 if missing_keys:
     st.error(f"❌ Faltan credenciales: {', '.join(missing_keys)}")
     st.stop()
+    
+@st.cache_resource
+def get_gspread_client():
+    # Convertir las credenciales a formato usable
+    creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+    return gspread.authorize(creds)
 
-# Convertir las credenciales a un formato JSON
-creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+client = get_gspread_client()
 
-# Autenticarse con Google
-client = gspread.authorize(creds)
 
 @st.cache_resource
 def get_spreadsheet():
