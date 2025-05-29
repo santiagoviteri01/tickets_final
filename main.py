@@ -824,6 +824,7 @@ def persistir_en_sheet(df: pd.DataFrame):
 def gestionar_asegurados():
     st.header("🔍 Buscar y Editar Asegurados")
 
+    # 📌 FILTROS DE BÚSQUEDA
     with st.expander("🔎 Filtros de Búsqueda", expanded=True):
         col1, col2 = st.columns(2)
         buscar_id     = col1.text_input("ID")
@@ -831,20 +832,13 @@ def gestionar_asegurados():
         buscar_cedula = col1.text_input("Número de Cédula")
         buscar_nombre = col2.text_input("Nombre Completo (o parte)")
 
-    EDITABLE_COLS = [
-        "TELÉFONO DOMICILIO",
-        "CORREO ELECTRÓNICO",
-        "OBSERVACIÓN",
-        "BENEFICIARIO ACREEDOR",
-        "ESTADO PÓLIZA",
-        "NÚMERO FACTURA VEHÍCULOS"
-    ]
-    df_asegurados=cargar_df_sin_cache("aseguradosfiltrados")
+    # 🔄 CARGAR DATOS
+    df_asegurados = cargar_df_sin_cache("aseguradosfiltrados")
     st.session_state["df_original"] = df_asegurados
     df_original = st.session_state["df_original"]
 
+    # 🔍 APLICAR FILTROS
     mask = pd.Series(True, index=df_original.index)
-
     if buscar_id:
         mask &= df_original["ID"].astype(str) == buscar_id.strip()
     if buscar_poliza:
@@ -861,23 +855,29 @@ def gestionar_asegurados():
         return
 
     registro = df_filtrado.iloc[0]
+
+    # ✅ SIEMPRE CALCULAR EL REGISTRO ACTUAL
+    mask_upd = df_original["ID"] == registro["ID"]
+    registro_act = df_original[mask_upd].iloc[0]
+
+    # 🧾 MOSTRAR INFO
     st.markdown("### Detalles del Asegurado")
     left, right = st.columns([1, 2])
-
     with left:
         st.info(f"**Nombre:** {registro['NOMBRE COMPLETO']}")
         st.info(f"**ID:** {registro['ID']}")
         st.info(f"**Cédula:** {registro['NÚMERO IDENTIFICACIÓN']}")
         st.info(f"**Póliza:** {registro['NÚMERO PÓLIZA VEHÍCULOS']}")
 
+    # ✏️ FORMULARIO DE EDICIÓN
     with right:
         st.subheader("✏️ Editar Campos")
         with st.form("editar_aseg_form"):
             telefono        = st.text_input("Teléfono", registro["TELÉFONO DOMICILIO"])
             correo          = st.text_input("Correo Electrónico", registro["CORREO ELECTRÓNICO"])
             observacion     = st.text_area("Observación", registro["OBSERVACIÓN"])
-            beneficiario     = st.text_area("Beneficiario Acreedor", registro["BENEFICIARIO ACREEDOR"])
-            estado_poliza = st.selectbox(
+            beneficiario    = st.text_area("Beneficiario Acreedor", registro["BENEFICIARIO ACREEDOR"])
+            estado_poliza   = st.selectbox(
                 "Estado de Póliza",
                 options=[
                     "DOCUMENTOS AUDITADOS",
@@ -892,47 +892,48 @@ def gestionar_asegurados():
                     "CANCELADA"
                 ].index(registro["ESTADO PÓLIZA"])
             )
-            num_factura     = st.text_input("Número Factura Vehículos", registro["NÚMERO FACTURA VEHÍCULOS"])
-            submitted = st.form_submit_button("💾 Guardar Cambios")
+            num_factura = st.text_input("Número Factura Vehículos", registro["NÚMERO FACTURA VEHÍCULOS"])
+            submitted   = st.form_submit_button("💾 Guardar Cambios")
 
-        if submitted:
-            mask_upd = df_original["ID"] == registro["ID"]
-            df_original.loc[mask_upd, "TELÉFONO DOMICILIO"]                = telefono
-            df_original.loc[mask_upd, "CORREO ELECTRÓNICO"]      = correo
-            df_original.loc[mask_upd, "OBSERVACIÓN"]             = observacion
-            df_original.loc[mask_upd, "BENEFICIARIO ACREEDOR"]             = beneficiario
-            df_original.loc[mask_upd, "ESTADO PÓLIZA"]           = estado_poliza
-            df_original.loc[mask_upd, "NÚMERO FACTURA VEHÍCULOS"] = num_factura
+    # 💾 GUARDAR CAMBIOS
+    if submitted:
+        df_original.loc[mask_upd, "TELÉFONO DOMICILIO"] = telefono
+        df_original.loc[mask_upd, "CORREO ELECTRÓNICO"] = correo
+        df_original.loc[mask_upd, "OBSERVACIÓN"] = observacion
+        df_original.loc[mask_upd, "BENEFICIARIO ACREEDOR"] = beneficiario
+        df_original.loc[mask_upd, "ESTADO PÓLIZA"] = estado_poliza
+        df_original.loc[mask_upd, "NÚMERO FACTURA VEHÍCULOS"] = num_factura
 
-            st.session_state["df_original"] = df_original
-            persistir_en_sheet(df_original)
-            st.success("✅ Cambios guardados")
+        st.session_state["df_original"] = df_original
+        persistir_en_sheet(df_original)
+        st.success("✅ Cambios guardados")
+        st.dataframe(registro_act.to_frame().T)
 
-            registro_act = df_original[mask_upd].iloc[0]
-            st.dataframe(registro_act.to_frame().T)
+    # 📄 GENERAR CERTIFICADO DE COBERTURA
+    if st.button("📄 Emitir Certificado de Cobertura"):
+        try:
+            TEMPLATES = {
+                "MAPFRE": "templates/mapfre_template.docx",
+                "ZURICH": "templates/zurich_template.docx",
+                "AIG": "templates/aig_template.docx",
+            }
             aseguradora = registro_act["ASEGURADORA"].strip().upper()
-        if st.button("📄 Emitir Certificado de Cobertura"):
-            try:
-                TEMPLATES = {
-                    "MAPFRE": "templates/mapfre_template.docx",
-                    "ZURICH": "templates/zurich_template.docx",
-                    "AIG": "templates/aig_template.docx",
-                }
-                aseguradora = registro_act["ASEGURADORA"].strip().upper()
-                tpl_path = TEMPLATES[aseguradora]  # tu mapeo a .docx
-                buffer_pdf = generar_certificado_pdf_from_template(
-                    df_asegurados=df_original,
-                    cliente_id=registro["NOMBRE COMPLETO"],
-                    template_path=tpl_path
-                )
-                st.download_button(
-                    label="⬇️ Descargar Certificado PDF",
-                    data=buffer_pdf,
-                    file_name=f"Certificado_{registro['NOMBRE COMPLETO'].replace(' ', '_')}.pdf",
-                    mime="application/pdf"
-                )
-            except Exception as e:
-                st.error(f"❌ No se pudo generar el certificado: {e}")
+            tpl_path = TEMPLATES[aseguradora]
+
+            buffer_pdf = generar_certificado_pdf_from_template(
+                df_asegurados=df_original,
+                cliente_id=registro["NOMBRE COMPLETO"],
+                template_path=tpl_path
+            )
+
+            st.download_button(
+                label="⬇️ Descargar Certificado PDF",
+                data=buffer_pdf,
+                file_name=f"Certificado_{registro['NOMBRE COMPLETO'].replace(' ', '_')}.pdf",
+                mime="application/pdf"
+            )
+        except Exception as e:
+            st.error(f"❌ No se pudo generar el certificado: {e}")
 
             
 # Portal del Cliente
@@ -1938,7 +1939,7 @@ def manejar_tickets():
                         'Cliente': cliente,
                         'Cedula': cedula,
                         'CONCESIONARIO': concesionario,
-                        'ID': ID,
+                        'ID_LIDERSEG': ID,
                         'ASEGURADORA': aseguradora,
                         'CIUDAD OCURRENCIA': ciudad_ocurrencia,
                         'TALLER': taller_seleccionado,
