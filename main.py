@@ -1357,7 +1357,7 @@ def portal_cliente():
                 hoja_adjuntos = cargar_worksheet_sin_cache("archivos_adjuntos")
                 bucket_name = 'insurapp-fotos'
                 for archivo in archivos:
-                    subir_y_mostrar_archivo(archivo=archivo, bucket_name=bucket_name, numero_ticket=numero_reclamo, hoja_adjuntos=hoja_adjuntos,  st.session_state.usuario_actual)
+                    subir_y_mostrar_archivo(archivo=archivo, bucket_name=bucket_name, numero_ticket=numero_reclamo, hoja_adjuntos=hoja_adjuntos, usuario=st.session_state.usuario_actual)
             
 def modulo_cotizaciones_mauricio():
     st.title("📋 Gestión de Cotizaciones")
