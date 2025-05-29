@@ -839,7 +839,7 @@ def gestionar_asegurados():
         "ESTADO PÓLIZA",
         "NÚMERO FACTURA VEHÍCULOS"
     ]
-    df_asegurados=cargar_df_sin_cache("aseguradasfiltrados")
+    df_asegurados=cargar_df_sin_cache("aseguradosfiltrados")
     st.session_state["df_original"] = df_asegurados
     df_original = st.session_state["df_original"]
 
@@ -1099,6 +1099,7 @@ def portal_cliente():
         os.makedirs(UPLOAD_DIR)
     
     with tab3:
+        asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
         st.header("Nuevo Reclamo")
         enviar_reclamo = False  
         cliente_id = st.session_state.usuario_actual
@@ -1785,6 +1786,8 @@ def actualizar_bases_reclamos(todos_df, spreadsheet_sin_cache):
     )
         
 def manejar_tickets():
+    talleres_df = cargar_worksheet_sin_cache("talleres")  # o como corresponda según tu sistema
+    talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
     # ✅ Nuevo bloque más limpio y eficiente
     df = cargar_tickets(clear_cache=st.session_state.get("recargar_tickets", False))
     st.session_state.recargar_tickets = False
