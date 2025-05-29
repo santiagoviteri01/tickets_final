@@ -882,15 +882,13 @@ def gestionar_asegurados():
                 options=[
                     "DOCUMENTOS AUDITADOS",
                     "PÓLIZA CREADA",
-                    "PÓLIZA VENCIDA",
-                    "RENOVADA",
+                    "PÓLIZA VENCIDA RENOVADA",
                     "CANCELADA"
                 ],
                 index=[
                     "DOCUMENTOS AUDITADOS",
                     "PÓLIZA CREADA",
-                    "PÓLIZA VENCIDA",
-                    "RENOVADA",
+                    "PÓLIZA VENCIDA RENOVADA",
                     "CANCELADA"
                 ].index(registro["ESTADO PÓLIZA"])
             )
