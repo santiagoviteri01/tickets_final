@@ -4,10 +4,11 @@ numpy
 matplotlib
 seaborn
 openpyxl
-gspread
-oauth2client
-gspread
-google-auth
+
+gspread==5.12.0
+google-auth==2.22.0
+google-auth-httplib2==0.1.0
+
 boto3
 folium
 streamlit-folium
