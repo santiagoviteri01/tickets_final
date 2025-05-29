@@ -308,7 +308,7 @@ def cargar_datos():
                                      'Grua','Asistencia_Legal','Ubicacion','Foto_URL'])
 
 
-@st.cache_data(ttl=240)
+@st.cache_data(ttl=60)
 def cargar_datos_dashboard_desde_sheets():
     df_pagados = cargar_df("pagados")
     df_pendientes = cargar_df("pendientes")
@@ -734,7 +734,7 @@ def generar_certificado_pdf_from_template(
         "fecha_nac":         pd.to_datetime(fila["FECHA NACIMIENTO"]).strftime("%d/%m/%Y"),
         "poliza_maestra":    fila["POLIZA MAESTRA"],
         "poliza":            fila["NÚMERO PÓLIZA VEHÍCULOS"],
-        "liderseg":          fila["ID LIDERSEG"],
+        "liderseg":          fila["ID"],
         "marca":             fila["MARCA"],
         "modelo":            fila["MODELO"],
         "motor":             fila["MOTOR"],
@@ -826,7 +826,7 @@ def gestionar_asegurados():
 
     with st.expander("🔎 Filtros de Búsqueda", expanded=True):
         col1, col2 = st.columns(2)
-        buscar_id     = col1.text_input("ID LIDERSEG")
+        buscar_id     = col1.text_input("ID")
         buscar_poliza = col2.text_input("Número de Póliza")
         buscar_cedula = col1.text_input("Número de Cédula")
         buscar_nombre = col2.text_input("Nombre Completo (o parte)")
@@ -846,7 +846,7 @@ def gestionar_asegurados():
     mask = pd.Series(True, index=df_original.index)
 
     if buscar_id:
-        mask &= df_original["ID LIDERSEG"].astype(str) == buscar_id.strip()
+        mask &= df_original["ID"].astype(str) == buscar_id.strip()
     if buscar_poliza:
         mask &= df_original["NÚMERO PÓLIZA VEHÍCULOS"].astype(str) == buscar_poliza.strip()
     if buscar_cedula:
@@ -866,7 +866,7 @@ def gestionar_asegurados():
 
     with left:
         st.info(f"**Nombre:** {registro['NOMBRE COMPLETO']}")
-        st.info(f"**ID:** {registro['ID LIDERSEG']}")
+        st.info(f"**ID:** {registro['ID']}")
         st.info(f"**Cédula:** {registro['NÚMERO IDENTIFICACIÓN']}")
         st.info(f"**Póliza:** {registro['NÚMERO PÓLIZA VEHÍCULOS']}")
 
@@ -896,7 +896,7 @@ def gestionar_asegurados():
             submitted = st.form_submit_button("💾 Guardar Cambios")
 
         if submitted:
-            mask_upd = df_original["ID LIDERSEG"] == registro["ID LIDERSEG"]
+            mask_upd = df_original["ID"] == registro["ID"]
             df_original.loc[mask_upd, "TELÉFONO DOMICILIO"]                = telefono
             df_original.loc[mask_upd, "CORREO ELECTRÓNICO"]      = correo
             df_original.loc[mask_upd, "OBSERVACIÓN"]             = observacion
@@ -978,7 +978,7 @@ def portal_cliente():
                     with col3:
                         st.write(f"**Marca:** {datos['MARCA']}")
                         st.write(f"**Modelo:** {datos['MODELO']}")
-                        st.write(f"**Año:** {datos['AÑO']}")
+                        st.write(f"**Año:** {datos['AÑOCARRO']}")
                         st.write(f"**Clase (Tipo):** {datos['CLASE (TIPO)']}")
                     with col4:
                         st.write(f"**Motor:** {datos['MOTOR']}")
@@ -1283,13 +1283,13 @@ def portal_cliente():
                         'Cliente': st.session_state.usuario_actual,
                         'Cedula': datos.get('CÉDULA'),
                         'CONCESIONARIO': datos.get('CONCESIONARIO'),
-                        'ID_LIDERSEG': datos.get('ID_LIDERSEG'),
+                        'ID': datos.get('ID'),
                         'ASEGURADORA': datos.get('ASEGURADORA'),
                         'CIUDAD OCURRENCIA': ciudad_ocurrencia,
                         'TALLER': "SIN TALLER DEFINIDO",
                         'MARCA': datos.get('MARCA'),
                         'MODELO': datos.get('MODELO'),
-                        'AÑO': datos.get('AÑO'),
+                        'AÑOCARRO': datos.get('AÑOCARRO'),
                         'PLACA': datos.get('PLACA'),
                         'fecha_ocurrencia': fecha_ocurrencia.strftime("%Y-%m-%d"),
                         'SUMA ASEGURADA': datos.get('VALOR ASEGURADO'),
@@ -1688,6 +1688,7 @@ def convertir_a_float(valor):
         return 0.0   
         
 def actualizar_bases_reclamos(todos_df, spreadsheet_sin_cache):
+    
     todos_df["fecha_ocurrencia"] = pd.to_datetime(todos_df["fecha_ocurrencia"], errors="coerce")
     todos_df["Fecha_Modificacion"] = pd.to_datetime(todos_df["Fecha_Modificacion"], errors="coerce")
     todos_df["MES"] = todos_df["fecha_ocurrencia"].dt.month.fillna(0).astype(int)
@@ -1848,7 +1849,7 @@ def manejar_tickets():
             tipo_busqueda = st.radio("Buscar por:", ["Cédula", "Número de Póliza"])
             if tipo_busqueda == "Cédula":
                 cedula = st.text_input("Ingrese el número:")
-                coincidencias = asegurados_data[asegurados_data["CÉDULA"].astype(str) == cedula]
+                coincidencias = asegurados_data[asegurados_data["NÚMERO IDENTIFICACIÓN"].astype(str) == cedula]
             else:
                 poliza = st.text_input("Ingrese número de póliza:")
                 coincidencias = asegurados_data[asegurados_data["NÚMERO PÓLIZA VEHÍCULOS"].astype(str) == poliza]
@@ -1877,14 +1878,14 @@ def manejar_tickets():
         
                 # Relleno automático
                 cliente = vehiculo_info["NOMBRE COMPLETO"]
-                cedula = vehiculo_info["CÉDULA"]
+                cedula = vehiculo_info["NÚMERO IDENTIFICACIÓN"]
                 concesionario = vehiculo_info.get("CONCESIONARIO", "")
-                id_liderseg = vehiculo_info.get("ID_LIDERSEG", "")
+                id_liderseg = vehiculo_info.get("ID", "")
                 aseguradora = vehiculo_info["ASEGURADORA"]
                 ciudad = vehiculo_info["CIUDAD CLIENTE"]
                 marca = vehiculo_info["MARCA"]
                 modelo = vehiculo_info["MODELO"]
-                anio = vehiculo_info["AÑO"]
+                anio = vehiculo_info["AÑOCARRO"]
                 placa = vehiculo_info["PLACA"]
                 suma_asegurada = vehiculo_info["VALOR ASEGURADO"]
         
@@ -1929,13 +1930,13 @@ def manejar_tickets():
                         'Cliente': cliente,
                         'Cedula': cedula,
                         'CONCESIONARIO': concesionario,
-                        'ID_LIDERSEG': id_liderseg,
+                        'ID': ID,
                         'ASEGURADORA': aseguradora,
                         'CIUDAD OCURRENCIA': ciudad_ocurrencia,
                         'TALLER': taller_seleccionado,
                         'MARCA': marca,
                         'MODELO': modelo,
-                        'AÑO': anio,
+                        'AÑOCARRO': anio,
                         'PLACA': placa,
                         'fecha_ocurrencia': fecha_ocurrencia.strftime("%Y-%m-%d"),
                         'SUMA ASEGURADA': suma_asegurada,
@@ -2097,13 +2098,13 @@ def manejar_tickets():
                         'Cliente': ticket_actual.get('Cliente'),
                         'Cedula': ticket_actual.get('Cedula'),
                         'CONCESIONARIO': ticket_actual.get('CONCESIONARIO'),
-                        'ID_LIDERSEG': ticket_actual.get('ID_LIDERSEG'),
+                        'ID': ticket_actual.get('ID'),
                         'ASEGURADORA': ticket_actual.get('ASEGURADORA'),
                         'CIUDAD OCURRENCIA': ticket_actual.get('CIUDAD OCURRENCIA'),
                         'TALLER': taller_seleccionado,
                         'MARCA': ticket_actual.get('MARCA'),
                         'MODELO': ticket_actual.get('MODELO'),
-                        'AÑO': ticket_actual.get('AÑO'),
+                        'AÑOCARRO': ticket_actual.get('AÑOCARRO'),
                         'PLACA': ticket_actual.get('PLACA'),
                         'fecha_ocurrencia': ticket_actual.get('fecha_ocurrencia'),
                         'SUMA ASEGURADA': ticket_actual.get('SUMA ASEGURADA'),
@@ -2130,7 +2131,7 @@ def manejar_tickets():
                         # Cargar datos actuales
                         pendientes_ws = cargar_worksheet_sin_cache("pendientes")
                         pagados_ws =cargar_worksheet_sin_cache("pagados")
-                        todos_df = cargar_worksheet_sin_cache("hoja")
+                        todos_df = cargar_df_sin_cache("hoja")
                         actualizar_bases_reclamos(todos_df, spreadsheet_sin_cache)
                         st.success("Base actualizado correctamente ✅")
                         st.session_state.recargar_tickets = True
