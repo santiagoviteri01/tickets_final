@@ -23,7 +23,8 @@ COPY main.py dashboard.py .
 
 COPY archivos_coberturas ./archivos_coberturas
 COPY images ./images
-COPY best.pt ./  # <--- ESTA LÍNEA ES CLAVE
+COPY modelos/best.pt ./modelos/
+
 
 # 6) Arranque
 CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
