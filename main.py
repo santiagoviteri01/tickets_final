@@ -198,9 +198,18 @@ def cargar_df_seguro(nombre_hoja):
     hoja = spreadsheet.worksheet(nombre_hoja)
     return pd.DataFrame(hoja.get_all_records())
 
+#Funciones sin cache:
+def get_spreadsheet_sin_cache():
+    return client.open_by_key("13hY8la9Xke5-wu3vmdB-tNKtY5D6ud4FZrJG2_HtKd8")
+spreadsheet_sin_cache = get_spreadsheet_sin_cache()
+def cargar_worksheet_sin_cache(nombre_hoja):
+    return spreadsheet_sin_cache.worksheet(nombre_hoja)
+def get_worksheet_sin_cache(nombre_hoja):
+    return get_spreadsheet_sin_cache().worksheet(nombre_hoja)
+def cargar_df_sin_cache(nombre_hoja):
+    hoja = get_worksheet_sin_cache(nombre_hoja)  # ✅ esta SÍ usa la función cacheada
+    return pd.DataFrame(hoja.get_all_records())
 
-
-sheet = cargar_worksheet("hoja")
 
 # Configuración de usuarios y contraseñas
 USUARIOS = {
@@ -211,10 +220,8 @@ USUARIOS = {
     "santiagoviteri": {"password": "insuratlan2", "rol": "admin"},
 }
 # Mantienes el acceso al worksheet
-
-talleres_df = cargar_df("talleres")
-asegurados_df = cargar_df("asegurados")
-
+#defino asegurados df
+asegurados_df=cargar_df("aseguradosfiltrados")
 for _, row in asegurados_df.iterrows():
     client_id = str(row["NOMBRE COMPLETO"])
     USUARIOS[client_id] = {
@@ -308,9 +315,6 @@ def cargar_datos_dashboard_desde_sheets():
     df_asegurados = cargar_df("aseguradosfiltrados")
     return df_pagados, df_pendientes, df_asegurados
 
-df_pagados, df_pendientes, df_asegurados = cargar_datos_dashboard_desde_sheets()
-
-
 def descargar_archivos_ticket(numero_ticket, nombre_cliente):
     df_adjuntos = cargar_df("archivos_adjuntos")
     archivos_ticket = df_adjuntos[df_adjuntos["Número Ticket"] == numero_ticket]
@@ -343,11 +347,8 @@ def descargar_archivos_ticket(numero_ticket, nombre_cliente):
         file_name=nombre_zip,
         mime="application/zip"
     )
-    
+   
 def subir_y_mostrar_archivo(archivo, bucket_name, numero_ticket, hoja_adjuntos, usuario):
-    import io
-    import base64
-
     file_type = archivo.type
     extension = archivo.name.split('.')[-1]
     unique_filename = f"adjuntos/{str(uuid.uuid4())}.{extension}"
@@ -398,7 +399,6 @@ def subir_y_mostrar_archivo(archivo, bucket_name, numero_ticket, hoja_adjuntos, 
     
 def formulario_cotizacion():
     st.header("📝 Cotizador de Seguros")
-
     tipo_seguro = st.selectbox("¿Qué seguro deseas cotizar?", ["Vida", "Auto", "Accidentes Personales"])
     nombre = st.text_input("Nombres")
     apellidos = st.text_input("Apellidos")
@@ -411,10 +411,9 @@ def formulario_cotizacion():
             if not all([tipo_seguro, nombre, apellidos, correo, telefono]):
                 st.warning("Por favor completa todos los campos.")
             else:
-                hoja_cotizaciones = cargar_worksheet("cotizaciones")
+                hoja_cotizaciones = cargar_worksheet_sin_cache("cotizaciones")
                 nueva_fila = [datetime.now().strftime("%Y-%m-%d %H:%M:%S"), tipo_seguro, nombre, apellidos, correo, telefono, "NO COTIZADA"]
                 hoja_cotizaciones.append_row(nueva_fila)
-                st.cache_data.clear()  # ← LIMPIA CACHE
                 st.success("🎉 Tu solicitud ha sido enviada exitosamente. Pronto nos contactaremos contigo.")
                 time.sleep(1.5)
                 st.session_state.mostrar_formulario_cotizacion = False
@@ -817,7 +816,7 @@ def persistir_en_sheet(df: pd.DataFrame):
 
     # Prepara la matriz de valores (incluyendo cabecera)
     values = [df.columns.tolist()] + df.values.tolist()
-
+    hoja = spreadsheet_sin_cache.worksheet("asegurados_insurance")
     # Limpia la hoja y sube todo
     hoja.clear()
     hoja.update(values)
@@ -840,6 +839,7 @@ def gestionar_asegurados():
         "ESTADO PÓLIZA",
         "NÚMERO FACTURA VEHÍCULOS"
     ]
+    df_asegurados=cargas_datos_sin_cache("aseguradasfiltrados")
     st.session_state["df_original"] = df_asegurados
     df_original = st.session_state["df_original"]
 
@@ -906,14 +906,11 @@ def gestionar_asegurados():
 
             st.session_state["df_original"] = df_original
             persistir_en_sheet(df_original)
-            st.cache_data.clear()  # ✅ limpia cache después de guardar
-
-            
             st.success("✅ Cambios guardados")
 
             registro_act = df_original[mask_upd].iloc[0]
             st.dataframe(registro_act.to_frame().T)
-            aseguradora = datos["ASEGURADORA"].strip().upper()
+            aseguradora = df_original["ASEGURADORA"].strip().upper()
             tpl_path = TEMPLATES[aseguradora]  # tu mapeo a .docx
         if st.button("📄 Emitir Certificado de Cobertura"):
             try:
@@ -1309,9 +1306,8 @@ def portal_cliente():
     
                     # Serializar y guardar
                     nuevo_reclamos_serializable = {k: str(v) for k, v in nuevo_reclamos.items()}
-                    sheet = cargar_worksheet("hoja")
+                    sheet = cargar_worksheet_sin_cache("hoja")
                     sheet.append_row(list(nuevo_reclamos_serializable.values()))
-                    st.cache_data.clear()  # ← LIMPIA CACHE
                     st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente")
                     # --- Enviar correo de notificación ---
                     correo_destinatario = "reclamosinsuratlan@outlook.com"
@@ -1334,7 +1330,6 @@ def portal_cliente():
                 
     with tab4:
         st.header("📎 Subir Archivos Adicionales a un Reclamo")
-    
         df_tickets_cliente = cargar_datos()
         df_tickets_cliente = df_tickets_cliente[df_tickets_cliente["Cliente"] == st.session_state.usuario_actual]
         df_tickets_cliente = df_tickets_cliente.sort_values("Número")
@@ -1359,7 +1354,7 @@ def portal_cliente():
                     region_name='us-east-1'
                 )
     
-                hoja_adjuntos = cargar_worksheet("archivos_adjuntos")
+                hoja_adjuntos = cargar_worksheet_sin_cache("archivos_adjuntos")
     
                 for archivo in archivos:
                     file_type = archivo.type
@@ -1383,7 +1378,6 @@ def portal_cliente():
                         file_type,
                         archivo_url
                     ])
-                    st.cache_data.clear()  # ← LIMPIA CACHE
     
                     st.success(f"✅ Archivo `{archivo.name}` subido y vinculado al reclamo #{numero_reclamo}")
     
@@ -1419,7 +1413,6 @@ def modulo_cotizaciones_mauricio():
 
     def actualizar_estado(index, nuevo_estado):
         hoja_cotizaciones.update_cell(index + 2, cotizaciones_df.columns.get_loc('Estado') + 1, nuevo_estado)
-        st.cache_data.clear()  # ← LIMPIA CACHE
         st.success(f"Cotización actualizada a '{nuevo_estado}'.")
         time.sleep(1)
         st.session_state.recargar_cotizaciones = True
@@ -1726,7 +1719,7 @@ def convertir_a_float(valor):
     except:
         return 0.0   
         
-def actualizar_bases_reclamos(todos_df, spreadsheet):
+def actualizar_bases_reclamos(todos_df, spreadsheet_sin_cache):
     todos_df["fecha_ocurrencia"] = pd.to_datetime(todos_df["fecha_ocurrencia"], errors="coerce")
     todos_df["Fecha_Modificacion"] = pd.to_datetime(todos_df["Fecha_Modificacion"], errors="coerce")
     todos_df["MES"] = todos_df["fecha_ocurrencia"].dt.month.fillna(0).astype(int)
@@ -1735,11 +1728,11 @@ def actualizar_bases_reclamos(todos_df, spreadsheet):
     todos_df_ultimos = todos_df.sort_values("Fecha_Modificacion").drop_duplicates(subset=["Número"], keep="last")
 
     # Leer y conservar histórico de pagados y pendientes
-    pagados_ws = cargar_worksheet("pagados")
-    pagados_hist = cargar_df("pagados")
+    pagados_ws = cargar_worksheet_sin_cache("pagados")
+    pagados_hist = cargar_df_sin_cache("pagados")
 
-    pendientes_ws = cargar_worksheet("pendientes")
-    pendientes_hist = cargar_df("pendientes")
+    pendientes_ws = cargar_worksheet_sin_cache("pendientes")
+    pendientes_hist = cargar_df_sin_cache("pendientes")
 
     # Convertir campos de fecha si existen
     #Fecha Siniestro
@@ -1788,7 +1781,6 @@ def actualizar_bases_reclamos(todos_df, spreadsheet):
     pagados_ws.update(
         [df_pagados_final.columns.tolist()] + df_pagados_final.astype(str).values.tolist()
     )
-    st.cache_data.clear()  # ← LIMPIA CACHE
 
     # === PENDIENTES ===
     nuevos_pendientes = []
@@ -1822,7 +1814,6 @@ def actualizar_bases_reclamos(todos_df, spreadsheet):
     pendientes_ws.update(
         [df_pendientes_final.columns.tolist()] + df_pendientes_final.astype(str).values.tolist()
     )
-    st.cache_data.clear()  # ← LIMPIA CACHE
         
 def manejar_tickets():
     # ✅ Nuevo bloque más limpio y eficiente
@@ -1892,7 +1883,7 @@ def manejar_tickets():
                 coincidencias = asegurados_data[asegurados_data["CÉDULA"].astype(str) == cedula]
             else:
                 poliza = st.text_input("Ingrese número de póliza:")
-                coincidencias = asegurados_data[asegurados_data["POLIZA MAESTRA"].astype(str) == poliza]
+                coincidencias = asegurados_data[asegurados_data["NÚMERO PÓLIZA VEHÍCULOS"].astype(str) == poliza]
                 # Validación de la columna
             buscar = st.form_submit_button("🔍 Buscar")
         if buscar:
@@ -1990,14 +1981,13 @@ def manejar_tickets():
                         'Ubicacion': None,
                         'Foto_URL': None
                     }
-        
+                    sheet = cargar_worksheet_sin_cache("hoja")
                     sheet.append_row([str(v) for v in nuevo_reclamos.values()])
-                    st.cache_data.clear()  # ← LIMPIA CACHE
                     st.success(f"✅ Reclamo #{nuevo_numero} guardado exitosamente.")
                     pendientes_ws =cargar_worksheet("pendientes")
                     pagados_ws = cargar_worksheet("pagados")
-                    todos_df =cargar_df("hoja")
-                    actualizar_bases_reclamos(todos_df, spreadsheet)
+                    todos_df =cargar_df_sin_cache("hoja")
+                    actualizar_bases_reclamos(todos_df, spreadsheet_sin_cache)
                     del st.session_state.coincidencias
                     del st.session_state.busqueda_exitosa
                     st.rerun()
@@ -2166,14 +2156,13 @@ def manejar_tickets():
                     }
         
                     with st.spinner("Actualizando ticket..."):
-                        sheet = cargar_worksheet("hoja")
+                        sheet = cargar_worksheet_sin_cache("hoja")
                         sheet.append_row(list(ticket_actualizado_serializable.values()))
-                        st.cache_data.clear()  # ← LIMPIA CACHE
                         # Cargar datos actuales
-                        pendientes_ws = cargar_worksheet("pendientes")
-                        pagados_ws =cargar_worksheet("pagados")
-                        todos_df = cargar_df("hoja")
-                        actualizar_bases_reclamos(todos_df, spreadsheet)
+                        pendientes_ws = cargar_worksheet_sin_cache("pendientes")
+                        pagados_ws =cargar_worksheet_sin_cache("pagados")
+                        todos_df = cargar_worksheet_sin_cache("hoja")
+                        actualizar_bases_reclamos(todos_df, spreadsheet_sin_cache)
                         st.success("Base actualizado correctamente ✅")
                         st.session_state.recargar_tickets = True
                         del st.session_state.ticket_actual
@@ -2223,7 +2212,7 @@ def manejar_tickets():
                 region_name='us-east-1'
             )
     
-            hoja_adjuntos = spreadsheet.worksheet("archivos_adjuntos")
+            hoja_adjuntos = spreadsheet_sin_cache.worksheet("archivos_adjuntos")
             bucket_name = 'insurapp-fotos'
             for archivo in archivos:
                 subir_y_mostrar_archivo(archivo=archivo, bucket_name=bucket_name, numero_ticket=numero_ticket, hoja_adjuntos=hoja_adjuntos,  usuario=ticket_seleccionado['Cliente'])
