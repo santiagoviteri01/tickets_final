@@ -1181,7 +1181,7 @@ def portal_cliente():
                     mask_canvas = np.zeros_like(img_np)
                 
                     names = seg_model.names  # Diccionario de clases
-                    
+                    overlay_final = img                    
                     if results.masks is not None and results.masks.data is not None:
                         mask_canvas = np.zeros((img.height, img.width, 3), dtype=np.uint8)
                         overlay_img = np.array(img).copy()
