@@ -15,9 +15,12 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         st.warning("Por favor verifica que los DataFrames no estén vacíos.")
         return
 
-    tab1, tab2, tab3 = st.tabs(["🔍 Suma Asegurada", "📁 Reclamos", "🔥 Siniestralidad"])
-
-    with tab1:
+    seccion = st.radio(
+        "Selecciona una sección:",
+        ["🔍 Suma Asegurada", "📁 Reclamos", "🔥 Siniestralidad"],
+        horizontal=True
+    )
+    if seccion == "🔍 Suma Asegurada":
         asegurados['FECHA'] = pd.to_datetime(asegurados['FECHA'], dayfirst=True, errors='coerce')
         asegurados['MES'] = asegurados['FECHA'].dt.month
         asegurados['MES_NOMBRE'] = asegurados['FECHA'].dt.month_name()
@@ -128,7 +131,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.bar_chart(top_marcas)
 
     
-    with tab2:
+    elif seccion == "📁 Reclamos":
         # Asegurar formato de fecha
         pagados['FECHA SINIESTRO'] = pd.to_datetime(pagados['FECHA SINIESTRO'], errors='coerce')
         pendientes['FECHA DE SINIESTRO'] = pd.to_datetime(pendientes['FECHA DE SINIESTRO'], errors='coerce')
@@ -231,7 +234,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
-    with tab3:
+    elif seccion == "🔥 Siniestralidad":
         st.header("📉 Siniestralidad Mensual por Aseguradora")
     
         # Estándar de nombres desde pendientes
