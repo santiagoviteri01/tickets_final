@@ -14,22 +14,22 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     if any(df is None or df.empty for df in [pagados, pendientes, asegurados]):
         st.warning("Por favor verifica que los DataFrames no estén vacíos.")
         return
-
+    meses_orden = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+    mes_actual = datetime.now().month
     seccion = st.radio(
         "Selecciona una sección:",
         ["🔍 Suma Asegurada", "📁 Reclamos", "🔥 Siniestralidad"],
         horizontal=True
     )
+
+
     if seccion == "🔍 Suma Asegurada":
         asegurados['FECHA'] = pd.to_datetime(asegurados['FECHA'], dayfirst=True, errors='coerce')
         asegurados['MES'] = asegurados['FECHA'].dt.month
         asegurados['MES_NOMBRE'] = asegurados['FECHA'].dt.month_name()
         asegurados['AÑO'] = asegurados['FECHA'].dt.year
-    
-        meses_orden = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-        mes_actual = datetime.now().month
-    
+
         st.header("📈 Análisis de Suma Asegurada")
         with st.sidebar:
             st.header("⚙️ Configuración del Analisis de Suma Asegurada")
@@ -132,6 +132,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
 
     
     elif seccion == "📁 Reclamos":
+
         # Asegurar formato de fecha
         pagados['FECHA SINIESTRO'] = pd.to_datetime(pagados['FECHA SINIESTRO'], errors='coerce')
         pendientes['FECHA DE SINIESTRO'] = pd.to_datetime(pendientes['FECHA DE SINIESTRO'], errors='coerce')
