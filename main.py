@@ -1026,8 +1026,8 @@ def portal_cliente():
     
         else:
             st.error("No se encontró información para tu cuenta.")
-    
-    if tab_seleccionado == "Mis Tickets":
+        
+    elif tab_seleccionado == "Mis Tickets":
         st.header("Mis Tickets")
         df = cargar_datos()
     
@@ -1106,8 +1106,8 @@ def portal_cliente():
     UPLOAD_DIR = "uploads"
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
-    
-   if tab_seleccionado == "Nuevo Reclamo":
+
+    elif tab_seleccionado == "Nuevo Reclamo":
         st.header("Nuevo Reclamo")
         enviar_reclamo = False  
         cliente_id = st.session_state.usuario_actual
@@ -1337,7 +1337,7 @@ def portal_cliente():
                     
                     enviar_correo_reclamo(correo_destinatario, asunto, cuerpo)
                 
-    if tab_seleccionado == "Subir Archivos Adicionales a un Reclamo":
+    elif tab_seleccionado == "Subir Archivos Adicionales a un Reclamo":
         st.header("📎 Subir Archivos Adicionales a un Reclamo")
         df_tickets_cliente = cargar_datos()
         df_tickets_cliente = df_tickets_cliente[df_tickets_cliente["Cliente"] == st.session_state.usuario_actual]
