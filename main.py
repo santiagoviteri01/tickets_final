@@ -816,7 +816,7 @@ def persistir_en_sheet(df: pd.DataFrame):
 
     # Prepara la matriz de valores (incluyendo cabecera)
     values = [df.columns.tolist()] + df.values.tolist()
-    hoja = spreadsheet_sin_cache.worksheet("asegurados_insurance")
+    hoja = spreadsheet_sin_cache.worksheet("aseguradosfiltrados")
     # Limpia la hoja y sube todo
     hoja.clear()
     hoja.update(values)
