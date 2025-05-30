@@ -913,9 +913,9 @@ def gestionar_asegurados():
     if st.button("📄 Emitir Certificado de Cobertura"):
         try:
             TEMPLATES = {
-                "MAPFRE": "templates/mapfre_template.docx",
-                "ZURICH": "templates/zurich_template.docx",
-                "AIG": "templates/aig_template.docx",
+                "AIG":     "archivos_coberturas/certificado_aig_temp.docx",
+                "MAPFRE":  "archivos_coberturas/certificado_mapfre_temp.docx",
+                "ZURICH SEGUROS":  "archivos_coberturas/certificado_zurich_temp.docx",
             }
             aseguradora = registro_act["ASEGURADORA"].strip().upper()
             tpl_path = TEMPLATES[aseguradora]
@@ -1792,8 +1792,6 @@ def actualizar_bases_reclamos(todos_df, spreadsheet_sin_cache):
     )
         
 def manejar_tickets():
-    talleres_df = cargar_df_sin_cache("talleres")  # o como corresponda según tu sistema
-    talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
     # ✅ Nuevo bloque más limpio y eficiente
     df = cargar_tickets(clear_cache=st.session_state.get("recargar_tickets", False))
     st.session_state.recargar_tickets = False
@@ -1906,7 +1904,7 @@ def manejar_tickets():
                 ciudad_ocurrencia = st.text_input("Ciudad donde ocurrió el siniestro*")
                 fecha_ocurrencia = st.date_input("Fecha de ocurrencia")
                 causa = st.selectbox("Causa*", ["ROBO TOTAL", "CHOQUE PARCIAL + RC", "PERDIDA TOTAL", "DAÑOS MALICIOSOS", "CHOQUE PARCIAL", "ROBO PARCIAL", "ROTURA DE PARABRISAS", "SOLO RC", "DESGRAVAMEN","ASISTENCIA"])
-        
+                talleres_df = cargar_df_sin_cache("talleres")  # o como corresponda según tu sistema
                 talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
                 taller_opcion = st.selectbox("Selecciona el taller de reparación*", talleres_unicos + ["Otro..."])
         
@@ -1939,7 +1937,7 @@ def manejar_tickets():
                         'Cliente': cliente,
                         'Cedula': cedula,
                         'CONCESIONARIO': concesionario,
-                        'ID_LIDERSEG': ID,
+                        'ID_LIDERSEG': id_liderseg,
                         'ASEGURADORA': aseguradora,
                         'CIUDAD OCURRENCIA': ciudad_ocurrencia,
                         'TALLER': taller_seleccionado,
