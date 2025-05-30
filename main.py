@@ -951,8 +951,8 @@ def portal_cliente():
         time.sleep(1)
         st.rerun()
     asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
-    tab_seleccionado = st.radio("Secciones", ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo","Subir Archivos Adicionales a un Reclamo"], horizontal=True)
-    if tab_seleccionado == "Mis Datos":
+    tab_seleccionado = st.radio("Secciones", ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo", "Subir Archivos Adicionales a un Reclamo"], horizontal=True)
+    if tab_seleccionado == "Mis Datos Personales":
         st.header("🧾 Mis Datos Personales y del Vehículo")
     
         cliente_id = st.session_state.usuario_actual
