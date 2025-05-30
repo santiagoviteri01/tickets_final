@@ -824,7 +824,6 @@ def persistir_en_sheet(df: pd.DataFrame):
 def gestionar_asegurados():
     st.header("🔍 Buscar y Editar Asegurados")
 
-    # 📌 FILTROS DE BÚSQUEDA
     with st.expander("🔎 Filtros de Búsqueda", expanded=True):
         col1, col2 = st.columns(2)
         buscar_id     = col1.text_input("ID")
@@ -832,12 +831,19 @@ def gestionar_asegurados():
         buscar_cedula = col1.text_input("Número de Cédula")
         buscar_nombre = col2.text_input("Nombre Completo (o parte)")
 
-    # 🔄 CARGAR DATOS
+    EDITABLE_COLS = [
+        "TELÉFONO DOMICILIO",
+        "CORREO ELECTRÓNICO",
+        "OBSERVACIÓN",
+        "BENEFICIARIO ACREEDOR",
+        "ESTADO PÓLIZA",
+        "NÚMERO FACTURA VEHÍCULOS"
+    ]
+
     df_asegurados = cargar_df_sin_cache("aseguradosfiltrados")
     st.session_state["df_original"] = df_asegurados
     df_original = st.session_state["df_original"]
 
-    # 🔍 APLICAR FILTROS
     mask = pd.Series(True, index=df_original.index)
     if buscar_id:
         mask &= df_original["ID"].astype(str) == buscar_id.strip()
@@ -855,21 +861,18 @@ def gestionar_asegurados():
         return
 
     registro = df_filtrado.iloc[0]
-
-    # ✅ SIEMPRE CALCULAR EL REGISTRO ACTUAL
     mask_upd = df_original["ID"] == registro["ID"]
-    registro_act = df_original[mask_upd].iloc[0]
+    registro_act = df_original[mask_upd].iloc[0]  # ✅ Esta línea es clave
 
-    # 🧾 MOSTRAR INFO
     st.markdown("### Detalles del Asegurado")
     left, right = st.columns([1, 2])
+
     with left:
         st.info(f"**Nombre:** {registro['NOMBRE COMPLETO']}")
         st.info(f"**ID:** {registro['ID']}")
         st.info(f"**Cédula:** {registro['NÚMERO IDENTIFICACIÓN']}")
         st.info(f"**Póliza:** {registro['NÚMERO PÓLIZA VEHÍCULOS']}")
 
-    # ✏️ FORMULARIO DE EDICIÓN
     with right:
         st.subheader("✏️ Editar Campos")
         with st.form("editar_aseg_form"):
@@ -893,29 +896,28 @@ def gestionar_asegurados():
                 ].index(registro["ESTADO PÓLIZA"])
             )
             num_factura = st.text_input("Número Factura Vehículos", registro["NÚMERO FACTURA VEHÍCULOS"])
-            submitted   = st.form_submit_button("💾 Guardar Cambios")
+            submitted = st.form_submit_button("💾 Guardar Cambios")
 
-    # 💾 GUARDAR CAMBIOS
-    if submitted:
-        df_original.loc[mask_upd, "TELÉFONO DOMICILIO"] = telefono
-        df_original.loc[mask_upd, "CORREO ELECTRÓNICO"] = correo
-        df_original.loc[mask_upd, "OBSERVACIÓN"] = observacion
-        df_original.loc[mask_upd, "BENEFICIARIO ACREEDOR"] = beneficiario
-        df_original.loc[mask_upd, "ESTADO PÓLIZA"] = estado_poliza
-        df_original.loc[mask_upd, "NÚMERO FACTURA VEHÍCULOS"] = num_factura
+        if submitted:
+            df_original.loc[mask_upd, "TELÉFONO DOMICILIO"] = telefono
+            df_original.loc[mask_upd, "CORREO ELECTRÓNICO"] = correo
+            df_original.loc[mask_upd, "OBSERVACIÓN"] = observacion
+            df_original.loc[mask_upd, "BENEFICIARIO ACREEDOR"] = beneficiario
+            df_original.loc[mask_upd, "ESTADO PÓLIZA"] = estado_poliza
+            df_original.loc[mask_upd, "NÚMERO FACTURA VEHÍCULOS"] = num_factura
 
-        st.session_state["df_original"] = df_original
-        persistir_en_sheet(df_original)
-        st.success("✅ Cambios guardados")
-        st.dataframe(registro_act.to_frame().T)
+            st.session_state["df_original"] = df_original
+            persistir_en_sheet(df_original)
+            st.success("✅ Cambios guardados")
+            st.dataframe(registro_act.to_frame().T)
 
-    # 📄 GENERAR CERTIFICADO DE COBERTURA
+    # 📄 EMITIR CERTIFICADO
     if st.button("📄 Emitir Certificado de Cobertura"):
         try:
             TEMPLATES = {
-                "AIG":     "archivos_coberturas/certificado_aig_temp.docx",
-                "MAPFRE":  "archivos_coberturas/certificado_mapfre_temp.docx",
-                "ZURICH SEGUROS":  "archivos_coberturas/certificado_zurich_temp.docx",
+                "AIG": "archivos_coberturas/certificado_aig_temp.docx",
+                "MAPFRE": "archivos_coberturas/certificado_mapfre_temp.docx",
+                "ZURICH SEGUROS": "archivos_coberturas/certificado_zurich_temp.docx",
             }
             aseguradora = registro_act["ASEGURADORA"].strip().upper()
             tpl_path = TEMPLATES[aseguradora]
