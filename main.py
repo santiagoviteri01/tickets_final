@@ -951,8 +951,8 @@ def portal_cliente():
         time.sleep(1)
         st.rerun()
     asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
-    tab1, tab2, tab3, tab4 = st.tabs(["Mis Datos y Coberturas", "Mis Tickets", "Nuevo Reclamo", "📎 Subir Archivos"])
-    with tab1:
+    tab_seleccionado = st.radio("Secciones", ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo","Subir Archivos Adicionales a un Reclamo"], horizontal=True)
+    if tab_seleccionado == "Mis Datos":
         st.header("🧾 Mis Datos Personales y del Vehículo")
     
         cliente_id = st.session_state.usuario_actual
@@ -1027,7 +1027,7 @@ def portal_cliente():
         else:
             st.error("No se encontró información para tu cuenta.")
     
-    with tab2:
+    if tab_seleccionado == "Mis Tickets":
         st.header("Mis Tickets")
         df = cargar_datos()
     
@@ -1107,7 +1107,7 @@ def portal_cliente():
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
     
-    with tab3:
+   if tab_seleccionado == "Nuevo Reclamo":
         st.header("Nuevo Reclamo")
         enviar_reclamo = False  
         cliente_id = st.session_state.usuario_actual
@@ -1337,7 +1337,7 @@ def portal_cliente():
                     
                     enviar_correo_reclamo(correo_destinatario, asunto, cuerpo)
                 
-    with tab4:
+    if tab_seleccionado == "Subir Archivos Adicionales a un Reclamo":
         st.header("📎 Subir Archivos Adicionales a un Reclamo")
         df_tickets_cliente = cargar_datos()
         df_tickets_cliente = df_tickets_cliente[df_tickets_cliente["Cliente"] == st.session_state.usuario_actual]
