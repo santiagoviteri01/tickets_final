@@ -22,7 +22,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         ["🔍 Suma Asegurada", "📁 Reclamos", "🔥 Siniestralidad"],
         horizontal=True
     )
-
+    
 
     if seccion == "🔍 Suma Asegurada":
         asegurados['FECHA'] = pd.to_datetime(asegurados['FECHA'], dayfirst=True, errors='coerce')
@@ -83,18 +83,45 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
 
         if "Evolución Anual" in mostrar_graficos:
             st.subheader("📈 Evolución Anual")
+        
+            # Crear tabla pivote
             df_temporal = df_filtrado.pivot_table(
                 values='VALOR ASEGURADO', index='MES', columns='AÑO', aggfunc='sum'
-            ).fillna(0).reindex(range(1, 13))
+            ).reindex(range(1, 13))
+        
+            # Reemplazar índice numérico por nombre del mes
             df_temporal.index = pd.Categorical(
                 [meses_orden[m-1] for m in df_temporal.index], categories=meses_orden, ordered=True
             )
-            st.line_chart(df_temporal)
+        
+            # Reemplazar ceros por NaN si en una columna (año) todos los valores desde cierto punto son ceros
+            for col in df_temporal.columns:
+                # Encuentra el último mes con un valor distinto de cero
+                non_zero_mask = df_temporal[col] != 0
+                if non_zero_mask.any():
+                    last_valid_index = non_zero_mask[non_zero_mask].index[-1]
+                    last_valid_pos = df_temporal.index.get_loc(last_valid_index)
+                    # Desde el siguiente al último valor válido en adelante, pon NaN si es cero
+                    for i in range(last_valid_pos + 1, len(df_temporal)):
+                        if df_temporal.iloc[i][col] == 0:
+                            df_temporal.iloc[i, df_temporal.columns.get_loc(col)] = np.nan
+        
+            # Graficar con matplotlib
+            fig, ax = plt.subplots(figsize=(10, 5))
+            df_temporal.plot(ax=ax, marker='o')
+            ax.set_title("Evolución Anual de la Suma Asegurada")
+            ax.set_xlabel("Mes")
+            ax.set_ylabel("Suma Asegurada")
+            ax.grid(True)
+            plt.xticks(rotation=45)
+        
+            st.pyplot(fig)
         
         if "Evolución Continua" in mostrar_graficos:
             st.subheader("📅 Evolución Continua desde Oct 2023")
             hoy = datetime.now()
             df_periodo = asegurados.copy()
+        
             if aseguradora_sel != 'Todas':
                 df_periodo = df_periodo[df_periodo['ASEGURADORA'] == aseguradora_sel]
         
@@ -105,38 +132,76 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             df_periodo['Periodo'] = pd.Categorical(df_periodo['Periodo'], categories=periodos_ordenados, ordered=True)
         
             evolucion = df_periodo.groupby('Periodo').agg(
-                Prima_Total=('PRIMA TOTAL VEHÍCULOS', 'sum'),
                 Suma_Asegurada=('VALOR ASEGURADO', 'sum')
             ).fillna(0)
-            st.line_chart(evolucion)
+        
+            # Plot con matplotlib
+            fig, ax = plt.subplots(figsize=(10, 4))
+            evolucion.plot(ax=ax, marker='o', legend=False)
+            ax.set_title("Evolución de la Suma Asegurada")
+            ax.set_xlabel("Periodo")
+            ax.set_ylabel("Suma Asegurada")
+            ax.grid(True)
+            plt.xticks(rotation=45)
+        
+            st.pyplot(fig)
         
         if "Tasa Mensual" in mostrar_graficos:
             st.subheader("📉 Tasa Mensual")
+        
+            # Agrupar y calcular la tasa
             tasa_mensual = df_filtrado.groupby(['AÑO', 'MES']).agg(
                 Prima_Total=('PRIMA TOTAL VEHÍCULOS', 'sum'),
                 Suma_Asegurada_Total=('VALOR ASEGURADO', 'sum')
             ).reset_index()
+        
+            # Calcular tasa como porcentaje
             tasa_mensual['Tasa'] = (tasa_mensual['Prima_Total'] / tasa_mensual['Suma_Asegurada_Total']) * 100
+        
+            # Crear columna de periodo legible
             tasa_mensual['Periodo'] = tasa_mensual['MES'].apply(lambda x: meses_orden[x-1]) + '-' + tasa_mensual['AÑO'].astype(str)
         
-            # Orden correcto
+            # Ordenar por año y mes
             tasa_mensual = tasa_mensual.sort_values(['AÑO', 'MES'])
-            tasa_mensual['Periodo'] = pd.Categorical(tasa_mensual['Periodo'], categories=tasa_mensual['Periodo'].unique(), ordered=True)
+            tasa_mensual['Periodo'] = pd.Categorical(
+                tasa_mensual['Periodo'], categories=tasa_mensual['Periodo'].unique(), ordered=True
+            )
         
-            st.line_chart(tasa_mensual.set_index('Periodo')['Tasa'])
+            # Graficar con matplotlib
+            fig, ax = plt.subplots(figsize=(10, 4))
+            ax.plot(tasa_mensual['Periodo'], tasa_mensual['Tasa'], marker='o')
+            ax.set_title("Tasa Mensual de Prima vs. Suma Asegurada")
+            ax.set_xlabel("Periodo")
+            ax.set_ylabel("Tasa (%)")
+            ax.grid(True)
+            plt.xticks(rotation=45)
+        
+            st.pyplot(fig)
     
         if "Top Marcas" in mostrar_graficos:
             st.subheader("🏅 Top Marcas")
+        
+            # Obtener top 10 marcas
             top_marcas = df_filtrado['MARCA'].value_counts().nlargest(10)
-            st.bar_chart(top_marcas)
+        
+            # Graficar con matplotlib
+            fig, ax = plt.subplots(figsize=(8, 4))
+            top_marcas.plot(kind='barh', ax=ax)
+            ax.set_title("Top 10 Marcas Más Aseguradas")
+            ax.set_xlabel("Marca")
+            ax.set_ylabel("Cantidad")
+            ax.grid(axis='y')
+            plt.xticks(rotation=45)
+        
+            st.pyplot(fig)
 
     
     elif seccion == "📁 Reclamos":
-
+    
         # Asegurar formato de fecha
         pagados['FECHA SINIESTRO'] = pd.to_datetime(pagados['FECHA SINIESTRO'], errors='coerce')
         pendientes['FECHA DE SINIESTRO'] = pd.to_datetime(pendientes['FECHA DE SINIESTRO'], errors='coerce')
-        
+    
         # Forzar que BASE sea el año de la fecha siniestro
         pagados['BASE'] = pagados['FECHA SINIESTRO'].dt.year.astype('Int64')
         pendientes['BASE'] = pendientes['FECHA DE SINIESTRO'].dt.year.astype('Int64')
@@ -165,15 +230,11 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         pagos_aseguradora_data = pagados_filtrados[pagados_filtrados['COMPAÑÍA'].isin(aseguradoras_seleccionadas)]
         pendientes_aseguradora_data = pendientes_filtrados[pendientes_filtrados['CIA. DE SEGUROS'].isin(aseguradoras_seleccionadas)]
     
-        with st.expander("📁 Datos Generales"):
-            st.subheader("Reclamos Pagados")
-            st.dataframe(pagos_aseguradora_data[['COMPAÑÍA', 'VALOR RECLAMO', 'FECHA SINIESTRO', 'EVENTO']].head(3), use_container_width=True)
+        st.header("📁 Datos Generales")
+        st.dataframe(pagos_aseguradora_data[['COMPAÑÍA', 'VALOR RECLAMO', 'FECHA SINIESTRO', 'EVENTO']].head(3))
+        st.dataframe(pendientes_aseguradora_data[['CIA. DE SEGUROS', 'VALOR SINIESTRO', 'FECHA DE SINIESTRO', 'ESTADO ACTUAL']].head(3))
     
-            st.subheader("Reclamos Pendientes")
-            st.dataframe(pendientes_aseguradora_data[['CIA. DE SEGUROS', 'VALOR SINIESTRO', 'FECHA DE SINIESTRO', 'ESTADO ACTUAL']].head(3), use_container_width=True)
-    
-        st.header("📅 Distribución Temporal")
-        pagos_aseguradora_data['FECHA SINIESTRO'] = pd.to_datetime(pagos_aseguradora_data['FECHA SINIESTRO'], dayfirst=True, errors='coerce')
+        st.header("🗕️ Distribución Temporal")
         pagos_aseguradora_data['MES'] = pagos_aseguradora_data['FECHA SINIESTRO'].dt.month
         fig, ax = plt.subplots(figsize=(10, 5))
         sns.countplot(data=pagos_aseguradora_data, x='MES', palette='viridis', ax=ax)
@@ -185,8 +246,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         st.header("💰 Análisis de Valores")
         grafico_valores = st.radio("Elegir gráfico de análisis de valores", ["Histograma", "Boxplot", "Por Rangos"], horizontal=True)
         if grafico_valores == "Histograma":
-            bins_hist = st.slider("📊 Número de Bins para Histograma", min_value=10, max_value=100, value=30, step=5, key="bins_hist")
-
+            bins_hist = st.slider("📊 Número de Bins", 10, 100, 30, 5)
             fig = plt.figure(figsize=(10, 4))
             sns.histplot(pagos_aseguradora_data['VALOR RECLAMO'], bins=bins_hist, kde=True)
             st.pyplot(fig)
@@ -196,7 +256,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.pyplot(fig)
         elif grafico_valores == "Por Rangos":
             max_val = int(pagos_aseguradora_data['VALOR RECLAMO'].max())
-            bin_size = st.slider("Tamaño del bin ($)", 2000, max_val, 500, step=500)
+            bin_size = st.slider("Tamaño del bin ($)", 2000, max_val, 500, 500)
             bins = list(range(0, max_val + bin_size, bin_size))
             labels = [f"{bins[i]}-{bins[i+1]}" for i in range(len(bins)-1)]
             pagos_aseguradora_data['Rango'] = pd.cut(pagos_aseguradora_data['VALOR RECLAMO'], bins=bins, labels=labels, right=False)
@@ -204,22 +264,51 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             sns.countplot(y='Rango', data=pagos_aseguradora_data, order=labels, color='salmon', ax=ax)
             st.pyplot(fig)
     
+        # Nuevo selector de tipo de severidad
+        st.header("Análisis de Variables")
+        tipo_severidad = st.radio("Tipo de severidad", ["Promedio", "Total"], horizontal=True)
+    
+        def plot_severidad(tipo, campo, titulo):
+            agrupado = pagos_aseguradora_data.groupby(campo)['VALOR RECLAMO']
+            datos = agrupado.mean() if tipo == "Promedio" else agrupado.sum()
+            datos = datos.sort_values(ascending=False).head(10)
+            fig, ax = plt.subplots(figsize=(10, 6))
+            sns.barplot(x=datos.values, y=datos.index, ax=ax, palette='viridis')
+            ax.set_title(titulo)
+            ax.set_xlabel(f"{'Promedio' if tipo == 'Promedio' else 'Total'} ($)")
+            st.pyplot(fig)
+    
+        cols = ["EVENTO", "TALLER DE REPARACION", "CIUDAD OCURRENCIA", "MARCA"]
+        titulos = [
+            "Severidad por Evento",
+            "Severidad por Taller de Reparación",
+            "Severidad por Ciudad",
+            "Severidad por Marca"
+        ]
+    
+        for col, titulo in zip(cols, titulos):
+            plot_severidad(tipo_severidad, col, titulo)
+    
         st.header("📄 Generar Informe Anual")
         if st.button("Generar Informe"):
-            resumen_mes = pd.pivot_table(
-                pagados_filtrados,
-                values='VALOR RECLAMO',
-                index='MES',
-                columns='COMPAÑÍA',
-                aggfunc=['sum', 'count'],
-                fill_value=0,
-                margins=True
-            )
-            resumen_mes.columns = [f"{aggfunc} {compa}" for aggfunc, compa in resumen_mes.columns]
+            resumen_mes = pagados_filtrados.pivot_table(values='VALOR RECLAMO', index='MES', columns='COMPAÑÍA', aggfunc=['sum', 'count'], fill_value=0, margins=True)
+            resumen_mes.columns = [f"{aggfunc} {col}" for aggfunc, col in resumen_mes.columns]
             talleres = pagados_filtrados.pivot_table(values='VALOR RECLAMO', index='TALLER DE REPARACION', columns='COMPAÑÍA', aggfunc='count', fill_value=0)
             causas = pagados_filtrados.pivot_table(values='VALOR RECLAMO', index='EVENTO', aggfunc=['sum', 'count'], fill_value=0)
             causas.columns = ['Total_Reclamo', 'Cantidad_Reclamos']
             pendientes_estado = pendientes_filtrados.pivot_table(values='VALOR SINIESTRO', index='ESTADO ACTUAL', columns='CIA. DE SEGUROS', aggfunc='count', fill_value=0)
+    
+            # Severidad resumen
+            def resumen_severidad(df, campo):
+                return pd.DataFrame({
+                    'Severidad Promedio': df.groupby(campo)['VALOR RECLAMO'].mean().round(2),
+                    'Severidad Total': df.groupby(campo)['VALOR RECLAMO'].sum().round(2)
+                }).sort_values('Severidad Total', ascending=False)
+    
+            sev_evento = resumen_severidad(pagos_aseguradora_data, 'EVENTO')
+            sev_taller = resumen_severidad(pagos_aseguradora_data, 'TALLER DE REPARACION')
+            sev_ciudad = resumen_severidad(pagos_aseguradora_data, 'CIUDAD OCURRENCIA')
+            sev_marca = resumen_severidad(pagos_aseguradora_data, 'MARCA')
     
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -227,11 +316,16 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 talleres.to_excel(writer, sheet_name='Talleres')
                 causas.to_excel(writer, sheet_name='Causas')
                 pendientes_estado.to_excel(writer, sheet_name='Pendientes')
+                sev_evento.to_excel(writer, sheet_name='Severidad Eventos')
+                sev_taller.to_excel(writer, sheet_name='Severidad Talleres')
+                sev_ciudad.to_excel(writer, sheet_name='Severidad Ciudades')
+                sev_marca.to_excel(writer, sheet_name='Severidad Marcas')
             output.seek(0)
+    
             st.download_button(
-                label="Descargar Reporte",
+                label="📂 Descargar Reporte",
                 data=output,
-                file_name=f"Reporte_Retorno_{año_analisis}.xlsx",
+                file_name=f"Reporte_Reclamos_{año_analisis}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
