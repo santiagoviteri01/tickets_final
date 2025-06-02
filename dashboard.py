@@ -266,18 +266,27 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     
         # Nuevo selector de tipo de severidad
         st.header("Análisis de Variables")
-        tipo_severidad = st.radio("Tipo de severidad", ["Promedio", "Total"], horizontal=True)
-    
+        tipo_severidad = st.radio("Tipo de severidad", ["Promedio", "Total", "Frecuencia"], horizontal=True)
+
         def plot_severidad(tipo, campo, titulo):
             agrupado = pagos_aseguradora_data.groupby(campo)['VALOR RECLAMO']
-            datos = agrupado.mean() if tipo == "Promedio" else agrupado.sum()
+            if tipo == "Promedio":
+                datos = agrupado.mean()
+                etiqueta = "Promedio ($)"
+            elif tipo == "Total":
+                datos = agrupado.sum()
+                etiqueta = "Total ($)"
+            else:  # Frecuencia
+                datos = agrupado.count()
+                etiqueta = "Cantidad de Reclamos"
+
             datos = datos.sort_values(ascending=False).head(10)
             fig, ax = plt.subplots(figsize=(10, 6))
             sns.barplot(x=datos.values, y=datos.index, ax=ax, palette='viridis')
             ax.set_title(titulo)
-            ax.set_xlabel(f"{'Promedio' if tipo == 'Promedio' else 'Total'} ($)")
+            ax.set_xlabel(etiqueta)
             st.pyplot(fig)
-    
+
         cols = ["EVENTO", "TALLER DE REPARACION", "CIUDAD OCURRENCIA", "MARCA"]
         titulos = [
             "Severidad por Evento",
@@ -285,10 +294,10 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             "Severidad por Ciudad",
             "Severidad por Marca"
         ]
-    
+
         for col, titulo in zip(cols, titulos):
             plot_severidad(tipo_severidad, col, titulo)
-    
+
         st.header("📄 Generar Informe Anual")
         if st.button("Generar Informe"):
             resumen_mes = pagados_filtrados.pivot_table(values='VALOR RECLAMO', index='MES', columns='COMPAÑÍA', aggfunc=['sum', 'count'], fill_value=0, margins=True)
@@ -297,19 +306,20 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             causas = pagados_filtrados.pivot_table(values='VALOR RECLAMO', index='EVENTO', aggfunc=['sum', 'count'], fill_value=0)
             causas.columns = ['Total_Reclamo', 'Cantidad_Reclamos']
             pendientes_estado = pendientes_filtrados.pivot_table(values='VALOR SINIESTRO', index='ESTADO ACTUAL', columns='CIA. DE SEGUROS', aggfunc='count', fill_value=0)
-    
+
             # Severidad resumen
             def resumen_severidad(df, campo):
                 return pd.DataFrame({
                     'Severidad Promedio': df.groupby(campo)['VALOR RECLAMO'].mean().round(2),
-                    'Severidad Total': df.groupby(campo)['VALOR RECLAMO'].sum().round(2)
+                    'Severidad Total': df.groupby(campo)['VALOR RECLAMO'].sum().round(2),
+                    'Frecuencia': df.groupby(campo)['VALOR RECLAMO'].count()
                 }).sort_values('Severidad Total', ascending=False)
-    
+
             sev_evento = resumen_severidad(pagos_aseguradora_data, 'EVENTO')
             sev_taller = resumen_severidad(pagos_aseguradora_data, 'TALLER DE REPARACION')
             sev_ciudad = resumen_severidad(pagos_aseguradora_data, 'CIUDAD OCURRENCIA')
             sev_marca = resumen_severidad(pagos_aseguradora_data, 'MARCA')
-    
+
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                 resumen_mes.to_excel(writer, sheet_name='Resumen Mes')
@@ -321,7 +331,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 sev_ciudad.to_excel(writer, sheet_name='Severidad Ciudades')
                 sev_marca.to_excel(writer, sheet_name='Severidad Marcas')
             output.seek(0)
-    
+
             st.download_button(
                 label="📂 Descargar Reporte",
                 data=output,
@@ -484,27 +494,27 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         asegurados['FECHA'] = pd.to_datetime(asegurados['FECHA'], dayfirst=True, errors='coerce')
         asegurados['MES'] = asegurados['FECHA'].dt.month
         asegurados['AÑO'] = asegurados['FECHA'].dt.year
-
+    
         # Sidebar de filtros
         with st.sidebar:
             st.header("⚙️ Filtros de Comisiones")
             aseguradoras = ['Todas'] + sorted(asegurados['ASEGURADORA'].dropna().unique())
             aseguradora_sel = st.selectbox("Seleccionar Aseguradora", aseguradoras, key="aseg_comisiones")
-
+    
             años_disponibles = sorted(asegurados['AÑO'].dropna().unique())
             años_sel = st.multiselect("Seleccionar Años", años_disponibles, default=años_disponibles, key="años_comisiones")
-
+    
         # Filtrar aseguradora y años
         df_com = asegurados.copy()
         if aseguradora_sel != 'Todas':
             df_com = df_com[df_com['ASEGURADORA'] == aseguradora_sel]
-
+    
         if años_sel:
             df_com = df_com[df_com['AÑO'].isin(años_sel)]
         else:
             st.warning("Selecciona al menos un año")
             st.stop()
-
+    
         # Columnas de comisiones
         columnas_comision = [
             "COMISIÓN PRIMA VEHÍCULOS",
@@ -512,57 +522,66 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             "COMISIÓN BROKER LIDERSEG VEHÍCULOS",
             "COMISIÓN BROKER INSURATLAN VEHÍCULOS"
         ]
-
+    
         # Agrupar por año y mes
         df_comisiones = df_com.groupby(['AÑO', 'MES'])[columnas_comision].sum().reset_index()
-
+    
         # Crear columna "Periodo"
         df_comisiones['Periodo'] = df_comisiones['MES'].apply(lambda x: meses_orden[x - 1]) + '-' + df_comisiones['AÑO'].astype(str)
         df_comisiones = df_comisiones.sort_values(['AÑO', 'MES'])
         df_comisiones['Periodo'] = pd.Categorical(df_comisiones['Periodo'], categories=df_comisiones['Periodo'].unique(), ordered=True)
         df_comisiones.set_index('Periodo', inplace=True)
-
+    
         # Total comisiones
-        st.subheader("🔢 Total Comisiones Pagadas")
-        total_comisiones = df_comisiones[columnas_comision].sum().sum()
-        st.metric("Total USD", f"${total_comisiones:,.2f}")
-
-        # Gráfico apilado por canal
-        st.subheader("📈 Evolución de Comisiones por Canal")
-        fig, ax = plt.subplots(figsize=(12, 5))
-        df_comisiones[columnas_comision].plot(kind='bar', stacked=True, ax=ax)
-        ax.set_ylabel("USD ($)")
-        ax.set_title("Pago de Comisiones por Canal y Mes")
-        ax.legend(title="Canal", bbox_to_anchor=(1.05, 1), loc='upper left')
-        ax.grid(True)
-        plt.xticks(rotation=45)
-        st.pyplot(fig)
-
-        # Gráficos individuales por canal
-        st.subheader("📊 Comisiones por Canal - Individual")
-        for col in columnas_comision:
-            fig, ax = plt.subplots(figsize=(10, 4))
-            ax.plot(df_comisiones.index, df_comisiones[col], marker='o', label=col)
-            ax.set_title(col)
-            ax.set_xlabel("Periodo")
+        if not df_comisiones.empty:
+            st.subheader("🔢 Total Comisiones Pagadas")
+            total_comisiones = df_comisiones[columnas_comision].sum().sum()
+            st.metric("Total USD", f"${total_comisiones:,.2f}")
+    
+            # Gráfico apilado por canal
+            st.subheader("📈 Evolución de Comisiones por Canal")
+            fig, ax = plt.subplots(figsize=(12, 5))
+            df_comisiones[columnas_comision].plot(kind='bar', stacked=True, ax=ax)
             ax.set_ylabel("USD ($)")
+            ax.set_title("Pago de Comisiones por Canal y Mes")
+            ax.legend(title="Canal", bbox_to_anchor=(1.05, 1), loc='upper left')
             ax.grid(True)
             plt.xticks(rotation=45)
             st.pyplot(fig)
+    
+            # Gráfico individual por canal seleccionado
+            st.subheader("📊 Comisiones por Canal - Individual")
+            canal_seleccionado = st.selectbox("Selecciona el canal a visualizar:", columnas_comision)
+            if canal_seleccionado in df_comisiones.columns:
+                fig, ax = plt.subplots(figsize=(10, 4))
+                ax.plot(df_comisiones.index, df_comisiones[canal_seleccionado], marker='o', label=canal_seleccionado)
+                ax.set_title(f"Evolución de {canal_seleccionado}")
+                ax.set_xlabel("Periodo")
+                ax.set_ylabel("USD ($)")
+                ax.grid(True)
+                plt.xticks(rotation=45)
+                st.pyplot(fig)
+            else:
+                st.warning(f"El canal '{canal_seleccionado}' no está disponible en los datos.")
+    
+            # Tabla detallada
+            st.subheader("📄 Tabla Detallada")
+            st.dataframe(df_comisiones[columnas_comision].round(2), use_container_width=True)
+    
+            # Exportar a Excel
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                df_comisiones.reset_index()[['Periodo'] + columnas_comision].to_excel(writer, sheet_name='Comisiones Mensuales', index=False)
+            output.seek(0)
+            st.download_button(
+                label="📥 Descargar Comisiones en Excel",
+                data=output,
+                file_name="comisiones_por_canal.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        else:
+            st.warning("No hay datos de comisiones disponibles para los filtros seleccionados.")
 
-        # Tabla detallada
-        st.subheader("📄 Tabla Detallada")
-        st.dataframe(df_comisiones[columnas_comision].round(2), use_container_width=True)
 
-        # Exportar a Excel
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            df_comisiones.reset_index()[['Periodo'] + columnas_comision].to_excel(writer, sheet_name='Comisiones Mensuales', index=False)
-        output.seek(0)
-        st.download_button(
-            label="📥 Descargar Comisiones en Excel",
-            data=output,
-            file_name="comisiones_por_canal.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+
 
