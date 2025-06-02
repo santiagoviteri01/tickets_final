@@ -480,39 +480,70 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         st.header("📊 Análisis de Comisiones por Canal")
     
         # Asegurar formato de fecha
-        pagados['FECHA SINIESTRO'] = pd.to_datetime(pagados['FECHA SINIESTRO'], errors='coerce')
-        pagados['MES'] = pagados['FECHA SINIESTRO'].dt.month
-        pagados['AÑO'] = pagados['FECHA SINIESTRO'].dt.year
+        asegurados['FECHA'] = pd.to_datetime(asegurados['FECHA'], dayfirst=True, errors='coerce')
+        asegurados['MES'] = asegurados['FECHA'].dt.month
+        asegurados['AÑO'] = asegurados['FECHA'].dt.year
     
-        # Agrupamos por Año-Mes
-        comisiones_mensuales = pagados.groupby(['AÑO', 'MES'])[
-            [
-                'COMISIÓN PRIMA VEHÍCULOS',
-                'COMISIÓN CONCESIONARIO VEHÍCULOS',
-                'COMISIÓN BROKER LIDERSEG VEHÍCULOS',
-                'COMISIÓN BROKER INSURATLAN VEHÍCULOS'
-            ]
-        ].sum().reset_index()
+        # Sidebar
+        with st.sidebar:
+            st.header("⚙️ Filtros de Comisiones")
+            aseguradoras = ['Todas'] + sorted(asegurados['ASEGURADORA'].dropna().unique().tolist())
+            aseguradora_sel = st.selectbox("Seleccionar Aseguradora", aseguradoras, key="aseg_comisiones")
     
-        # Crear columna Periodo legible
-        comisiones_mensuales['Periodo'] = comisiones_mensuales['MES'].apply(lambda x: meses_orden[x-1]) + '-' + comisiones_mensuales['AÑO'].astype(str)
-        comisiones_mensuales = comisiones_mensuales.sort_values(['AÑO', 'MES'])
-        comisiones_mensuales['Periodo'] = pd.Categorical(comisiones_mensuales['Periodo'], categories=comisiones_mensuales['Periodo'].unique(), ordered=True)
-        comisiones_mensuales.set_index('Periodo', inplace=True)
+            años_disponibles = sorted(asegurados['AÑO'].dropna().unique())
+            años_sel = st.multiselect("Seleccionar Años", años_disponibles, default=años_disponibles, key="años_comisiones")
+    
+        # Filtro
+        df_com = asegurados.copy()
+        if aseguradora_sel != 'Todas':
+            df_com = df_com[df_com['ASEGURADORA'] == aseguradora_sel]
+    
+        if años_sel:
+            df_com = df_com[df_com['AÑO'].isin(años_sel)]
+        else:
+            st.warning("Selecciona al menos un año")
+            st.stop()
+    
+        # Columnas relevantes
+        columnas_comision = [
+            "COMISIÓN PRIMA VEHÍCULOS",
+            "COMISIÓN CONCESIONARIO VEHÍCULOS",
+            "COMISIÓN BROKER LIDERSEG VEHÍCULOS",
+            "COMISIÓN BROKER INSURATLAN VEHÍCULOS"
+        ]
+    
+        # Agrupar por año y mes
+        df_comisiones = df_com.groupby(['AÑO', 'MES'])[columnas_comision].sum().reset_index()
+        df_comisiones['Periodo'] = df_comisiones['MES'].apply(lambda x: meses_orden[x-1]) + '-' + df_comisiones['AÑO'].astype(str)
+        df_comisiones = df_comisiones.sort_values(['AÑO', 'MES'])
+        df_comisiones['Periodo'] = pd.Categorical(df_comisiones['Periodo'], categories=df_comisiones['Periodo'].unique(), ordered=True)
+        df_comisiones.set_index('Periodo', inplace=True)
     
         # Gráfico
-        st.subheader("📈 Evolución Mensual de Comisiones")
+        st.subheader("📈 Evolución de Comisiones por Canal")
         fig, ax = plt.subplots(figsize=(12, 5))
-        comisiones_mensuales.plot(kind='bar', stacked=True, ax=ax)
-        ax.set_title("Pago de Comisiones por Canal")
-        ax.set_ylabel("USD $")
-        ax.set_xlabel("Periodo")
-        ax.legend(title="Canal")
+        df_comisiones.plot(kind='bar', stacked=True, ax=ax)
+        ax.set_ylabel("USD ($)")
+        ax.set_title("Pago de Comisiones por Canal y Mes")
+        ax.legend(title="Canal", bbox_to_anchor=(1.05, 1), loc='upper left')
+        ax.grid(True)
         plt.xticks(rotation=45)
         st.pyplot(fig)
     
-        # Tabla resumen
-        st.subheader("📄 Tabla de Comisiones por Periodo")
-        st.dataframe(comisiones_mensuales.round(2), use_container_width=True)
+        # Tabla
+        st.subheader("📄 Tabla Detallada")
+        st.dataframe(df_comisiones.round(2), use_container_width=True)
+    
+        # Exportar Excel
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df_comisiones.reset_index().to_excel(writer, sheet_name='Comisiones Mensuales', index=False)
+        output.seek(0)
+        st.download_button(
+            label="📥 Descargar Comisiones en Excel",
+            data=output,
+            file_name="comisiones_por_canal.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
 
