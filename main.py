@@ -860,8 +860,9 @@ def gestionar_asegurados():
         st.warning("No se encontró ningún asegurado con esos criterios.")
         return
 
-    registro = df_filtrado.iloc[0]
-    mask_upd = df_original["ID"] == registro["ID"]
+    registro = df_filtrado.sort_values("NÚMERO RENOVACIÓN", ascending=False).iloc[0]
+    mask_upd = (df_original["ID"] == registro["ID"]) & \
+               (df_original["NÚMERO RENOVACIÓN"] == registro["NÚMERO RENOVACIÓN"])    
     registro_act = df_original[mask_upd].iloc[0]  # ✅ Esta línea es clave
 
     st.markdown("### Detalles del Asegurado")
