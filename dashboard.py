@@ -7,13 +7,13 @@ import seaborn as sns
 from docx import Document
 from io import BytesIO
 import os
+import openai
 from openai import OpenAI
 
-# Crea el cliente con tu API key
-client = OpenAI()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def generar_analisis_gpt(prompt: str) -> str:
-    response = client.chat.completions.create(
+    response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "Eres un analista experto en seguros."},
