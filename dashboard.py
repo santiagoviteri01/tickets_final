@@ -574,7 +574,6 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         asegurados['MES'] = asegurados['FECHA'].dt.month
         asegurados['AÑO'] = asegurados['FECHA'].dt.year
     
-        # Sidebar de filtros
         with st.sidebar:
             st.header("⚙️ Filtros de Comisiones")
             aseguradoras = ['Todas'] + sorted(asegurados['ASEGURADORA'].dropna().unique())
@@ -583,7 +582,6 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             años_disponibles = sorted(asegurados['AÑO'].dropna().unique())
             años_sel = st.multiselect("Seleccionar Años", años_disponibles, default=años_disponibles, key="años_comisiones")
     
-        # Filtrar aseguradora y años
         df_com = asegurados.copy()
         if aseguradora_sel != 'Todas':
             df_com = df_com[df_com['ASEGURADORA'] == aseguradora_sel]
@@ -594,7 +592,6 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.warning("Selecciona al menos un año")
             st.stop()
     
-        # Columnas de comisiones
         columnas_comision = [
             "COMISIÓN PRIMA VEHÍCULOS",
             "COMISIÓN CONCESIONARIO VEHÍCULOS",
@@ -602,10 +599,12 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             "COMISIÓN BROKER INSURATLAN VEHÍCULOS"
         ]
     
-        # Agrupar por año y mes
         df_comisiones = df_com.groupby(['AÑO', 'MES'])[columnas_comision].sum().reset_index()
     
-        # Crear columna "Periodo"
+        if df_comisiones.empty:
+            st.warning("⚠️ No hay datos de comisiones para los filtros seleccionados.")
+            return
+    
         df_comisiones['Periodo'] = df_comisiones['MES'].apply(lambda x: meses_orden[x - 1]) + '-' + df_comisiones['AÑO'].astype(str)
         df_comisiones = df_comisiones.sort_values(['AÑO', 'MES'])
         df_comisiones['Periodo'] = pd.Categorical(df_comisiones['Periodo'], categories=df_comisiones['Periodo'].unique(), ordered=True)
@@ -660,41 +659,41 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             )
     elif seccion == "Generar Informe Ejecutivo":
         st.subheader("Análisis Final Automatizado (GPT-3.5)")
-
+    
         datos_ok = all(
             df is not None and isinstance(df, pd.DataFrame) and not df.empty
             for df in [pagados, pendientes, asegurados, df_comisiones, df_siniestralidad]
         )
-
+    
         if not datos_ok:
             st.warning("⚠️ No se han podido cargar correctamente todos los datos requeridos para el análisis.")
         else:
             if st.button("Generar Análisis GPT"):
                 with st.spinner("Consultando modelo GPT-3.5..."):
                     prompt = f"""
-Analiza los siguientes datos brevemente:
-
-1. **Comisiones Totales por Mes**:
-{df_comisiones[columnas_comision].tail(3).to_string(index=True)}
-
-2. **Reclamos Pagados por Aseguradora (muestra):**
-{pagados[['COMPAÑÍA','VALOR RECLAMO','EVENTO','TALLER DE REPARACION','CONCESIONARIO SISTEMA']].head(3).to_string(index=False)}
-
-3. **Siniestralidad por Aseguradora**:
-{df_siniestralidad[['ASEGURADORA','AÑO','MES','Siniestralidad']].dropna().tail(3).to_string(index=False)}
-
-4. **Suma Asegurada por Marca (muestra):**
-{asegurados[['MARCA','VALOR ASEGURADO','FECHA']].dropna().tail(3).to_string(index=False)}
-
-Escribe un **informe ejecutivo en español** que incluya:
-- Resumen general.
-- Análisis de comisiones: meses altos/bajos.
-- Aseguradoras con más reclamos y eventos más frecuentes.
-- Comportamiento de concesionarios y talleres.
-- Siniestralidad: ¿alta/baja?, ¿mejores y peores aseguradoras?
-- Marcas más aseguradas y evolución de la suma asegurada.
-- Cierre con recomendaciones o insights accionables.
-"""
+    Analiza los siguientes datos brevemente:
+    
+    1. **Comisiones Totales por Mes**:
+    {df_comisiones[columnas_comision].tail(3).to_string(index=True)}
+    
+    2. **Reclamos Pagados por Aseguradora (muestra):**
+    {pagados[['COMPAÑÍA','VALOR RECLAMO','EVENTO','TALLER DE REPARACION','CONCESIONARIO SISTEMA']].head(3).to_string(index=False)}
+    
+    3. **Siniestralidad por Aseguradora**:
+    {df_siniestralidad[['ASEGURADORA','AÑO','MES','Siniestralidad']].dropna().tail(3).to_string(index=False)}
+    
+    4. **Suma Asegurada por Marca (muestra):**
+    {asegurados[['MARCA','VALOR ASEGURADO','FECHA']].dropna().tail(3).to_string(index=False)}
+    
+    Escribe un **informe ejecutivo en español** que incluya:
+    - Resumen general.
+    - Análisis de comisiones: meses altos/bajos.
+    - Aseguradoras con más reclamos y eventos más frecuentes.
+    - Comportamiento de concesionarios y talleres.
+    - Siniestralidad: ¿alta/baja?, ¿mejores y peores aseguradoras?
+    - Marcas más aseguradas y evolución de la suma asegurada.
+    - Cierre con recomendaciones o insights accionables.
+    """
                     try:
                         analisis = generar_analisis_gpt(prompt)
                         st.markdown(analisis)
@@ -707,8 +706,7 @@ Escribe un **informe ejecutivo en español** que incluya:
                         )
                     except Exception as e:
                         st.error(f"❌ Error al generar análisis: {e}")
-        else:
-            st.warning("No hay datos de comisiones disponibles para los filtros seleccionados.")
+
 
 
 
