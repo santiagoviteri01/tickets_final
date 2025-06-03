@@ -10,7 +10,7 @@ import os
 from openai import OpenAI
 
 # Crea el cliente con tu API key
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI()
 
 def generar_analisis_gpt(prompt: str) -> str:
     response = client.chat.completions.create(
