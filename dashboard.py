@@ -5,6 +5,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import seaborn as sns
 from docx import Document
+import io
 from io import BytesIO
 import os
 import openai
