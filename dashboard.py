@@ -6,13 +6,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from docx import Document
 from io import BytesIO
-import openai
 import os
+from openai import OpenAI
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Crea el cliente con tu API key
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generar_analisis_gpt(prompt: str) -> str:
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "Eres un analista experto en seguros."},
