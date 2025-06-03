@@ -28,3 +28,4 @@ opencv-python-headless
 opencv-python
 docxtpl>=0.17.0
 python-docx>=0.8.11
+openai==1.14.3
