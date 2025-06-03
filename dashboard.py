@@ -4,11 +4,37 @@ import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
 import seaborn as sns
-import io
+from docx import Document
+from io import BytesIO
+import openai
+import os
 
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Configuración inicial
+def generar_analisis_gpt(prompt: str) -> str:
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Eres un analista experto en seguros."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.7,
+        max_tokens=1200
+    )
+    return response.choices[0].message.content.strip()
+
+def exportar_a_docx(texto: str) -> BytesIO:
+    doc = Document()
+    doc.add_heading("Informe Ejecutivo Generado por GPT", level=1)
+    for linea in texto.split("\n"):
+        doc.add_paragraph(linea)
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
+
 def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
+    
     st.title("📊 Análisis de la Cuenta")
 
     if any(df is None or df.empty for df in [pagados, pendientes, asegurados]):
@@ -17,13 +43,66 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     meses_orden = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
     mes_actual = datetime.now().month
+    # Crear columnas necesarias en asegurados
+    asegurados['FECHA'] = pd.to_datetime(asegurados['FECHA'], dayfirst=True, errors='coerce')
+    asegurados['MES'] = asegurados['FECHA'].dt.month
+    asegurados['AÑO'] = asegurados['FECHA'].dt.year
+    
+    # Crear columnas de comisiones por mes
+    columnas_comision = [
+        "COMISIÓN PRIMA VEHÍCULOS",
+        "COMISIÓN CONCESIONARIO VEHÍCULOS",
+        "COMISIÓN BROKER LIDERSEG VEHÍCULOS",
+        "COMISIÓN BROKER INSURATLAN VEHÍCULOS"
+    ]
+    df_comisiones = asegurados.groupby(['AÑO', 'MES'])[columnas_comision].sum().reset_index()
+    
+    # Reclamos unificados
+    mapeo_columnas = {
+        'CIA. DE SEGUROS': 'COMPAÑÍA',
+        'VALOR SINIESTRO': 'VALOR RECLAMO',
+        'FECHA DE SINIESTRO': 'FECHA SINIESTRO'
+    }
+    pendientes_estandarizado = pendientes.rename(columns=mapeo_columnas)
+    pagados['VALOR RECLAMO'] = pd.to_numeric(pagados['VALOR RECLAMO'], errors='coerce')
+    pendientes_estandarizado['VALOR RECLAMO'] = pd.to_numeric(pendientes_estandarizado['VALOR RECLAMO'], errors='coerce')
+    
+    df_completo = pd.concat([
+        pagados[['COMPAÑÍA', 'FECHA SINIESTRO', 'VALOR RECLAMO']],
+        pendientes_estandarizado[['COMPAÑÍA', 'FECHA SINIESTRO', 'VALOR RECLAMO']]
+    ], ignore_index=True).dropna(subset=['FECHA SINIESTRO'])
+    
+    df_completo['AÑO'] = pd.to_datetime(df_completo['FECHA SINIESTRO']).dt.year
+    df_completo['MES'] = pd.to_datetime(df_completo['FECHA SINIESTRO']).dt.month
+    
+    valor_asegurado = asegurados.groupby(['ASEGURADORA', 'AÑO', 'MES']).agg(
+        Prima_Vehiculos=('PRIMA VEHÍCULOS', 'sum')
+    ).reset_index()
+    
+    reclamos_agrupados = df_completo.groupby(['COMPAÑÍA', 'AÑO', 'MES']).agg(
+        Total_Reclamos=('VALOR RECLAMO', 'count'),
+        Monto_Total_Reclamos=('VALOR RECLAMO', 'sum')
+    ).reset_index().rename(columns={'COMPAÑÍA': 'ASEGURADORA'})
+    
+    df_siniestralidad = pd.merge(
+        valor_asegurado,
+        reclamos_agrupados,
+        on=['ASEGURADORA', 'AÑO', 'MES'],
+        how='left'
+    ).fillna(0)
+    
+    df_siniestralidad['Siniestralidad'] = np.where(
+        df_siniestralidad['Prima_Vehiculos'] > 0,
+        df_siniestralidad['Monto_Total_Reclamos'] / df_siniestralidad['Prima_Vehiculos'],
+        0
+    )
     seccion = st.radio(
         "Selecciona una sección:",
-        ["🔍 Suma Asegurada", "📁 Reclamos", "🔥 Siniestralidad","📊 Comisiones por Canal"],
+        ["🔍 Suma Asegurada", "📁 Reclamos", "🔥 Siniestralidad","📊 Comisiones por Canal","Generar Informe Ejecutivo"],
         horizontal=True
     )
     
-
+    
     if seccion == "🔍 Suma Asegurada":
         asegurados['FECHA'] = pd.to_datetime(asegurados['FECHA'], dayfirst=True, errors='coerce')
         asegurados['MES'] = asegurados['FECHA'].dt.month
@@ -486,7 +565,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 st.metric("Siniestralidad Promedio", f"{df_filtrado['Siniestralidad'].mean():.2%}")
             with col6:
                 st.metric("Total Reclamos", f"{df_filtrado['Total_Reclamos'].sum():,.0f}")
-    
+            
     elif seccion == "📊 Comisiones por Canal":
         st.header("📊 Análisis de Comisiones por Canal")
     
@@ -579,6 +658,55 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 file_name="comisiones_por_canal.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
+    elif seccion == "Generar Informe Ejecutivo":
+        st.subheader("Análisis Final Automatizado (GPT-3.5)")
+
+        datos_ok = all(
+            df is not None and isinstance(df, pd.DataFrame) and not df.empty
+            for df in [pagados, pendientes, asegurados, df_comisiones, df_siniestralidad]
+        )
+
+        if not datos_ok:
+            st.warning("⚠️ No se han podido cargar correctamente todos los datos requeridos para el análisis.")
+        else:
+            if st.button("Generar Análisis GPT"):
+                with st.spinner("Consultando modelo GPT-3.5..."):
+                    prompt = f"""
+Analiza los siguientes datos brevemente:
+
+1. **Comisiones Totales por Mes**:
+{df_comisiones[columnas_comision].tail(3).to_string(index=True)}
+
+2. **Reclamos Pagados por Aseguradora (muestra):**
+{pagados[['COMPAÑÍA','VALOR RECLAMO','EVENTO','TALLER DE REPARACION','CONCESIONARIO SISTEMA']].head(3).to_string(index=False)}
+
+3. **Siniestralidad por Aseguradora**:
+{df_siniestralidad[['ASEGURADORA','AÑO','MES','Siniestralidad']].dropna().tail(3).to_string(index=False)}
+
+4. **Suma Asegurada por Marca (muestra):**
+{asegurados[['MARCA','VALOR ASEGURADO','FECHA']].dropna().tail(3).to_string(index=False)}
+
+Escribe un **informe ejecutivo en español** que incluya:
+- Resumen general.
+- Análisis de comisiones: meses altos/bajos.
+- Aseguradoras con más reclamos y eventos más frecuentes.
+- Comportamiento de concesionarios y talleres.
+- Siniestralidad: ¿alta/baja?, ¿mejores y peores aseguradoras?
+- Marcas más aseguradas y evolución de la suma asegurada.
+- Cierre con recomendaciones o insights accionables.
+"""
+                    try:
+                        analisis = generar_analisis_gpt(prompt)
+                        st.markdown(analisis)
+                        docx_file = exportar_a_docx(analisis)
+                        st.download_button(
+                            label="⬇️ Descargar Informe en Word",
+                            data=docx_file,
+                            file_name="informe_gpt.docx",
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        )
+                    except Exception as e:
+                        st.error(f"❌ Error al generar análisis: {e}")
         else:
             st.warning("No hay datos de comisiones disponibles para los filtros seleccionados.")
 
