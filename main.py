@@ -1483,7 +1483,56 @@ def visualizar_ticket_modificar(ticket=None):
             else:
                 st.info("No se adjuntó foto del siniestro.")
 
+def mostrar_conversaciones_bot():
+    df_conversaciones = cargar_df("tickets_bot")
+    # Clasificación del sentimiento
+    def clasificar_sentimiento(score):
+        if score <= -0.5:
+            return "Muy negativo"
+        elif -0.5 < score <= -0.2:
+            return "Negativo"
+        elif -0.2 < score < 0:
+            return "Ligeramente negativo"
+        elif score == 0:
+            return "Neutral"
+        else:
+            return "Positivo"
 
+    colores = {
+        "Muy negativo": "#C62828",        # Rojo fuerte
+        "Negativo": "#EF5350",            # Rojo claro
+        "Ligeramente negativo": "#FFCDD2",# Rosado suave
+        "Neutral": "#9E9E9E",             # Gris neutro
+        "Positivo": "#BDBDBD"             # Gris claro (según imagen)
+    }
+
+    df_conversaciones["categoria"] = df_conversaciones["sentimiento"].apply(clasificar_sentimiento)
+
+    # Filtro por fecha
+    fecha_inicio = st.date_input("Desde", df_conversaciones['fecha'].min().date())
+    fecha_fin = st.date_input("Hasta", df_conversaciones['fecha'].max().date())
+    df_filtrado = df_conversaciones[
+        (df_conversaciones['fecha'] >= pd.to_datetime(fecha_inicio)) &
+        (df_conversaciones['fecha'] <= pd.to_datetime(fecha_fin))
+    ]
+
+    # Gráfico de pastel
+    st.subheader("Distribución de Sentimientos")
+    conteo = df_filtrado["categoria"].value_counts().reindex(colores.keys(), fill_value=0)
+
+    fig, ax = plt.subplots()
+    ax.pie(conteo, labels=conteo.index, autopct='%1.1f%%', startangle=90,
+           colors=[colores[c] for c in conteo.index])
+    ax.axis("equal")
+    st.pyplot(fig)
+
+    # Tabla detallada
+    st.subheader("Detalle de Conversaciones")
+    st.dataframe(df_filtrado[['fecha', 'numero', 'conversacion', 'categoria']].sort_values(by="fecha", ascending=False))
+
+    # Descarga CSV
+    csv = df_filtrado.to_csv(index=False).encode("utf-8")
+    st.download_button("Descargar CSV", data=csv, file_name="conversaciones_bot.csv", mime="text/csv")
 
 # Portal de Administración (Usuarios)
 def portal_administracion():
@@ -1495,6 +1544,7 @@ def portal_administracion():
         "Polizas y Asegurados",
         "Gestión de Reclamos y Tickets", 
         "Ver Reclamos", 
+        "Analisis de Chatbot",
         "Descargar Datos"
     ]
     
@@ -1528,6 +1578,10 @@ def portal_administracion():
     elif opcion == "Ver Reclamos":
         st.title("📈 Reclamos")
         visualizar_tickets()
+    
+    elif opcion == "Analisis de Chatbot":
+        st.title("📞 Analisis e Historial del ChatBot")
+        mostrar_conversaciones_bot()
 
     elif opcion == "Descargar Datos":
         st.title("⬇️ Descargar Datos")
