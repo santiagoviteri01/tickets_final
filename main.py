@@ -32,7 +32,7 @@ import smtplib
 from email.message import EmailMessage
 import base64
 from string import Template
-
+import matplotlib.pyplot as plt
 
 st.set_page_config(
     page_title="Insurapp",
