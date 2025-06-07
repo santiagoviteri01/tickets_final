@@ -1525,11 +1525,12 @@ def mostrar_conversaciones_bot():
     # Gráfico de pastel
     st.subheader("Distribución de Sentimientos")
     conteo = df_filtrado["categoria"].value_counts().reindex(colores.keys(), fill_value=0)
+    conteo = conteo[conteo > 0]  # <- Aquí se filtran las categorías vacías
 
-    if conteo.sum() == 0:
+    if conteo.empty:
         st.warning("⚠️ No hay datos de sentimiento disponibles para graficar.")
     else:
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(6, 6))  # más espacio visual
         ax.pie(
             conteo,
             labels=conteo.index,
@@ -1547,6 +1548,7 @@ def mostrar_conversaciones_bot():
     # Descarga CSV
     csv = df_filtrado.to_csv(index=False).encode("utf-8")
     st.download_button("Descargar CSV", data=csv, file_name="conversaciones_bot.csv", mime="text/csv")
+
 
 
 # Portal de Administración (Usuarios)
