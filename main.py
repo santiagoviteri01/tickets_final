@@ -1501,11 +1501,11 @@ def mostrar_conversaciones_bot():
             return "Positivo"
 
     colores = {
-        "Muy negativo": "#C62828",        # Rojo fuerte
-        "Negativo": "#EF5350",            # Rojo claro
-        "Ligeramente negativo": "#FFCDD2",# Rosado suave
-        "Neutral": "#9E9E9E",             # Gris neutro
-        "Positivo": "#BDBDBD"             # Gris claro (según imagen)
+        "Muy negativo": "#C62828",
+        "Negativo": "#EF5350",
+        "Ligeramente negativo": "#FFCDD2",
+        "Neutral": "#9E9E9E",
+        "Positivo": "#BDBDBD"
     }
 
     df_conversaciones["categoria"] = df_conversaciones["sentimiento"].apply(clasificar_sentimiento)
@@ -1518,15 +1518,27 @@ def mostrar_conversaciones_bot():
         (df_conversaciones['fecha'] <= pd.to_datetime(fecha_fin))
     ]
 
+    if df_filtrado.empty:
+        st.warning("⚠️ No hay conversaciones en el rango de fechas seleccionado.")
+        return
+
     # Gráfico de pastel
     st.subheader("Distribución de Sentimientos")
     conteo = df_filtrado["categoria"].value_counts().reindex(colores.keys(), fill_value=0)
 
-    fig, ax = plt.subplots()
-    ax.pie(conteo, labels=conteo.index, autopct='%1.1f%%', startangle=90,
-           colors=[colores[c] for c in conteo.index])
-    ax.axis("equal")
-    st.pyplot(fig)
+    if conteo.sum() == 0:
+        st.warning("⚠️ No hay datos de sentimiento disponibles para graficar.")
+    else:
+        fig, ax = plt.subplots()
+        ax.pie(
+            conteo,
+            labels=conteo.index,
+            autopct='%1.1f%%',
+            startangle=90,
+            colors=[colores[c] for c in conteo.index]
+        )
+        ax.axis("equal")
+        st.pyplot(fig)
 
     # Tabla detallada
     st.subheader("Detalle de Conversaciones")
@@ -1535,6 +1547,7 @@ def mostrar_conversaciones_bot():
     # Descarga CSV
     csv = df_filtrado.to_csv(index=False).encode("utf-8")
     st.download_button("Descargar CSV", data=csv, file_name="conversaciones_bot.csv", mime="text/csv")
+
 
 # Portal de Administración (Usuarios)
 def portal_administracion():
