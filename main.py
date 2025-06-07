@@ -1485,6 +1485,8 @@ def visualizar_ticket_modificar(ticket=None):
 
 def mostrar_conversaciones_bot():
     df_conversaciones = cargar_df("tickets_bot")
+    df_conversaciones["fecha"] = pd.to_datetime(df_conversaciones["fecha"], errors="coerce")
+
     # Clasificación del sentimiento
     def clasificar_sentimiento(score):
         if score <= -0.5:
