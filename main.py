@@ -1564,6 +1564,8 @@ def portal_administracion():
         """)
         
     elif opcion == "Dashboard":
+        if st.button("🔄 Recargar datos (limpiar caché)"):
+            st.cache_data.clear()
         df_pagados, df_pendientes, df_asegurados = cargar_datos_dashboard_desde_sheets()
         mostrar_dashboard_analisis(df_pagados, df_pendientes, df_asegurados)
    
