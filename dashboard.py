@@ -9,7 +9,7 @@ import io
 from io import BytesIO
 import os
 import openai
-
+TAMANO_GRAFICO = (8, 4)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def generar_analisis_gpt(prompt: str) -> str:
@@ -147,14 +147,14 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.subheader("📉 Distribuciones")
             col4, col5 = st.columns(2)
             with col4:
-                fig, ax = plt.subplots(figsize=(8, 4))
+                fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
                 sns.histplot(df_filtrado['PRIMA TOTAL VEHÍCULOS'], kde=True, bins=30, ax=ax, color='orange')
                 ax.set_title("Distribución de Prima Total")
                 ax.set_xlabel("Prima Total ($)")
                 ax.set_ylabel("Frecuencia")
                 st.pyplot(fig)
             with col5:
-                fig, ax = plt.subplots(figsize=(8, 4))
+                fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
                 sns.histplot(df_filtrado['VALOR ASEGURADO'], kde=True, bins=30, ax=ax, color='teal')
                 ax.set_title("Distribución de Valor Asegurado")
                 ax.set_xlabel("Valor Asegurado ($)")
@@ -187,7 +187,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                             df_temporal.iloc[i, df_temporal.columns.get_loc(col)] = np.nan
         
             # Graficar con matplotlib
-            fig, ax = plt.subplots(figsize=(10, 5))
+            fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
             df_temporal.plot(ax=ax, marker='o')
             ax.set_title("Evolución Anual de la Suma Asegurada")
             ax.set_xlabel("Mes")
@@ -216,7 +216,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             ).fillna(0)
         
             # Plot con matplotlib
-            fig, ax = plt.subplots(figsize=(10, 4))
+            fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
             evolucion.plot(ax=ax, marker='o', legend=False)
             ax.set_title("Evolución de la Suma Asegurada")
             ax.set_xlabel("Periodo")
@@ -248,7 +248,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             )
         
             # Graficar con matplotlib
-            fig, ax = plt.subplots(figsize=(10, 4))
+            fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
             ax.plot(tasa_mensual['Periodo'], tasa_mensual['Tasa'], marker='o')
             ax.set_title("Tasa Mensual de Prima vs. Suma Asegurada")
             ax.set_xlabel("Periodo")
@@ -265,7 +265,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             top_marcas = df_filtrado['MARCA'].value_counts().nlargest(10)
         
             # Graficar con matplotlib
-            fig, ax = plt.subplots(figsize=(8, 4))
+            fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
             top_marcas.plot(kind='barh', ax=ax)
             ax.set_title("Top 10 Marcas Más Aseguradas")
             ax.set_xlabel("Marca")
@@ -316,7 +316,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     
         st.header("🗕️ Distribución Temporal")
         pagos_aseguradora_data['MES'] = pagos_aseguradora_data['FECHA SINIESTRO'].dt.month
-        fig, ax = plt.subplots(figsize=(10, 5))
+        fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
         sns.countplot(data=pagos_aseguradora_data, x='MES', palette='viridis', ax=ax)
         ax.set_xticks(range(0, 12))
         ax.set_xticklabels(meses_orden, rotation=45)
@@ -327,11 +327,11 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         grafico_valores = st.radio("Elegir gráfico de análisis de valores", ["Histograma", "Boxplot", "Por Rangos"], horizontal=True)
         if grafico_valores == "Histograma":
             bins_hist = st.slider("📊 Número de Bins", 10, 100, 30, 5)
-            fig = plt.figure(figsize=(10, 4))
+            fig = plt.figure(figsize=TAMANO_GRAFICO)
             sns.histplot(pagos_aseguradora_data['VALOR RECLAMO'], bins=bins_hist, kde=True)
             st.pyplot(fig)
         elif grafico_valores == "Boxplot":
-            fig = plt.figure(figsize=(10, 4))
+            fig = plt.figure(figsize=TAMANO_GRAFICO)
             sns.boxplot(x=pagos_aseguradora_data['VALOR RECLAMO'], color='lightgreen')
             st.pyplot(fig)
         elif grafico_valores == "Por Rangos":
@@ -340,7 +340,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             bins = list(range(0, max_val + bin_size, bin_size))
             labels = [f"{bins[i]}-{bins[i+1]}" for i in range(len(bins)-1)]
             pagos_aseguradora_data['Rango'] = pd.cut(pagos_aseguradora_data['VALOR RECLAMO'], bins=bins, labels=labels, right=False)
-            fig, ax = plt.subplots(figsize=(10, 5))
+            fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
             sns.countplot(y='Rango', data=pagos_aseguradora_data, order=labels, color='salmon', ax=ax)
             st.pyplot(fig)
     
@@ -361,7 +361,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 etiqueta = "Cantidad de Reclamos"
 
             datos = datos.sort_values(ascending=False).head(10)
-            fig, ax = plt.subplots(figsize=(10, 6))
+            fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
             sns.barplot(x=datos.values, y=datos.index, ax=ax, palette='viridis')
             ax.set_title(titulo)
             ax.set_xlabel(etiqueta)
@@ -632,7 +632,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.subheader("📊 Comisiones por Canal - Individual")
             canal_seleccionado = st.selectbox("Selecciona el canal a visualizar:", columnas_comision)
             if canal_seleccionado in df_comisiones.columns:
-                fig, ax = plt.subplots(figsize=(10, 4))
+                fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
                 ax.plot(df_comisiones.index, df_comisiones[canal_seleccionado], marker='o', label=canal_seleccionado)
                 ax.set_title(f"Evolución de {canal_seleccionado}")
                 ax.set_xlabel("Periodo")
@@ -669,8 +669,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         if not datos_ok:
             st.warning("⚠️ No se han podido cargar correctamente todos los datos requeridos para el análisis.")
         else:
-            if st.button("Generar Análisis GPT"):
-                with st.spinner("Consultando modelo GPT-3.5..."):
+            if st.button("Generar Análisis con AI"):
+                with st.spinner("Consultando modelo de AI..."):
                     prompt = f"""
     Analiza los siguientes datos brevemente:
     
@@ -686,11 +686,11 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     4. **Suma Asegurada por Marca (muestra):**
     {asegurados[['MARCA','VALOR ASEGURADO','FECHA']].dropna().tail(3).to_string(index=False)}
     
-    Escribe un **informe ejecutivo en español** que incluya:
+    Escribe un **informe ejecutivo en español**, que incluya (excluir el mes en vigencia ya que este todavia no cuenta con informacion completa):
     - Resumen general.
     - Análisis de comisiones: meses altos/bajos.
-    - Aseguradoras con más reclamos y eventos más frecuentes.
-    - Comportamiento de concesionarios y talleres.
+    - Aseguradoras con más reclamos y eventos más frecuentes. 
+    - Comportamiento de concesionarios y talleres. (Ponle mucho enfasis a este punto)
     - Siniestralidad: ¿alta/baja?, ¿mejores y peores aseguradoras?
     - Marcas más aseguradas y evolución de la suma asegurada.
     - Cierre con recomendaciones o insights accionables.
