@@ -659,7 +659,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
     elif seccion == "Generar Informe Ejecutivo":
-        st.subheader("Análisis Final Automatizado (GPT-3.5)")
+        st.subheader("Análisis Final Automatizado con AI")
     
         datos_ok = all(
             df is not None and isinstance(df, pd.DataFrame) and not df.empty
