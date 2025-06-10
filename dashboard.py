@@ -531,7 +531,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             ax2 = ax.twinx()
             sns.barplot(data=df_filtrado, x='PERIODO', y='Monto_Total_Reclamos', color=rosa_s, alpha=0.3, ax=ax2)
             ax2.set_ylabel("Monto Total Reclamos ($)", color=rosa_s)
-            ax2.tick_params(axis='y', colors=rosa_s')
+            ax2.tick_params(axis='y', colors=rosa_s)
     
         titulo = f"Siniestralidad {'por Aseguradora' if aseguradora_sel != 'Todas' else 'Acumulada'}"
         titulo += f" ({'Histórico Completo' if año_sel == 'Todos' else año_sel})"
