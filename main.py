@@ -906,7 +906,7 @@ def gestionar_asegurados():
                (df_original["NÚMERO RENOVACIÓN"] == registro["NÚMERO RENOVACIÓN"])    
     registro_act = df_original[mask_upd].iloc[0]  # ✅ Esta línea es clave
 
-    encabezado_sin_icono("Detalles del Asegurado",h2)
+    encabezado_sin_icono("Detalles del Asegurado","h2")
     left, right = st.columns([1, 2])
 
     with left:
