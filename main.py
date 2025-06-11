@@ -1574,7 +1574,10 @@ def portal_administracion():
     opcion = st.sidebar.radio("Opciones", opciones)
 
     if opcion == "Inicio":
-        st.title("🏠 Panel de Administración")
+        st.markdown(
+            "<h1><img src='iconos/home.png' width='28' style='vertical-align:middle; margin-right:10px;'> Panel de Administración</h1>",
+            unsafe_allow_html=True
+        )
         st.markdown("""
         **Bienvenido al panel de administración**
         Selecciona una opción del menú lateral para comenzar.
@@ -1590,20 +1593,32 @@ def portal_administracion():
         gestionar_asegurados()
 
     elif opcion == "Gestión de Reclamos y Tickets":
-        st.title("📋Gestión de Reclamos y Tickets")
+        st.markdown(
+            "<h1><img src='iconos/informe.png' width='28' style='vertical-align:middle; margin-right:10px;'> Gestión de Reclamos y Tickets</h1>",
+            unsafe_allow_html=True
+        )
         manejar_tickets()
         
 
     elif opcion == "Ver Reclamos":
-        st.title("📈 Reclamos")
+        st.markdown(
+            "<h1><img src='iconos/reclamos.png' width='28' style='vertical-align:middle; margin-right:10px;'> Reclamos</h1>",
+            unsafe_allow_html=True
+        )
         visualizar_tickets()
     
     elif opcion == "Analisis de Chatbot":
-        st.title("📞 Analisis e Historial del ChatBot")
+        st.markdown(
+            "<h1><img src='iconos/chat.png' width='28' style='vertical-align:middle; margin-right:10px;'> Analisis e Historial del ChatBot</h1>",
+            unsafe_allow_html=True
+        )
         mostrar_conversaciones_bot()
 
     elif opcion == "Descargar Datos":
-        st.title("⬇️ Descargar Datos")
+        st.markdown(
+            "<h1><img src='iconos/carpeta.png' width='28' style='vertical-align:middle; margin-right:10px;'> Descargar Datos</h1>",
+            unsafe_allow_html=True
+        )
         descargar_tickets()
         
     elif opcion == "Gestión de Cotizaciones" and st.session_state.usuario_actual == "mauriciodavila":
