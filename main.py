@@ -1618,11 +1618,11 @@ def portal_administracion():
     opcion = st.sidebar.radio("Opciones", opciones)
 
     if opcion == "Inicio":
-    encabezado_con_icono("iconos/home.png", "Panel de Administración", "h1")
-            st.markdown("""
-            **Bienvenido al panel de administración**
-            Selecciona una opción del menú lateral para comenzar.
-            """)
+        encabezado_con_icono("iconos/home.png", "Panel de Administración", "h1")
+        st.markdown("""
+        **Bienvenido al panel de administración**
+        Selecciona una opción del menú lateral para comenzar.
+        """)
         
     elif opcion == "Dashboard":
         if st.button("🔄 Recargar datos (limpiar caché)"):
