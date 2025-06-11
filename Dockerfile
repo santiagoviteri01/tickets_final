@@ -20,7 +20,7 @@ COPY .streamlit /root/.streamlit
 COPY main.py dashboard.py .
 
 # 5) Copia las carpetas que realmente existen en tu proyecto
-
+COPY iconos ./iconos
 COPY archivos_coberturas ./archivos_coberturas
 COPY images ./images
 COPY modelos/best.pt ./modelos/
