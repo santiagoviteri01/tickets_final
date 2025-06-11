@@ -2273,7 +2273,7 @@ def manejar_tickets():
                         st.rerun()
                     
     elif opcion_ticket == "Subir documentación a reclamo":
-        encabezado_sin_icono("Subir documentación a un reclamo existente"", "h2")
+        encabezado_sin_icono("Subir documentación a un reclamo existente", "h2")
         tickets_df = cargar_tickets()
         
         if tickets_df.empty:
