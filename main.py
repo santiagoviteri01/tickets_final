@@ -292,6 +292,20 @@ def mostrar_encabezado(texto_derecha=""):
 
     html = html_template.substitute(logo_b64=logo_b64, texto_derecha=texto_derecha)
     st.markdown(html, unsafe_allow_html=True)
+
+def encabezado_sin_icono(texto, nivel="h2"):
+    estilo = {
+        "h1": "font-size:28px; font-weight:bold;",
+        "h2": "font-size:22px; font-weight:bold;",
+        "h3": "font-size:18px;",
+    }.get(nivel, "font-size:22px; font-weight:bold;")
+
+    html = f"""
+    <div style='margin-bottom:10px;'>
+        <span style='{estilo} color:#D8272E; font-family:Calibri, sans-serif;'>{texto}</span>
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)
     
 def encabezado_con_icono(ruta_icono, texto, nivel="h2"):
     tamaños = {"h1": 28, "h2": 22, "h3": 18}
@@ -892,7 +906,7 @@ def gestionar_asegurados():
                (df_original["NÚMERO RENOVACIÓN"] == registro["NÚMERO RENOVACIÓN"])    
     registro_act = df_original[mask_upd].iloc[0]  # ✅ Esta línea es clave
 
-    st.markdown("### Detalles del Asegurado")
+    encabezado_sin_icono("Detalles del Asegurado",h2)
     left, right = st.columns([1, 2])
 
     with left:
@@ -969,8 +983,10 @@ def gestionar_asegurados():
 # Portal del Cliente
 def portal_cliente():
     mostrar_encabezado(f"Cliente: {st.session_state.usuario_actual}")
-    st.title(f"Portal del Cliente - {st.session_state.usuario_actual}")
-        # Botón de cerrar sesión en el sidebar
+    encabezado_sin_icono(
+        f"Portal del Cliente - {st.session_state.usuario_actual}",
+        nivel="h1"
+    )
     st.sidebar.title("Menú Cliente")
     if st.sidebar.button("Cerrar Sesión"):
         st.session_state.autenticado = False
@@ -1055,7 +1071,7 @@ def portal_cliente():
             st.error("No se encontró información para tu cuenta.")
         
     elif tab_seleccionado == "Mis Tickets":
-        st.header("Mis Tickets")
+        encabezado_sin_icono("Mis Tickets",nivel="h1")
         df = cargar_datos()
     
         if not df.empty:
@@ -1137,7 +1153,8 @@ def portal_cliente():
         os.makedirs(UPLOAD_DIR)
 
     elif tab_seleccionado == "Nuevo Reclamo":
-        st.header("Nuevo Reclamo")
+        encabezado_sin_icono("Nuevo Reclamo",nivel="h1")
+
         enviar_reclamo = False  
         cliente_id = st.session_state.usuario_actual
         cliente_data = asegurados_df[asegurados_df["NOMBRE COMPLETO"].astype(str) == cliente_id]
@@ -1160,7 +1177,7 @@ def portal_cliente():
             )
     
             ciudad_ocurrencia = st.text_input("Ciudad de ocurrencia*")
-            st.subheader("Asistencia Adicional")
+            encabezado_sin_icono("Asistencia Adicional",nivel="h2")
             necesita_grua = st.selectbox("¿Necesitas grúa?", ["No", "Sí"])
             asistencia_legal = st.selectbox("¿Necesitas asistencia legal en el punto?", ["No", "Sí"])
             enviar_asistencias = st.form_submit_button("Enviar Asistencias")
@@ -1171,10 +1188,7 @@ def portal_cliente():
             if necesita_grua == "Sí" or asistencia_legal == "Sí":
                 ubicacion_actual = obtener_ubicacion()
                 permiso_ubicacion = st.form_submit_button("permitir ubicación")
-
-                
-
-            st.subheader("Información sobre el Siniestro")
+            encabezado_sin_icono("Información sobre el Siniestro",nivel="h2")
             siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
             enviar_vehiculos = st.form_submit_button("Enviar Foto")
 
@@ -1368,10 +1382,8 @@ def portal_cliente():
                 
     elif tab_seleccionado == "Subir Archivos Adicionales a un Reclamo":
         
-        st.markdown(
-            "<h1><img src='iconos/cargardocumento.png' width='28' style='vertical-align:middle; margin-right:10px;'> Subir Archivos Adicionales a un Reclamo</h1>",
-            unsafe_allow_html=True
-        )
+        encabezado_con_icono("iconos/cargardocumento.png", "Subir Archivos Adicionales a un Reclamo", "h1")
+
         df_tickets_cliente = cargar_datos()
         df_tickets_cliente = df_tickets_cliente[df_tickets_cliente["Cliente"] == st.session_state.usuario_actual]
         df_tickets_cliente = df_tickets_cliente.sort_values("Número")
@@ -1431,7 +1443,7 @@ def modulo_cotizaciones_mauricio():
 
 
     # Sección 1: Nuevas Cotizaciones
-    st.subheader("Cotizaciones Nuevas (no cotizadas)")
+    encabezado_sin_icono("Pendientes", "h2")
     nuevas = cotizaciones_df[cotizaciones_df['Estado'] == 'NO COTIZADA']
     for idx, row in nuevas.iterrows():
         with st.expander(f"🆕 {row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']}"):
@@ -1441,7 +1453,7 @@ def modulo_cotizaciones_mauricio():
                 actualizar_estado(idx, "EN PROCESO")
 
     # Sección 2: Cotizaciones en Proceso
-    st.subheader("Cotizaciones en Proceso")
+    encabezado_sin_icono("En Proceso", "h2")
     en_proceso = cotizaciones_df[cotizaciones_df['Estado'] == 'EN PROCESO']
     for idx, row in en_proceso.iterrows():
         with st.expander(f"🔄 {row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']}"):
@@ -1452,7 +1464,7 @@ def modulo_cotizaciones_mauricio():
                 actualizar_estado(idx, opcion)
 
     # Sección 3: Cotizaciones Cotizadas
-    st.subheader("Cotizaciones Realizadas")
+    encabezado_sin_icono("Realizadas", "h2")
     cotizadas = cotizaciones_df[cotizaciones_df['Estado'] == 'COTIZADA']
     for idx, row in cotizadas.iterrows():
         with st.expander(f"✅ {row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']}"):
@@ -1463,7 +1475,7 @@ def modulo_cotizaciones_mauricio():
                 actualizar_estado(idx, opcion)
 
     # Sección 4: Cotizaciones Finalizadas
-    st.subheader("Cotizaciones Finalizadas (Aceptadas o Rechazadas)")
+    encabezado_sin_icono("Finalizadas", "h2")
     finalizadas = cotizaciones_df[cotizaciones_df['Estado'].isin(['ACEPTADA', 'RECHAZADA'])]
     for idx, row in finalizadas.iterrows():
         with st.expander(f"🏁 {row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']} - {row['Estado'].capitalize()}"):
@@ -1510,9 +1522,9 @@ def visualizar_ticket_modificar(ticket=None):
             # Foto del siniestro
             url = ticket.get('Foto_URL', '')
             if isinstance(url, str) and url.startswith("http"):
-                st.subheader("📸 Foto del Siniestro")
+                encabezado_con_icono("iconos/ver.png","Foto", "h2")
                 st.image(url, caption="Imagen del siniestro", use_container_width=True)
-                st.markdown(f"[🔗 Ver imagen en nueva pestaña]({url})", unsafe_allow_html=True)
+                st.markdown(f"[Ver imagen en nueva pestaña]({url})", unsafe_allow_html=True)
             else:
                 st.info("No se adjuntó foto del siniestro.")
 
@@ -1556,7 +1568,8 @@ def mostrar_conversaciones_bot():
         return
 
     # Gráfico de pastel
-    st.subheader("Distribución de Sentimientos")
+    encabezado_sin_icono("Distribución de Sentimientos", "h2")
+
     conteo = df_filtrado["categoria"].value_counts().reindex(colores.keys(), fill_value=0)
     conteo = conteo[conteo > 0]  # <- Aquí se filtran las categorías vacías
 
@@ -1575,7 +1588,8 @@ def mostrar_conversaciones_bot():
         st.pyplot(fig)
 
     # Tabla detallada
-    st.subheader("Detalle de Conversaciones")
+    encabezado_sin_icono("Detalle de Conversaciones", "h2")
+
     st.dataframe(df_filtrado[['fecha', 'numero', 'conversacion', 'categoria']].sort_values(by="fecha", ascending=False))
 
     # Descarga CSV
@@ -1586,7 +1600,7 @@ def mostrar_conversaciones_bot():
 
 # Portal de Administración (Usuarios)
 def portal_administracion():
-    mostrar_encabezado("🛠️ Portal Administrativo")
+    mostrar_encabezado("Portal Administrativo")
     st.sidebar.title("Menú Admin")
     opciones = [
         "Inicio", 
@@ -1709,8 +1723,7 @@ def visualizar_tickets():
                 tiempo_promedio = None
             st.metric("Tiempo Resolución Promedio", f"{tiempo_promedio:.1f} días" if tiempo_promedio is not None else "N/A")
                         
-        st.subheader("🔍 Filtros")
-        
+        encabezado_sin_icono("Filtros",nivel="h2")
         # Evitar errores si columnas están vacías
         areas = df['Área'].dropna().unique().tolist()
         estados = df['Estado'].dropna().unique().tolist()
@@ -1913,8 +1926,7 @@ def manejar_tickets():
     )
     
     if opcion_ticket == "Ver reclamos en cola":
-        
-        st.subheader("🔍 Ver reclamos en cola")
+        encabezado_sin_icono("Ver reclamos en cola", "h2")
         if df.empty:
             st.warning("No se encontraron reclamos")
             return
@@ -1959,8 +1971,7 @@ def manejar_tickets():
             st.info("Selecciona un número válido de la tabla anterior")
     elif opcion_ticket == "Registrar nuevo reclamo":
         with st.form("nuevo_reclamos"):
-            st.subheader("📝 Crear nuevo reclamo con datos del asegurado")
-    
+            encabezado_con_icono("iconos/reclamos.png",,"Crear nuevo reclamo con datos del asegurado", "h2")
             # Paso 1: Buscar cliente por cédula o póliza
             asegurados_data = asegurados_df.copy()
             tipo_busqueda = st.radio("Buscar por:", ["Cédula", "Número de Póliza"])
@@ -2118,7 +2129,11 @@ def manejar_tickets():
         
         if 'ticket_actual' in st.session_state:
             
-            st.subheader(f"✏️ Modificando Reclamo #{st.session_state.ticket_actual['Número']}")
+            encabezado_con_icono(
+                "iconos/editar.png",
+                f"Modificando Reclamo #{st.session_state.ticket_actual['Número']}",
+                nivel="h2"
+            )
         
             # Paso 1: Selección de estado y descripción (dentro del formulario)
             with st.form("seleccion_estado_form"):
@@ -2258,8 +2273,7 @@ def manejar_tickets():
                         st.rerun()
                     
     elif opcion_ticket == "Subir documentación a reclamo":
-        st.subheader("📎 Subir documentación a un reclamo existente")
-    
+        encabezado_sin_icono("Subir documentación a un reclamo existente"", "h2")
         tickets_df = cargar_tickets()
         
         if tickets_df.empty:
@@ -2336,8 +2350,6 @@ def manejar_tickets():
 
   
 def descargar_tickets():
-    st.subheader("📤 Descargar información de reclamos y tickets")
-
     with st.spinner("🔄 Cargando datos..."):
         df_tickets = cargar_tickets()
         df_pagados, df_pendientes, df_asegurados = cargar_datos_dashboard_desde_sheets()
@@ -2384,7 +2396,7 @@ def descargar_tickets():
                 mime="application/json"
             )
 
-        st.write("📊 Vista previa:")
+        encabezado_sin_icono("Vista Previa", "h3")
         st.dataframe(df.tail(), use_container_width=True)
     else:
         st.warning(f"⚠️ No hay datos disponibles en la hoja seleccionada ({hoja}).")
