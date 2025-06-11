@@ -1971,7 +1971,7 @@ def manejar_tickets():
             st.info("Selecciona un número válido de la tabla anterior")
     elif opcion_ticket == "Registrar nuevo reclamo":
         with st.form("nuevo_reclamos"):
-            encabezado_con_icono("iconos/reclamos.png",,"Crear nuevo reclamo con datos del asegurado", "h2")
+            encabezado_con_icono("iconos/reclamos.png","Crear nuevo reclamo con datos del asegurado", "h2")
             # Paso 1: Buscar cliente por cédula o póliza
             asegurados_data = asegurados_df.copy()
             tipo_busqueda = st.radio("Buscar por:", ["Cédula", "Número de Póliza"])
