@@ -850,11 +850,7 @@ def persistir_en_sheet(df: pd.DataFrame):
     hoja.update(values)
     
 def gestionar_asegurados():
-    st.markdown(
-        "<h1><img src='iconos/buscar.png' width='28' style='vertical-align:middle; margin-right:10px;'> Buscar y Editar Asegurados</h1>",
-        unsafe_allow_html=True
-    )
-
+    encabezado_con_icono("iconos/buscar.png", "Buscar y Editar Asegurados", "h1")
     with st.expander("Filtros de Búsqueda", expanded=True):
         col1, col2 = st.columns(2)
         buscar_id     = col1.text_input("ID")
@@ -985,11 +981,7 @@ def portal_cliente():
     asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
     tab_seleccionado = st.radio("Secciones", ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo", "Subir Archivos Adicionales a un Reclamo"], horizontal=True)
     if tab_seleccionado == "Mis Datos Personales":
-        st.markdown(
-            "<h1><img src='iconos/verdatos.png' width='28' style='vertical-align:middle; margin-right:10px;'> Mis Datos Personales y del Vehículo</h1>",
-            unsafe_allow_html=True
-        )
-    
+        encabezado_con_icono("iconos/verdatos.png", "Mis Datos Personales y del Vehículo", "h1")
         cliente_id = st.session_state.usuario_actual
         cliente_data = asegurados_df[asegurados_df["NOMBRE COMPLETO"].astype(str) == cliente_id]
 
@@ -1410,11 +1402,8 @@ def portal_cliente():
                     subir_y_mostrar_archivo(archivo=archivo, bucket_name=bucket_name, numero_ticket=numero_reclamo, hoja_adjuntos=hoja_adjuntos, usuario=st.session_state.usuario_actual)
             
 def modulo_cotizaciones_mauricio():
-    st.title("📋 Gestión de Cotizaciones")
-    st.markdown(
-        "<h1><img src='iconos/informe.png' width='28' style='vertical-align:middle; margin-right:10px;'> Gestión de Cotizaciones</h1>",
-        unsafe_allow_html=True
-    )
+    encabezado_con_icono("iconos/dinero.png", "Gestión de Cotizaciones", "h1")
+
     cotizaciones_df = cargar_df_sin_cache("cotizaciones")
     # 🔥 Aquí agregas la recarga automática
     if st.session_state.get("recargar_cotizaciones"):
