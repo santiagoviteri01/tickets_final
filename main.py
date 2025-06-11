@@ -228,7 +228,9 @@ for _, row in asegurados_df.iterrows():
         "password": client_id,  # Contraseña = ID en texto plano
         "rol": "cliente"
     }
-    
+
+
+
 def mostrar_encabezado(texto_derecha=""):
     logo_path = Path("images/atlantida_logo.jpg")
 
@@ -291,7 +293,32 @@ def mostrar_encabezado(texto_derecha=""):
     html = html_template.substitute(logo_b64=logo_b64, texto_derecha=texto_derecha)
     st.markdown(html, unsafe_allow_html=True)
     
+def encabezado_con_icono(ruta_icono, texto, nivel="h2"):
+    tamaños = {"h1": 28, "h2": 22, "h3": 18}
+    estilo = {
+        "h1": "font-size:28px; font-weight:bold;",
+        "h2": "font-size:22px; font-weight:bold;",
+        "h3": "font-size:18px;",
+    }
+    tamaño = tamaños.get(nivel, 22)
+    estilo_texto = estilo.get(nivel, "font-size:22px;")
 
+    icon_path = Path(ruta_icono)
+    if not icon_path.exists():
+        st.warning(f"⚠️ No se encontró el ícono en {ruta_icono}")
+        return
+
+    with open(icon_path, "rb") as f:
+        icon_b64 = base64.b64encode(f.read()).decode()
+
+    html = f"""
+    <div style='display:flex; align-items:center; gap:10px; margin-bottom:10px;'>
+        <img src="data:image/png;base64,{icon_b64}" style='height:{tamaño}px;' />
+        <span style='{estilo_texto} color:#D8272E; font-family:Calibri, sans-serif;'>{texto}</span>
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)
+    
 def cargar_datos():
     try:
         df = cargar_df("hoja")
@@ -573,7 +600,8 @@ from streamlit.runtime.scriptrunner import RerunException
 def obtener_ubicacion():
     # 1) Pedir permiso la primera vez
     if "ubicacion_coords" not in st.session_state:
-        st.subheader("📍 Solicitando permiso de ubicación…")
+        encabezado_con_icono("iconos/pingps.png", "Solicitando permiso de ubicación…", "h3")
+
         js = """
         new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(
@@ -822,9 +850,12 @@ def persistir_en_sheet(df: pd.DataFrame):
     hoja.update(values)
     
 def gestionar_asegurados():
-    st.header("🔍 Buscar y Editar Asegurados")
+    st.markdown(
+        "<h1><img src='iconos/buscar.png' width='28' style='vertical-align:middle; margin-right:10px;'> Buscar y Editar Asegurados</h1>",
+        unsafe_allow_html=True
+    )
 
-    with st.expander("🔎 Filtros de Búsqueda", expanded=True):
+    with st.expander("Filtros de Búsqueda", expanded=True):
         col1, col2 = st.columns(2)
         buscar_id     = col1.text_input("ID")
         buscar_poliza = col2.text_input("Número de Póliza")
@@ -875,7 +906,7 @@ def gestionar_asegurados():
         st.info(f"**Póliza:** {registro['NÚMERO PÓLIZA VEHÍCULOS']}")
 
     with right:
-        st.subheader("✏️ Editar Campos")
+        encabezado_con_icono("iconos/editar.png", "Editar Campos", "h2")
         with st.form("editar_aseg_form"):
             telefono        = st.text_input("Teléfono", registro["TELÉFONO DOMICILIO"])
             correo          = st.text_input("Correo Electrónico", registro["CORREO ELECTRÓNICO"])
@@ -954,7 +985,10 @@ def portal_cliente():
     asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
     tab_seleccionado = st.radio("Secciones", ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo", "Subir Archivos Adicionales a un Reclamo"], horizontal=True)
     if tab_seleccionado == "Mis Datos Personales":
-        st.header("🧾 Mis Datos Personales y del Vehículo")
+        st.markdown(
+            "<h1><img src='iconos/verdatos.png' width='28' style='vertical-align:middle; margin-right:10px;'> Mis Datos Personales y del Vehículo</h1>",
+            unsafe_allow_html=True
+        )
     
         cliente_id = st.session_state.usuario_actual
         cliente_data = asegurados_df[asegurados_df["NOMBRE COMPLETO"].astype(str) == cliente_id]
@@ -980,8 +1014,8 @@ def portal_cliente():
                 st.write(f"**Dirección Domicilio:** {datos_personales['DIRECCIÓN DOMICILIO']}")
                 st.write(f"**Teléfono Domicilio:** {datos_personales['TELÉFONO DOMICILIO']}")
                 
-            st.subheader("🚗 Vehículos Asegurados")
-            
+            encabezado_con_icono("iconos/carro.png", "Vehículos Asegurados", "h2")
+
             for idx, datos in cliente_data.iterrows():
                 with st.expander(f"🔹 Vehículo {idx + 1} — {datos['MARCA']} {datos['MODELO']} ({datos['PLACA']})"):
                     col3, col4 = st.columns(2)
@@ -1066,11 +1100,11 @@ def portal_cliente():
                         with col_left:
                             estado = ticket['Estado'].lower()
                             color_map = {
-                                'NUEVO': '🔵',
-                                'EN PROCESO': '🟡',
-                                'RESUELTO': '🟢',
-                                'CERRADO': '✅',
-                                'DOCUMENTACION PENDIENTE': '🟠'
+                                'NUEVO': '⚫',
+                                'EN PROCESO': '⚫',
+                                'RESUELTO': '⚫',
+                                'CERRADO': '⚫',
+                                'DOCUMENTACION PENDIENTE': '⚫'
                             }
                             icono = color_map.get(estado, '⚫')
                             st.markdown(f"**Estado:** {icono} {ticket['Estado'].capitalize()}")
@@ -1086,7 +1120,9 @@ def portal_cliente():
                             # Mostrar imagen si existe
                             if 'Foto_URL' in ticket and ticket['Foto_URL'] and ticket['Foto_URL'] != "None":
                                 try:
-                                    st.subheader("📸 Foto del Siniestro")
+                                    
+                                    encabezado_con_icono("iconos/ver.png", "Foto del Siniestro", "h3")
+
                                     st.image(ticket['Foto_URL'], caption="Imagen del siniestro", use_container_width=True)
                                 except Exception as e:
                                     st.warning(f"⚠️ Error mostrando la imagen: {e}")
@@ -1230,7 +1266,7 @@ def portal_cliente():
                     
                         # Mostrar
                         col1, = st.columns(1)
-                        col1.image(img, caption="📷 Imagen Capturada", use_container_width=True)
+                        col1.image(img, caption="Imagen Capturada", use_container_width=True)
                         #col2.image(mask_canvas, caption="🟥 Máscara", use_container_width=True)
                         #col3.image(overlay_final, caption="🎯 Imagen Final", use_container_width=True)
                     else:
@@ -1339,7 +1375,11 @@ def portal_cliente():
                     enviar_correo_reclamo(correo_destinatario, asunto, cuerpo)
                 
     elif tab_seleccionado == "Subir Archivos Adicionales a un Reclamo":
-        st.header("📎 Subir Archivos Adicionales a un Reclamo")
+        
+        st.markdown(
+            "<h1><img src='iconos/cargardocumento.png' width='28' style='vertical-align:middle; margin-right:10px;'> Subir Archivos Adicionales a un Reclamo</h1>",
+            unsafe_allow_html=True
+        )
         df_tickets_cliente = cargar_datos()
         df_tickets_cliente = df_tickets_cliente[df_tickets_cliente["Cliente"] == st.session_state.usuario_actual]
         df_tickets_cliente = df_tickets_cliente.sort_values("Número")
@@ -1371,6 +1411,10 @@ def portal_cliente():
             
 def modulo_cotizaciones_mauricio():
     st.title("📋 Gestión de Cotizaciones")
+    st.markdown(
+        "<h1><img src='iconos/informe.png' width='28' style='vertical-align:middle; margin-right:10px;'> Gestión de Cotizaciones</h1>",
+        unsafe_allow_html=True
+    )
     cotizaciones_df = cargar_df_sin_cache("cotizaciones")
     # 🔥 Aquí agregas la recarga automática
     if st.session_state.get("recargar_cotizaciones"):
@@ -1398,7 +1442,7 @@ def modulo_cotizaciones_mauricio():
 
 
     # Sección 1: Nuevas Cotizaciones
-    st.subheader("🔵 Cotizaciones Nuevas (no cotizadas)")
+    st.subheader("Cotizaciones Nuevas (no cotizadas)")
     nuevas = cotizaciones_df[cotizaciones_df['Estado'] == 'NO COTIZADA']
     for idx, row in nuevas.iterrows():
         with st.expander(f"🆕 {row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']}"):
@@ -1408,7 +1452,7 @@ def modulo_cotizaciones_mauricio():
                 actualizar_estado(idx, "EN PROCESO")
 
     # Sección 2: Cotizaciones en Proceso
-    st.subheader("🟡 Cotizaciones en Proceso")
+    st.subheader("Cotizaciones en Proceso")
     en_proceso = cotizaciones_df[cotizaciones_df['Estado'] == 'EN PROCESO']
     for idx, row in en_proceso.iterrows():
         with st.expander(f"🔄 {row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']}"):
@@ -1419,7 +1463,7 @@ def modulo_cotizaciones_mauricio():
                 actualizar_estado(idx, opcion)
 
     # Sección 3: Cotizaciones Cotizadas
-    st.subheader("🟢 Cotizaciones Cotizadas")
+    st.subheader("Cotizaciones Realizadas")
     cotizadas = cotizaciones_df[cotizaciones_df['Estado'] == 'COTIZADA']
     for idx, row in cotizadas.iterrows():
         with st.expander(f"✅ {row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']}"):
@@ -1430,7 +1474,7 @@ def modulo_cotizaciones_mauricio():
                 actualizar_estado(idx, opcion)
 
     # Sección 4: Cotizaciones Finalizadas
-    st.subheader("⚪ Cotizaciones Finalizadas (Aceptadas o Rechazadas)")
+    st.subheader("Cotizaciones Finalizadas (Aceptadas o Rechazadas)")
     finalizadas = cotizaciones_df[cotizaciones_df['Estado'].isin(['ACEPTADA', 'RECHAZADA'])]
     for idx, row in finalizadas.iterrows():
         with st.expander(f"🏁 {row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']} - {row['Estado'].capitalize()}"):
@@ -1454,8 +1498,8 @@ def visualizar_ticket_modificar(ticket=None):
         col1, col2 = st.columns([1, 2])
         with col1:
             icons = {
-                'NUEVO': '🔵', 'EN PROCESO': '🟡', 'RESUELTO': '🟢',
-                'cerrado': '✅', 'DOCUMENTACION PENDIENTE': '🟠'
+                'NUEVO': '⚫', 'EN PROCESO': '⚫', 'RESUELTO': '⚫',
+                'cerrado': '⚫', 'DOCUMENTACION PENDIENTE': '⚫'
             }
             est = ticket['Estado'].lower()
             st.markdown(f"**Estado:** {icons.get(est,'⚫')} {ticket['Estado'].capitalize()}")
@@ -1574,14 +1618,11 @@ def portal_administracion():
     opcion = st.sidebar.radio("Opciones", opciones)
 
     if opcion == "Inicio":
-        st.markdown(
-            "<h1><img src='iconos/home.png' width='28' style='vertical-align:middle; margin-right:10px;'> Panel de Administración</h1>",
-            unsafe_allow_html=True
-        )
-        st.markdown("""
-        **Bienvenido al panel de administración**
-        Selecciona una opción del menú lateral para comenzar.
-        """)
+    encabezado_con_icono("iconos/home.png", "Panel de Administración", "h1")
+            st.markdown("""
+            **Bienvenido al panel de administración**
+            Selecciona una opción del menú lateral para comenzar.
+            """)
         
     elif opcion == "Dashboard":
         if st.button("🔄 Recargar datos (limpiar caché)"):
@@ -1593,32 +1634,21 @@ def portal_administracion():
         gestionar_asegurados()
 
     elif opcion == "Gestión de Reclamos y Tickets":
-        st.markdown(
-            "<h1><img src='iconos/informe.png' width='28' style='vertical-align:middle; margin-right:10px;'> Gestión de Reclamos y Tickets</h1>",
-            unsafe_allow_html=True
-        )
+        encabezado_con_icono("iconos/informe.png", "Gestión de Reclamos y Tickets", "h1")
         manejar_tickets()
         
 
     elif opcion == "Ver Reclamos":
-        st.markdown(
-            "<h1><img src='iconos/reclamos.png' width='28' style='vertical-align:middle; margin-right:10px;'> Reclamos</h1>",
-            unsafe_allow_html=True
-        )
+
+        encabezado_con_icono("iconos/reclamos.png", "Reclamos", "h1")
         visualizar_tickets()
     
     elif opcion == "Analisis de Chatbot":
-        st.markdown(
-            "<h1><img src='iconos/chat.png' width='28' style='vertical-align:middle; margin-right:10px;'> Analisis e Historial del ChatBot</h1>",
-            unsafe_allow_html=True
-        )
+        encabezado_con_icono("iconos/chat.png", "Analisis e Historial del ChatBot", "h1")
         mostrar_conversaciones_bot()
 
     elif opcion == "Descargar Datos":
-        st.markdown(
-            "<h1><img src='iconos/carpeta.png' width='28' style='vertical-align:middle; margin-right:10px;'> Descargar Datos</h1>",
-            unsafe_allow_html=True
-        )
+        encabezado_con_icono("iconos/carpeta.png", "Descargar Datos", "h1")
         descargar_tickets()
         
     elif opcion == "Gestión de Cotizaciones" and st.session_state.usuario_actual == "mauriciodavila":
@@ -1729,11 +1759,11 @@ def visualizar_tickets():
                     # Estado
                     estado_ticket = ticket['Estado'].lower()
                     color_map = {
-                        'NUEVO': '🔵',
-                        'EN PROCESO': '🟡',
-                        'RESUELTO': '🟢',
-                        'cerrado': '✅',
-                        'DOCUMENTACION PENDIENTE': '🟠'
+                        'NUEVO': '⚫',
+                        'EN PROCESO': '⚫',
+                        'RESUELTO': '⚫',
+                        'cerrado': '⚫',
+                        'DOCUMENTACION PENDIENTE': '⚫'
                     }
                     icono = color_map.get(estado_ticket, '⚫')
                     st.markdown(f"**Estado:** {icono} {ticket['Estado'].capitalize()}")
