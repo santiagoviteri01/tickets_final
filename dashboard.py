@@ -40,10 +40,49 @@ def exportar_a_docx(texto: str) -> BytesIO:
     doc.save(buffer)
     buffer.seek(0)
     return buffer
+def encabezado_sin_icono(texto, nivel="h2"):
+    estilo = {
+        "h1": "font-size:28px; font-weight:bold;",
+        "h2": "font-size:22px; font-weight:bold;",
+        "h3": "font-size:18px;",
+    }.get(nivel, "font-size:22px; font-weight:bold;")
 
+    html = f"""
+    <div style='margin-bottom:10px;'>
+        <span style='{estilo} color:#D8272E; font-family:Calibri, sans-serif;'>{texto}</span>
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)
+    
+def encabezado_con_icono(ruta_icono, texto, nivel="h2"):
+    tamaños = {"h1": 28, "h2": 22, "h3": 18}
+    estilo = {
+        "h1": "font-size:28px; font-weight:bold;",
+        "h2": "font-size:22px; font-weight:bold;",
+        "h3": "font-size:18px;",
+    }
+    tamaño = tamaños.get(nivel, 22)
+    estilo_texto = estilo.get(nivel, "font-size:22px;")
+
+    icon_path = Path(ruta_icono)
+    if not icon_path.exists():
+        st.warning(f"⚠️ No se encontró el ícono en {ruta_icono}")
+        return
+
+    with open(icon_path, "rb") as f:
+        icon_b64 = base64.b64encode(f.read()).decode()
+
+    html = f"""
+    <div style='display:flex; align-items:center; gap:10px; margin-bottom:10px;'>
+        <img src="data:image/png;base64,{icon_b64}" style='height:{tamaño}px;' />
+        <span style='{estilo_texto} color:#D8272E; font-family:Calibri, sans-serif;'>{texto}</span>
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)
+    
 def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     
-    st.title("📊 Análisis de la Cuenta")
+    encabezado_con_icono("iconos/graficosubida.png", "Análisis de la Cuenta", "h1")
 
     if any(df is None or df.empty for df in [pagados, pendientes, asegurados]):
         st.warning("Por favor verifica que los DataFrames no estén vacíos.")
@@ -106,18 +145,20 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     )
     seccion = st.radio(
         "Selecciona una sección:",
-        ["🔍 Suma Asegurada", "📁 Reclamos", "🔥 Siniestralidad","📊 Comisiones por Canal","Generar Informe Ejecutivo"],
+        ["Suma Asegurada", "Reclamos", "Siniestralidad","Comisiones por Canal","Generar Informe Ejecutivo"],
         horizontal=True
     )
     
     
-    if seccion == "🔍 Suma Asegurada":
+    if seccion == "Suma Asegurada":
         asegurados['FECHA'] = pd.to_datetime(asegurados['FECHA'], dayfirst=True, errors='coerce')
         asegurados['MES'] = asegurados['FECHA'].dt.month
         asegurados['MES_NOMBRE'] = asegurados['FECHA'].dt.month_name()
         asegurados['AÑO'] = asegurados['FECHA'].dt.year
 
         st.header("Análisis de Suma Asegurada")
+        encabezado_con_icono("iconos/dinero.png", "Suma Asegurada", "h2")
+
         with st.sidebar:
             st.header("Configuración del Analisis de Suma Asegurada")
             aseguradoras = ['Todas'] + sorted(asegurados['ASEGURADORA'].dropna().unique().tolist())
@@ -140,8 +181,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.stop()
     
         titulo_años = f"{', '.join(map(str, años_sel))}" if len(años_sel) > 1 else f"{años_sel[0]}"
-    
-        st.subheader(f"Métricas Clave - {titulo_años}")
+        encabezado_sin_icono(f"Métricas Clave - {titulo_años}","h2")
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric("Suma Asegurada Total", f"${df_filtrado['VALOR ASEGURADO'].sum():,.2f}")
@@ -151,7 +191,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.metric("Valor Promedio Asegurado", f"${df_filtrado['VALOR ASEGURADO'].mean():,.2f}")
 
         if "Distribuciones" in mostrar_graficos:
-            st.subheader("Distribuciones")
+            encabezado_sin_icono("Distribuciones","h2")
             col4, col5 = st.columns(2)
             with col4:
                 fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
@@ -169,8 +209,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 st.pyplot(fig)
 
         if "Evolución Anual" in mostrar_graficos:
-            st.subheader("Evolución Anual")
-        
+            encabezado_sin_icono("Evolución Anual","h2")        
             # Crear tabla pivote
             df_temporal = df_filtrado.pivot_table(
                 values='VALOR ASEGURADO', index='MES', columns='AÑO', aggfunc='sum'
@@ -205,7 +244,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.pyplot(fig)
         
         if "Evolución Continua" in mostrar_graficos:
-            st.subheader("Evolución Continua desde Oct 2023")
+            encabezado_sin_icono("Evolución Continua desde Oct 2023","h2")
+            
             hoy = datetime.now()
             df_periodo = asegurados.copy()
         
@@ -234,8 +274,9 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.pyplot(fig)
         
         if "Tasa Mensual" in mostrar_graficos:
-            st.subheader("Tasa Mensual")
-        
+
+            encabezado_sin_icono("Tasa Mensual","h2")
+
             # Agrupar y calcular la tasa
             tasa_mensual = df_filtrado.groupby(['AÑO', 'MES']).agg(
                 Prima_Total=('PRIMA TOTAL VEHÍCULOS', 'sum'),
@@ -266,8 +307,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.pyplot(fig)
     
         if "Top Marcas" in mostrar_graficos:
-            st.subheader("Top Marcas")
-        
+            encabezado_sin_icono("Top Marcas","h2")
             # Obtener top 10 marcas
             top_marcas = df_filtrado['MARCA'].value_counts().nlargest(10)
         
@@ -283,7 +323,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.pyplot(fig)
 
     
-    elif seccion == "📁 Reclamos":
+    elif seccion == "Reclamos":
     
         # Asegurar formato de fecha
         pagados['FECHA SINIESTRO'] = pd.to_datetime(pagados['FECHA SINIESTRO'], errors='coerce')
@@ -302,7 +342,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         ).round(2)
     
         with st.sidebar:
-            st.header("Configuración del Análisis de Reclamos")
+            encabezado_con_icono("iconos/reclamos.png", "Configuración del Análisis de Reclamos", "h1")
             año_analisis = st.selectbox("Seleccionar Año", [2024, 2025], key="año_reclamos")
             if len(resumen_aseguradoras_total) >= 1:
                 aseguradoras_seleccionadas = st.multiselect(
@@ -317,11 +357,11 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         pagos_aseguradora_data = pagados_filtrados[pagados_filtrados['COMPAÑÍA'].isin(aseguradoras_seleccionadas)]
         pendientes_aseguradora_data = pendientes_filtrados[pendientes_filtrados['CIA. DE SEGUROS'].isin(aseguradoras_seleccionadas)]
     
-        st.header("Datos Generales")
+        encabezado_sin_icono("Datos Generales","h2")
         st.dataframe(pagos_aseguradora_data[['COMPAÑÍA', 'VALOR RECLAMO', 'FECHA SINIESTRO', 'EVENTO']].head(3))
         st.dataframe(pendientes_aseguradora_data[['CIA. DE SEGUROS', 'VALOR SINIESTRO', 'FECHA DE SINIESTRO', 'ESTADO ACTUAL']].head(3))
     
-        st.header("Distribución Temporal")
+        encabezado_sin_icono("Distribución Temporal","h2")
         pagos_aseguradora_data['MES'] = pagos_aseguradora_data['FECHA SINIESTRO'].dt.month
         fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
         sns.countplot(data=pagos_aseguradora_data, x='MES', palette=palette, ax=ax)
@@ -331,6 +371,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         st.pyplot(fig)
     
         st.header("Análisis de Valores")
+        encabezado_sin_icono("Análisis de Valores","h2")
         grafico_valores = st.radio("Elegir gráfico de análisis de valores", ["Histograma", "Boxplot", "Por Rangos"], horizontal=True)
         if grafico_valores == "Histograma":
             bins_hist = st.slider("Número de Bins", 10, 100, 30, 5)
@@ -352,7 +393,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.pyplot(fig)
     
         # Nuevo selector de tipo de severidad
-        st.header("Análisis de Variables")
+        encabezado_sin_icono("Análisis de Variables","h2")
         tipo_severidad = st.radio("Tipo de severidad", ["Promedio", "Total", "Frecuencia"], horizontal=True)
 
         def plot_severidad(tipo, campo, titulo):
@@ -385,7 +426,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         for col, titulo in zip(cols, titulos):
             plot_severidad(tipo_severidad, col, titulo)
 
-        st.header("Generar Informe Anual")
+        encabezado_sin_icono("Generar Informe Anual","h2")
+
         if st.button("Generar Informe"):
             resumen_mes = pagados_filtrados.pivot_table(values='VALOR RECLAMO', index='MES', columns='COMPAÑÍA', aggfunc=['sum', 'count'], fill_value=0, margins=True)
             resumen_mes.columns = [f"{aggfunc} {col}" for aggfunc, col in resumen_mes.columns]
@@ -426,8 +468,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
     
-    elif seccion == "🔥 Siniestralidad":
-        st.header("Siniestralidad Mensual por Aseguradora")
+    elif seccion == "Siniestralidad":
+        encabezado_con_icono("iconos/reclamos.png","Siniestralidad Mensual por Aseguradora"","h2")
     
         # Estándar de nombres desde pendientes
         mapeo_columnas = {
@@ -538,7 +580,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         plt.title(titulo)
         st.pyplot(fig)
     
-        st.subheader("Datos Detallados")
+
+        encabezado_sin_icono("Datos Detallados",nivel="h2")
         columnas = ['PERIODO', 'ASEGURADORA', 'Prima_Vehiculos', 'Total_Reclamos', 'Monto_Total_Reclamos', 'Siniestralidad'] if aseguradora_sel != 'Todas' else ['PERIODO', 'Prima_Vehiculos', 'Total_Reclamos', 'Monto_Total_Reclamos', 'Siniestralidad']
         st.dataframe(
             df_filtrado[columnas]
@@ -552,7 +595,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             use_container_width=True,
             height=400
         )
-        st.subheader("Indicadores Clave")
+        encabezado_sin_icono("Indicadores Clave",nivel="h2")
 
         if not df_filtrado.empty:
             ultimo_mes = df_filtrado.iloc[-1]
@@ -574,8 +617,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             with col6:
                 st.metric("Total Reclamos", f"{df_filtrado['Total_Reclamos'].sum():,.0f}")
             
-    elif seccion == "📊 Comisiones por Canal":
-        st.header("Análisis de Comisiones por Canal")
+    elif seccion == "Comisiones por Canal":
+        encabezado_con_icono("iconos/dinero.png","Análisis de Comisiones por Canal","h2")
     
         # Asegurar formato de fecha y crear columnas de año y mes
         asegurados['FECHA'] = pd.to_datetime(asegurados['FECHA'], dayfirst=True, errors='coerce')
@@ -583,7 +626,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         asegurados['AÑO'] = asegurados['FECHA'].dt.year
     
         with st.sidebar:
-            st.header("Filtros de Comisiones")
+            encabezado_sin_icono("Filtros de Comisiones",nivel="h2")
+            
             aseguradoras = ['Todas'] + sorted(asegurados['ASEGURADORA'].dropna().unique())
             aseguradora_sel = st.selectbox("Seleccionar Aseguradora", aseguradoras, key="aseg_comisiones")
     
@@ -620,12 +664,12 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     
         # Total comisiones
         if not df_comisiones.empty:
-            st.subheader("Total Comisiones Pagadas")
+            encabezado_sin_icono("Total Comisiones Pagadas",nivel="h2")
             total_comisiones = df_comisiones[columnas_comision].sum().sum()
             st.metric("Total USD", f"${total_comisiones:,.2f}")
     
             # Gráfico apilado por canal
-            st.subheader("Evolución de Comisiones por Canal")
+            encabezado_sin_icono("Evolución de Comisiones por Canal",nivel="h2")
             fig, ax = plt.subplots(figsize=(12, 5))
             paleta_colores = ['#7F7F7F', '#C5C5C5', '#D62828', '#F7A9A8']  # Usa solo 4 si tienes 4 canales
 
@@ -638,7 +682,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.pyplot(fig)
     
             # Gráfico individual por canal seleccionado
-            st.subheader("Comisiones por Canal - Individual")
+            encabezado_sin_icono("Comisiones por Canal - Individual",nivel="h2")
             canal_seleccionado = st.selectbox("Selecciona el canal a visualizar:", columnas_comision)
             if canal_seleccionado in df_comisiones.columns:
                 fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
@@ -653,7 +697,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 st.warning(f"El canal '{canal_seleccionado}' no está disponible en los datos.")
     
             # Tabla detallada
-            st.subheader("Tabla Detallada")
+            encabezado_sin_icono("Tabla Detallada",nivel="h2")
+
             st.dataframe(df_comisiones[columnas_comision].round(2), use_container_width=True)
     
             # Exportar a Excel
@@ -668,8 +713,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
     elif seccion == "Generar Informe Ejecutivo":
-        st.subheader("Análisis Final Automatizado con AI")
-    
+        encabezado_sin_icono("Análisis Final Automatizado con AI",nivel="h2")
         datos_ok = all(
             df is not None and isinstance(df, pd.DataFrame) and not df.empty
             for df in [pagados, pendientes, asegurados, df_comisiones, df_siniestralidad]
