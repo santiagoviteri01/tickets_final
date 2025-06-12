@@ -1071,7 +1071,7 @@ def portal_cliente():
             st.error("No se encontró información para tu cuenta.")
         
     elif tab_seleccionado == "Mis Tickets":
-        encabezado_sin_icono("Mis Tickets",nivel="h1")
+        encabezado_con_icono("iconos/verdatos.png", "Mis Tickets", "h1")
         df = cargar_datos()
     
         if not df.empty:
@@ -1153,7 +1153,7 @@ def portal_cliente():
         os.makedirs(UPLOAD_DIR)
 
     elif tab_seleccionado == "Nuevo Reclamo":
-        encabezado_sin_icono("Nuevo Reclamo",nivel="h1")
+        encabezado_con_icono("iconos/reclamos.png", "Nuevo Reclamo", "h1")
 
         enviar_reclamo = False  
         cliente_id = st.session_state.usuario_actual
