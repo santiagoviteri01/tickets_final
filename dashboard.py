@@ -469,7 +469,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             )
     
     elif seccion == "Siniestralidad":
-        encabezado_con_icono("iconos/reclamos.png","Siniestralidad Mensual por Aseguradora"","h2")
+        encabezado_con_icono("iconos/reclamos.png","Siniestralidad Mensual por Aseguradora","h2")
     
         # Estándar de nombres desde pendientes
         mapeo_columnas = {
