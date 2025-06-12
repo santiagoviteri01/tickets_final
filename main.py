@@ -1006,7 +1006,10 @@ def portal_cliente():
         cliente_data = cliente_data.drop_duplicates(subset=["PLACA"], keep="first")
         
         if not cliente_data.empty:
-            st.subheader("Información Personal")
+            encabezado_sin_icono(
+                "Datos ´Personales",
+                nivel="h2"
+            )
             datos_personales = cliente_data.iloc[0]  # Asumimos que estos campos se repiten en todas las filas
             col1, col2 = st.columns(2)
             with col1:
