@@ -42,7 +42,7 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-      /* Fuente global: Calibri (o similar si no está disponible) */
+      /* Fuente global */
       html, body, .stApp {
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
         font-size: 16px;
@@ -52,12 +52,12 @@ st.markdown(
         
       /* Sidebar */
       section[data-testid="stSidebar"] {
-        background-color: #BFBFBF !important;
+        background-color: #7F7F7F !important;
         color: white !important;
       }
-    
-      section[data-testid="stSidebar"] .css-1v0mbdj,  /* títulos */
-      section[data-testid="stSidebar"] .css-1cpxqw2,  /* labels */
+
+      section[data-testid="stSidebar"] .css-1v0mbdj,
+      section[data-testid="stSidebar"] .css-1cpxqw2,
       section[data-testid="stSidebar"] label,
       section[data-testid="stSidebar"] p {
         color: white !important;
@@ -66,11 +66,10 @@ st.markdown(
       /* Títulos */
       h1, h2, h3 {
         color: #D8272E;
-        #font-weight: bold;
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
       }
 
-      /* Botones primarios */
+      /* Botones */
       button[kind="primary"], .stButton > button {
         background-color: #D8272E !important;
         color: #FFFFFF !important;
@@ -87,7 +86,7 @@ st.markdown(
         background-color: rgba(216, 39, 46, 0.85) !important;
       }
 
-      /* Inputs y selects */
+      /* Inputs y selects activos */
       input, textarea, select {
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
         font-size: 15px !important;
@@ -96,6 +95,7 @@ st.markdown(
         color: white !important;
         border-radius: 6px !important;
       }
+
       /* Inputs deshabilitados o solo lectura */
       input:disabled, textarea:disabled, select:disabled,
       input[readonly], textarea[readonly], select[readonly] {
@@ -115,10 +115,12 @@ st.markdown(
         font-size: 16px !important;
         font-weight: bold;
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+        color: white !important;
       }
 
-      /* Markdown refinado */
-      .stMarkdown {
+      /* Markdown + texto adicional Streamlit */
+      .stMarkdown, .stText, .stDataFrame, .stTable, .css-1v0mbdj, .css-1cpxqw2 {
+        color: white !important;
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
       }
 
@@ -126,7 +128,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
 st.markdown(
     """
     <link rel="manifest" href="/manifest.json">
@@ -456,7 +457,7 @@ def subir_y_mostrar_archivo(archivo, bucket_name, numero_ticket, hoja_adjuntos, 
     st.markdown("---")
     
 def formulario_cotizacion():
-    st.header("📝 Cotizador de Seguros")
+    encabezado_sin_icono("Formulario de Cotización","h1")
     tipo_seguro = st.selectbox("¿Qué seguro deseas cotizar?", ["Vida", "Auto", "Accidentes Personales"])
     nombre = st.text_input("Nombres")
     apellidos = st.text_input("Apellidos")
@@ -601,7 +602,7 @@ def autenticacion():
 
     if not st.session_state.autenticado:
         with st.container():
-            st.header("Bienvenido de Nuevo!")
+            encabezado_sin_icono("Bienbenido de Nuevo","h1")
             usuario = st.text_input("Usuario")
             contraseña = st.text_input("Contraseña", type="password")
 
