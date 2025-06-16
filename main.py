@@ -117,6 +117,13 @@ st.markdown(
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
         color: white !important;
       }
+      /* Contenido del expander desplegado */
+      .stExpanderContent {
+         background-color: #7F7F7F !important;
+          color: white !important;
+          border-radius: 8px;
+          padding: 1rem !important;
+      }
 
       /* Markdown + texto adicional Streamlit */
       .stMarkdown, .stText, .stDataFrame, .stTable, .css-1v0mbdj, .css-1cpxqw2 {
