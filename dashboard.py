@@ -157,8 +157,6 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         asegurados['MES'] = asegurados['FECHA'].dt.month
         asegurados['MES_NOMBRE'] = asegurados['FECHA'].dt.month_name()
         asegurados['AÑO'] = asegurados['FECHA'].dt.year
-
-        st.header("Análisis de Suma Asegurada")
         encabezado_con_icono("iconos/dinero.png", "Suma Asegurada", "h2")
 
         with st.sidebar:
@@ -326,7 +324,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
 
     
     elif seccion == "Reclamos":
-    
+        encabezado_con_icono("iconos/reclamos.png", "Reclamos", "h2")
         # Asegurar formato de fecha
         pagados['FECHA SINIESTRO'] = pd.to_datetime(pagados['FECHA SINIESTRO'], errors='coerce')
         pendientes['FECHA DE SINIESTRO'] = pd.to_datetime(pendientes['FECHA DE SINIESTRO'], errors='coerce')
@@ -344,7 +342,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         ).round(2)
     
         with st.sidebar:
-            encabezado_con_icono("iconos/reclamos.png", "Configuración del Análisis de Reclamos", "h1")
+            encabezado_sin_icono("Configuración del Análisis de Reclamos", "h2")
             año_analisis = st.selectbox("Seleccionar Año", [2024, 2025], key="año_reclamos")
             if len(resumen_aseguradoras_total) >= 1:
                 aseguradoras_seleccionadas = st.multiselect(
@@ -471,7 +469,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             )
     
     elif seccion == "Siniestralidad":
-        encabezado_con_icono("iconos/reclamos.png","Siniestralidad Mensual por Aseguradora","h2")
+        encabezado_con_icono("iconos/graficosubida.png","Siniestralidad Mensual por Aseguradora","h2")
     
         # Estándar de nombres desde pendientes
         mapeo_columnas = {
@@ -715,7 +713,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
     elif seccion == "Generar Informe Ejecutivo":
-        encabezado_sin_icono("Análisis Final Automatizado con AI",nivel="h2")
+        encabezado_con_icono("iconos/informe.png","Análisis Final Automatizado con AI",nivel="h2")
         datos_ok = all(
             df is not None and isinstance(df, pd.DataFrame) and not df.empty
             for df in [pagados, pendientes, asegurados, df_comisiones, df_siniestralidad]
