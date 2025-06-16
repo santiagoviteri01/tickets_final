@@ -46,13 +46,21 @@ st.markdown(
       html, body, .stApp {
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
         font-size: 16px;
-        color: #D8272E;
+        color: #7F7F7F;
         background-color: #FFFFFF;
       }
-
+        
       /* Sidebar */
       section[data-testid="stSidebar"] {
         background-color: #BFBFBF !important;
+        color: white !important;
+      }
+    
+      section[data-testid="stSidebar"] .css-1v0mbdj,  /* títulos */
+      section[data-testid="stSidebar"] .css-1cpxqw2,  /* labels */
+      section[data-testid="stSidebar"] label,
+      section[data-testid="stSidebar"] p {
+        color: white !important;
       }
 
       /* Títulos */
@@ -84,7 +92,16 @@ st.markdown(
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
         font-size: 15px !important;
         padding: 6px 10px !important;
+        background-color: #7F7F7F !important;
+        color: white !important;
         border-radius: 6px !important;
+      }
+      /* Inputs deshabilitados o solo lectura */
+      input:disabled, textarea:disabled, select:disabled,
+      input[readonly], textarea[readonly], select[readonly] {
+        background-color: #7F7F7F !important;
+        color: white !important;
+        opacity: 1 !important;
       }
 
       /* Métricas */
@@ -383,7 +400,7 @@ def descargar_archivos_ticket(numero_ticket, nombre_cliente):
     buffer.seek(0)
     nombre_zip = f"{nombre_cliente.replace(' ', '_')}_ticket_{numero_ticket}.zip"
     st.download_button(
-        label="📥 Descargar todos los archivos",
+        label="Descargar todos los archivos",
         data=buffer,
         file_name=nombre_zip,
         mime="application/zip"
@@ -435,7 +452,7 @@ def subir_y_mostrar_archivo(archivo, bucket_name, numero_ticket, hoja_adjuntos, 
     else:
         st.image(io.BytesIO(archivo_bytes), caption=archivo.name, use_container_width=True)
 
-    st.markdown(f"[🔗 Ver archivo en S3]({archivo_url})")
+    st.markdown(f"[Ver archivo en S3]({archivo_url})")
     st.markdown("---")
     
 def formulario_cotizacion():
@@ -461,7 +478,7 @@ def formulario_cotizacion():
                 st.rerun()
 
     with col2:
-        if st.button("⬅️ Volver"):
+        if st.button("Volver"):
             st.session_state.mostrar_formulario_cotizacion = False
             st.rerun()
 
@@ -567,12 +584,12 @@ def landing_page():
     st.markdown("<div class='hero-buttons'>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🔐 Mi Cuenta", use_container_width=True):
+        if st.button("Mi Cuenta", use_container_width=True):
             st.session_state.mostrar_login = True
             st.session_state.mostrar_formulario_cotizacion = False
             st.rerun()
     with col2:
-        if st.button("📄 Cotiza con Nosotros", use_container_width=True):
+        if st.button("Cotiza con Nosotros", use_container_width=True):
             st.session_state.mostrar_login = False
             st.session_state.mostrar_formulario_cotizacion = True
             st.rerun()
@@ -627,10 +644,10 @@ def obtener_ubicacion():
         """
         coords = streamlit_js_eval(js_expressions=js, key="get_geo")
         if not coords or "lat" not in coords:
-            st.warning("⚠️ Para continuar, **permite** el acceso a tu ubicación.")
+            st.warning("Para continuar, **permite** el acceso a tu ubicación.")
             return ""
         st.session_state.ubicacion_coords = {"lat": coords["lat"], "lon": coords["lon"]}
-        st.success("🎉 Permiso concedido y ubicación obtenida.")
+        st.success("Permiso concedido y ubicación obtenida.")
 
     # 2) Leer coords actuales
     lat = st.session_state.ubicacion_coords["lat"]
@@ -675,7 +692,7 @@ def obtener_ubicacion():
     )
 
     # 8) Confirmar ubicación
-    if st.form_submit_button("📌 Confirmar ubicación"):
+    if st.form_submit_button("Confirmar ubicación"):
         pass
     web_uri = f"https://maps.google.com/maps?q={lat},{lon}"
     return web_uri
@@ -938,7 +955,7 @@ def gestionar_asegurados():
                 ].index(registro["ESTADO PÓLIZA"])
             )
             num_factura = st.text_input("Número Factura Vehículos", registro["NÚMERO FACTURA VEHÍCULOS"])
-            submitted = st.form_submit_button("💾 Guardar Cambios")
+            submitted = st.form_submit_button("Guardar Cambios")
 
         if submitted:
             df_original.loc[mask_upd, "TELÉFONO DOMICILIO"] = telefono
@@ -971,7 +988,7 @@ def gestionar_asegurados():
             )
 
             st.download_button(
-                label="⬇️ Descargar Certificado PDF",
+                label="Descargar Certificado PDF",
                 data=buffer_pdf,
                 file_name=f"Certificado_{registro['NOMBRE COMPLETO'].replace(' ', '_')}.pdf",
                 mime="application/pdf"
@@ -1028,7 +1045,7 @@ def portal_cliente():
             encabezado_con_icono("iconos/carro.png", "Vehículos Asegurados", "h2")
 
             for idx, datos in cliente_data.iterrows():
-                with st.expander(f"🔹 Vehículo {idx + 1} — {datos['MARCA']} {datos['MODELO']} ({datos['PLACA']})"):
+                with st.expander(f"Vehículo {idx + 1} — {datos['MARCA']} {datos['MODELO']} ({datos['PLACA']})"):
                     col3, col4 = st.columns(2)
                     with col3:
                         st.write(f"**Marca:** {datos['MARCA']}")
@@ -1053,7 +1070,7 @@ def portal_cliente():
             
                     aseguradora = datos["ASEGURADORA"].strip().upper()
                     tpl_path = TEMPLATES[aseguradora]  # tu mapeo a .docx
-                    if st.button("🖨️ Generar Certificado PDF", key=f"pdf_{datos['PLACA']}"):
+                    if st.button("Generar Certificado PDF", key=f"pdf_{datos['PLACA']}"):
                         try:
                             pdf_buf = generar_certificado_pdf_from_template(
                                 asegurados_df,
@@ -1061,7 +1078,7 @@ def portal_cliente():
                                 tpl_path
                             )
                             st.download_button(
-                                "📥 Descargar Certificado (PDF)",
+                                "Descargar Certificado (PDF)",
                                 data=pdf_buf,
                                 file_name=f"Certificado_{datos['PLACA']}.pdf",
                                 mime="application/pdf",
@@ -1142,7 +1159,7 @@ def portal_cliente():
                             ubic = ticket.get('Ubicacion', '')
                             if isinstance(ubic, str) and ubic.startswith("http"):
                                 st.markdown(
-                                    f"[📍 Ver ubicación en Google Maps]({ubic})",
+                                    f"[Ver ubicación en Google Maps]({ubic})",
                                     unsafe_allow_html=True
                                 )
             else:
@@ -1449,7 +1466,7 @@ def modulo_cotizaciones_mauricio():
     encabezado_sin_icono("Pendientes", "h2")
     nuevas = cotizaciones_df[cotizaciones_df['Estado'] == 'NO COTIZADA']
     for idx, row in nuevas.iterrows():
-        with st.expander(f"🆕 {row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']}"):
+        with st.expander(f"{row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']}"):
             st.write(f"**Correo:** {row['Correo']}")
             st.write(f"**Teléfono:** {row['Teléfono']}")
             if st.button(f"Tomar Cotización #{idx}", key=f"tomar_{idx}"):
@@ -1459,7 +1476,7 @@ def modulo_cotizaciones_mauricio():
     encabezado_sin_icono("En Proceso", "h2")
     en_proceso = cotizaciones_df[cotizaciones_df['Estado'] == 'EN PROCESO']
     for idx, row in en_proceso.iterrows():
-        with st.expander(f"🔄 {row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']}"):
+        with st.expander(f"{row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']}"):
             st.write(f"**Correo:** {row['Correo']}")
             st.write(f"**Teléfono:** {row['Teléfono']}")
             opcion = st.selectbox(f"Actualizar estado Cotización #{idx}", ["COTIZADA", "RECHAZADA"], key=f"proceso_{idx}")
@@ -1470,7 +1487,7 @@ def modulo_cotizaciones_mauricio():
     encabezado_sin_icono("Realizadas", "h2")
     cotizadas = cotizaciones_df[cotizaciones_df['Estado'] == 'COTIZADA']
     for idx, row in cotizadas.iterrows():
-        with st.expander(f"✅ {row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']}"):
+        with st.expander(f"{row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']}"):
             st.write(f"**Correo:** {row['Correo']}")
             st.write(f"**Teléfono:** {row['Teléfono']}")
             opcion = st.selectbox(f"Actualizar estado Cotización #{idx}", ["ACEPTADA", "RECHAZADA"], key=f"cotizada_{idx}")
@@ -1481,7 +1498,7 @@ def modulo_cotizaciones_mauricio():
     encabezado_sin_icono("Finalizadas", "h2")
     finalizadas = cotizaciones_df[cotizaciones_df['Estado'].isin(['ACEPTADA', 'RECHAZADA'])]
     for idx, row in finalizadas.iterrows():
-        with st.expander(f"🏁 {row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']} - {row['Estado'].capitalize()}"):
+        with st.expander(f"{row['Nombre']} {row['Apellidos']} - {row['Tipo Seguro']} - {row['Estado'].capitalize()}"):
             st.write(f"**Correo:** {row['Correo']}")
             st.write(f"**Teléfono:** {row['Teléfono']}")
             st.info(f"Estado final: {row['Estado'].capitalize()}")
@@ -1520,7 +1537,7 @@ def visualizar_ticket_modificar(ticket=None):
             st.write("**Ubicación:**")
             ubic = ticket.get('Ubicacion', '')
             if isinstance(ubic, str) and ubic.startswith("http"):
-                st.markdown(f"[📍 Ver en Google Maps]({ubic})", unsafe_allow_html=True)
+                st.markdown(f"[Ver en Google Maps]({ubic})", unsafe_allow_html=True)
 
             # Foto del siniestro
             url = ticket.get('Foto_URL', '')
@@ -1631,7 +1648,7 @@ def portal_administracion():
         """)
         
     elif opcion == "Dashboard":
-        if st.button("🔄 Recargar datos (limpiar caché)"):
+        if st.button("Recargar datos (limpiar caché)"):
             st.cache_data.clear()
         df_pagados, df_pendientes, df_asegurados = cargar_datos_dashboard_desde_sheets()
         mostrar_dashboard_analisis(df_pagados, df_pendientes, df_asegurados)
@@ -1789,14 +1806,14 @@ def visualizar_tickets():
                     st.write("**Ubicación:**")
                     ubic = ticket.get('Ubicacion', '')
                     if isinstance(ubic, str) and ubic.startswith("http"):
-                        st.markdown(f"[📍 Ver en Google Maps]({ubic})", unsafe_allow_html=True)
+                        st.markdown(f"[Ver en Google Maps]({ubic})", unsafe_allow_html=True)
 
                     # Foto del siniestro
                     url = ticket.get('Foto_URL', '')
                     if isinstance(url, str) and url.startswith("http"):
-                        st.subheader("📸 Foto del Siniestro")
+                        st.subheader("Foto del Siniestro")
                         st.image(url, caption="Imagen del siniestro", use_container_width=True)
-                        st.markdown(f"[🔗 Ver imagen en nueva pestaña]({url})", unsafe_allow_html=True)
+                        st.markdown(f"[Ver imagen en nueva pestaña]({url})", unsafe_allow_html=True)
                     else:
                         st.info("No se adjuntó foto del siniestro.")
 # Versión cacheada para uso general
@@ -1985,7 +2002,7 @@ def manejar_tickets():
                 poliza = st.text_input("Ingrese número de póliza:")
                 coincidencias = asegurados_data[asegurados_data["NÚMERO PÓLIZA VEHÍCULOS"].astype(str) == poliza]
                 # Validación de la columna
-            buscar = st.form_submit_button("🔍 Buscar")
+            buscar = st.form_submit_button("Buscar")
         if buscar:
             if not coincidencias.empty:
                 st.session_state.coincidencias = coincidencias
@@ -2041,7 +2058,7 @@ def manejar_tickets():
                 necesita_grua = st.selectbox("¿Necesita grúa?", ["No", "Sí"])
                 asistencia_legal = st.selectbox("¿Requiere asistencia legal?", ["No", "Sí"])
         
-                guardar = st.form_submit_button("💾 Guardar Reclamo")
+                guardar = st.form_submit_button("Guardar Reclamo")
                 if guardar:
                     fecha_modificacion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     ultimo_ticket = df["Número"].max() if not df.empty else 0
@@ -2197,7 +2214,7 @@ def manejar_tickets():
                     taller_seleccionado = taller_opcion
         
                 if estado_final == "cerrado":
-                    st.markdown("### 📝 Información final del siniestro (opcional)")
+                    st.markdown("### Información final del siniestro (opcional)")
                     valor_siniestro = st.number_input("Valor estimado del siniestro", min_value=0.0, format="%.2f", key="valor_siniestro")
                     deducible = st.text_input("Deducible (si aplica)", key="deducible")
                     rasa = st.text_input("RASA", key="rasa")
@@ -2209,7 +2226,7 @@ def manejar_tickets():
                     liquidacion = ""
         
                 # Botón final para guardar cambios
-                if st.button("💾 Guardar Cambios"):
+                if st.button("Guardar Cambios"):
                     fecha_modificacion = datetime.now()
                     ultima_fecha = datetime.strptime(st.session_state.ticket_actual['Fecha_Creación'], "%Y-%m-%d %H:%M:%S")
                     dias_transcurridos = (fecha_modificacion - ultima_fecha).days
@@ -2298,10 +2315,10 @@ def manejar_tickets():
             numero_ticket = st.selectbox("Selecciona el número de ticket del cliente:", sorted(ticket_ids))
             ticket_seleccionado = tickets_cliente[tickets_cliente["Número"] == numero_ticket].iloc[-1]
     
-        st.info(f"📄 Reclamo seleccionado: #{numero_ticket} — Cliente: {ticket_seleccionado['Cliente']}")
+        st.info(f"Reclamo seleccionado: #{numero_ticket} — Cliente: {ticket_seleccionado['Cliente']}")
     
         archivos = st.file_uploader(
-            "📤 Selecciona uno o más archivos (PDF o imagen)",
+            "Selecciona uno o más archivos (PDF o imagen)",
             type=["jpg", "jpeg", "png", "pdf"],
             accept_multiple_files=True,
             key=f"upload_docs_ticket_{numero_ticket}"
@@ -2321,7 +2338,7 @@ def manejar_tickets():
             for archivo in archivos:
                 subir_y_mostrar_archivo(archivo=archivo, bucket_name=bucket_name, numero_ticket=numero_ticket, hoja_adjuntos=hoja_adjuntos,  usuario=ticket_seleccionado['Cliente'])
          
-        if st.button("📥 Descargar todos los archivos del reclamo"):
+        if st.button("Descargar todos los archivos del reclamo"):
             import zipfile
             import requests
             df_adjuntos = cargar_df("archivos_adjuntos")
@@ -2344,7 +2361,7 @@ def manejar_tickets():
                 buffer.seek(0)
                 nombre_zip = f"ticket_{numero_ticket}.zip"
                 st.download_button(
-                    label="⬇️ Descargar ZIP",
+                    label="Descargar ZIP",
                     data=buffer,
                     file_name=nombre_zip,
                     mime="application/zip"
@@ -2353,7 +2370,7 @@ def manejar_tickets():
 
   
 def descargar_tickets():
-    with st.spinner("🔄 Cargando datos..."):
+    with st.spinner("Cargando datos..."):
         df_tickets = cargar_tickets()
         df_pagados, df_pendientes, df_asegurados = cargar_datos_dashboard_desde_sheets()
 
@@ -2377,7 +2394,7 @@ def descargar_tickets():
     if not df.empty:
         if formato == "CSV":
             st.download_button(
-                f"📥 Descargar {hoja} en CSV",
+                f"Descargar {hoja} en CSV",
                 df.to_csv(index=False),
                 f"{nombre_archivo}.csv",
                 mime="text/csv"
@@ -2386,14 +2403,14 @@ def descargar_tickets():
             output = BytesIO()
             df.to_excel(output, index=False)
             st.download_button(
-                f"📥 Descargar {hoja} en Excel",
+                f"Descargar {hoja} en Excel",
                 output.getvalue(),
                 f"{nombre_archivo}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
         elif formato == "JSON":
             st.download_button(
-                f"📥 Descargar {hoja} en JSON",
+                f"Descargar {hoja} en JSON",
                 df.to_json(orient="records"),
                 f"{nombre_archivo}.json",
                 mime="application/json"
