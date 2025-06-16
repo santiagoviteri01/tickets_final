@@ -602,7 +602,7 @@ def autenticacion():
 
     if not st.session_state.autenticado:
         with st.container():
-            encabezado_sin_icono("Bienbenido de Nuevo","h1")
+            encabezado_sin_icono("Bienvenido de Nuevo","h1")
             usuario = st.text_input("Usuario")
             contraseña = st.text_input("Contraseña", type="password")
 
