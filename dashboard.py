@@ -21,6 +21,58 @@ rosa_s= "#F7A9A8"
 rosa_c="#FDE4E2"
 palette=['#7F7F7F', '#C5C5C5', '#D62828', '#F7A9A8', '#FDE4E2']
 
+st.markdown(
+    """
+    <style>
+      /* Indicadores st.metric() */
+      .element-container .stMetric {
+        font-size: 12px !important;
+        font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+        color: #7F7F7F !important;
+      }
+      .stMetric > div {
+        color: #7F7F7F !important;
+      }
+
+      /* Botones normales (st.button) */
+      .stButton > button {
+        background-color: #FFFFFF !important;
+        color: #D62828 !important;
+        border: 2px solid #D62828 !important;
+        font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+        font-size: 15px !important;
+        font-weight: bold;
+        border-radius: 8px;
+        padding: 0.5rem 1.2rem;
+        transition: all 0.3s ease;
+      }
+
+      .stButton > button:hover {
+        background-color: #D62828 !important;
+        color: #FFFFFF !important;
+      }
+
+      /* Botones de descarga (st.download_button) */
+      div[data-testid="stDownloadButton"] > button {
+        background-color: #FFFFFF !important;
+        color: #D62828 !important;
+        border: 2px solid #D62828 !important;
+        font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+        font-size: 15px !important;
+        font-weight: bold;
+        border-radius: 8px;
+        padding: 0.5rem 1.2rem;
+        transition: all 0.3s ease;
+      }
+
+      div[data-testid="stDownloadButton"] > button:hover {
+        background-color: #D62828 !important;
+        color: #FFFFFF !important;
+      }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 def generar_analisis_gpt(prompt: str) -> str:
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
