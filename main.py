@@ -157,6 +157,20 @@ st.markdown(
         color: white !important;
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
       }
+      /* NUEVO: forzar texto plano gris oscuro */      
+      .stMarkdown p,
+      .stMarkdown div,
+      .stMarkdown span,
+      .stMarkdown li,
+      p, div, span, li {
+        color: #7F7F7F !important;
+      }
+
+      /* NUEVO: links en rojo institucional */
+      a {
+        color: #D62828 !important;
+        font-weight: bold;
+      }
     </style>
     """,
     unsafe_allow_html=True
