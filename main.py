@@ -159,13 +159,14 @@ st.markdown(
       }
       /* NUEVO: forzar texto plano gris oscuro */      
       .stMarkdown p,
-      .stMarkdown div,
       .stMarkdown span,
       .stMarkdown li,
-      p, div, span, li {
-        color: #7F7F7F !important;
+      .streamlit-expanderContent p,
+      .streamlit-expanderContent span,
+      .streamlit-expanderContent li {
+          color: #7F7F7F !important;
       }
-
+      
       /* NUEVO: links en rojo institucional */
       a {
         color: #D62828 !important;
