@@ -394,7 +394,7 @@ def encabezado_con_icono(ruta_icono, texto, nivel="h2"):
     html = f"""
     <div style='display:flex; align-items:center; gap:10px; margin-bottom:10px;'>
         <img src="data:image/png;base64,{icon_b64}" style='height:{tamaño}px;' />
-        <span style='{estilo_texto} color:#D8272E; font-family:Calibri, sans-serif;'>{texto}</span>
+        <span style='color:#D8272E; {estilo_texto} font-family:Calibri, sans-serif;'>{texto}</span>
     </div>
     """
     st.markdown(html, unsafe_allow_html=True)
