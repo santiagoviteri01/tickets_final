@@ -49,7 +49,7 @@ st.markdown(
         color: #7F7F7F;
         background-color: #FFFFFF;
       }
-        
+
       /* Sidebar */
       section[data-testid="stSidebar"] {
         background-color: #7F7F7F !important;
@@ -65,25 +65,44 @@ st.markdown(
 
       /* Títulos */
       h1, h2, h3 {
-        color: #D8272E;
+        color: #D62828;
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
       }
 
-      /* Botones */
-      button[kind="primary"], .stButton > button {
-        background-color: #D8272E !important;
-        color: #FFFFFF !important;
+      /* Botones normales (st.button) */
+      .stButton > button {
+        background-color: #FFFFFF !important;
+        color: #D62828 !important;
+        border: 2px solid #D62828 !important;
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
         font-size: 15px !important;
         font-weight: bold;
         border-radius: 8px;
         padding: 0.5rem 1.2rem;
-        border: none;
-        transition: background-color 0.3s ease;
+        transition: all 0.3s ease;
       }
 
-      button[kind="primary"]:hover, .stButton > button:hover {
-        background-color: rgba(216, 39, 46, 0.85) !important;
+      .stButton > button:hover {
+        background-color: #D62828 !important;
+        color: #FFFFFF !important;
+      }
+
+      /* Botones de descarga (st.download_button) */
+      div[data-testid="stDownloadButton"] > button {
+        background-color: #FFFFFF !important;
+        color: #D62828 !important;
+        border: 2px solid #D62828 !important;
+        font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+        font-size: 15px !important;
+        font-weight: bold;
+        border-radius: 8px;
+        padding: 0.5rem 1.2rem;
+        transition: all 0.3s ease;
+      }
+
+      div[data-testid="stDownloadButton"] > button:hover {
+        background-color: #D62828 !important;
+        color: #FFFFFF !important;
       }
 
       /* Inputs y selects activos */
@@ -106,8 +125,12 @@ st.markdown(
 
       /* Métricas */
       .element-container .stMetric {
-        font-size: 18px !important;
+        font-size: 14px !important;
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+        color: #7F7F7F !important;
+      }
+      .stMetric > div {
+        color: #7F7F7F !important;
       }
 
       /* Expander headers */
@@ -116,21 +139,24 @@ st.markdown(
         font-weight: bold;
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
         color: white !important;
-      }
-      /* Contenido del expander desplegado */
-      .stExpanderContent {
-         background-color: #7F7F7F !important;
-          color: white !important;
-          border-radius: 8px;
-          padding: 1rem !important;
+        background-color: #C5C5C5 !important;
+        padding: 0.5rem !important;
+        border-radius: 6px !important;
       }
 
-      /* Markdown + texto adicional Streamlit */
+      /* Contenido del expander desplegado */
+      div.streamlit-expanderContent {
+        background-color: #7F7F7F !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 1rem !important;
+      }
+
+      /* Markdown + texto adicional */
       .stMarkdown, .stText, .stDataFrame, .stTable, .css-1v0mbdj, .css-1cpxqw2 {
         color: white !important;
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
       }
-
     </style>
     """,
     unsafe_allow_html=True
