@@ -159,10 +159,10 @@ st.markdown(
       }
       /* NUEVO: forzar texto plano gris oscuro */      
       .stMarkdown p,
-      .stMarkdown span,
+      .stMarkdown span:not([style*="color"]),
       .stMarkdown li,
       .streamlit-expanderContent p,
-      .streamlit-expanderContent span,
+      .streamlit-expanderContent span:not([style*="color"]),
       .streamlit-expanderContent li {
           color: #7F7F7F !important;
       }
