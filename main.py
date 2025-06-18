@@ -212,8 +212,15 @@ st.markdown(
       section[data-testid="stSidebar"] .stButton > button:hover span {
         color: #FFFFFF !important;
       }
+      section[data-testid="stSidebar"] .stButton > button div {
+        color: #D62828 !important;
+      }
 
-      
+      /* Hover: blanco al pasar el mouse */
+      section[data-testid="stSidebar"] .stButton > button:hover div {
+        color: #FFFFFF !important;
+      }
+
     </style>
     """,
     unsafe_allow_html=True
@@ -1115,7 +1122,7 @@ def portal_cliente():
         
         if not cliente_data.empty:
             encabezado_sin_icono(
-                "Datos ´Personales",
+                "Datos Personales",
                 nivel="h2"
             )
             datos_personales = cliente_data.iloc[0]  # Asumimos que estos campos se repiten en todas las filas
