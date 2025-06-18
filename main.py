@@ -61,18 +61,38 @@ st.markdown(
       section[data-testid="stSidebar"] label,
       section[data-testid="stSidebar"] p {
         color: white !important;
+        font-family: 'Calibri', sans-serif !important;
       }
       
       /* Selectbox dentro del sidebar: texto gris oscuro y fondo blanco */
       section[data-testid="stSidebar"] select {
         background-color: #FFFFFF !important;
         color: #7F7F7F !important;
-        border-radius: 6px !important;
-        border: 1px solid #C5C5C5 !important;
+        border-radius: 8px !important;
+        border: 2px solid #C5C5C5 !important;
         font-family: 'Calibri', sans-serif !important;
+        font-weight: bold;
         padding: 6px 10px !important;
       }
+      section[data-testid="stSidebar"] .stButton > button {
+        background-color: #FFFFFF !important;
+        color: #D62828 !important;
+        border: 2px solid #D62828 !important;
+        font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+        font-size: 15px !important;
+        font-weight: bold;
+        border-radius: 8px !important;
+        padding: 0.5rem 1.2rem !important;
+        transition: all 0.3s ease;
+        box-shadow: none !important;
 
+      }
+    
+      /* Hover dentro del sidebar */
+      section[data-testid="stSidebar"] .stButton > button:hover {
+        background-color: #D62828 !important;
+        color: #FFFFFF !important;
+      }
       /* Títulos */
       h1, h2, h3 {
         color: #D62828;
@@ -107,7 +127,7 @@ st.markdown(
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
         font-size: 15px !important;
         padding: 6px 10px !important;
-        background-color: #C5C5C5 !important;
+        background-color: #FFFFFF !important;
         color: #7F7F7F !important;
         border-radius: 6px !important;
       }
@@ -118,6 +138,23 @@ st.markdown(
         background-color: #7F7F7F !important;
         color: white !important;
         opacity: 1 !important;
+      }
+      /* Form submit buttons */
+      button[kind="formSubmit"] {
+        background-color: #FFFFFF !important;
+        color: #D62828 !important;
+        border: 2px solid #D62828 !important;
+        font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+        font-size: 15px !important;
+        font-weight: bold;
+        border-radius: 8px;
+        padding: 0.5rem 1.2rem;
+        transition: all 0.3s ease;
+      }
+
+      button[kind="formSubmit"]:hover {
+        background-color: #D62828 !important;
+        color: #FFFFFF !important;
       }
 
       /* Métricas */
@@ -550,7 +587,7 @@ def landing_page():
             margin-bottom: 2rem;
           }}
           .logo-bar img {{
-            height: 50px;
+            height: 100px;
             object-fit: contain;
           }}
 
@@ -577,7 +614,7 @@ def landing_page():
 
           /* Subtítulo hero */
           .hero-subtitle {{
-            font-size: 1.2rem;
+            font-size: 2rem;
             color: #808080;
             max-width: 700px;
             margin: 0 auto 2rem auto;
@@ -1017,7 +1054,7 @@ def gestionar_asegurados():
             st.dataframe(registro_act.to_frame().T)
 
     # 📄 EMITIR CERTIFICADO
-    if st.button("📄 Emitir Certificado de Cobertura"):
+    if st.button("Emitir Certificado de Cobertura"):
         try:
             TEMPLATES = {
                 "AIG": "archivos_coberturas/certificado_aig_temp.docx",
