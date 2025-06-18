@@ -1120,18 +1120,20 @@ def portal_cliente():
         st.success("Sesión cerrada exitosamente")
         time.sleep(1)
         st.rerun()
+    
         
     mostrar_encabezado(f"Cliente: {st.session_state.usuario_actual}")
-    st.markdown("<div class='zona-portal'>", unsafe_allow_html=True)
-    encabezado_sin_icono(
-        f"Portal del Cliente - {st.session_state.usuario_actual}",
-        nivel="h1"
-    )
-
-    asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
     with st.container():
+        st.markdown("<div class='zona-portal'>", unsafe_allow_html=True)
+        encabezado_sin_icono(
+            f"Portal del Cliente - {st.session_state.usuario_actual}",
+            nivel="h1"
+        )
+    
+        asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
+    
         tab_seleccionado = st.radio("Secciones", ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo", "Subir Archivos Adicionales a un Reclamo"], horizontal=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     if tab_seleccionado == "Mis Datos Personales":
         encabezado_con_icono("iconos/verdatos.png", "Mis Datos Personales y del Vehículo", "h1")
