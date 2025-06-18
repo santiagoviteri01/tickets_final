@@ -753,7 +753,7 @@ def autenticacion():
                     st.rerun()
 
         with col_img:
-            st.markdown(imagen_base64("images/imagen_logo.png"), unsafe_allow_html=True)
+            st.markdown(imagen_base64("images/imagen_logo.jpg"), unsafe_allow_html=True)
 
 
         return False
