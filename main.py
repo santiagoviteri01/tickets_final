@@ -1156,9 +1156,8 @@ def portal_cliente():
         
     mostrar_encabezado(f"Cliente: {st.session_state.usuario_actual}")
     with st.container():
-        # Abrimos el div con borde visual
         st.markdown("""
-            <div class='zona-portal-visual'>
+            <div style='border:2px solid #7F7F7F; border-radius:10px; padding:1.5rem; margin-bottom:2rem;'>
         """, unsafe_allow_html=True)
     
         encabezado_sin_icono(
@@ -1174,7 +1173,6 @@ def portal_cliente():
             horizontal=True
         )
     
-        # Cerramos el div
         st.markdown("</div>", unsafe_allow_html=True)
 
     if tab_seleccionado == "Mis Datos Personales":
