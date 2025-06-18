@@ -62,32 +62,25 @@ st.markdown(
       section[data-testid="stSidebar"] p {
         color: white !important;
       }
+      
+      /* Selectbox dentro del sidebar: texto gris oscuro y fondo blanco */
+      section[data-testid="stSidebar"] select {
+        background-color: #FFFFFF !important;
+        color: #7F7F7F !important;
+        border-radius: 6px !important;
+        border: 1px solid #C5C5C5 !important;
+        font-family: 'Calibri', sans-serif !important;
+        padding: 6px 10px !important;
+      }
 
       /* Títulos */
       h1, h2, h3 {
         color: #D62828;
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
       }
-
-      /* Botones normales (st.button) */
-      .stButton > button {
-        background-color: #FFFFFF !important;
-        color: #D62828 !important;
-        border: 2px solid #D62828 !important;
-        font-family: 'Calibri', 'Segoe UI', sans-serif !important;
-        font-size: 15px !important;
-        font-weight: bold;
-        border-radius: 8px;
-        padding: 0.5rem 1.2rem;
-        transition: all 0.3s ease;
-      }
-
-      .stButton > button:hover {
-        background-color: #D62828 !important;
-        color: #FFFFFF !important;
-      }
-
-      /* Botones de descarga (st.download_button) */
+      .stButton > button,
+      section[data-testid="stSidebar"] .stButton > button,
+      button[kind="formSubmit"],
       div[data-testid="stDownloadButton"] > button {
         background-color: #FFFFFF !important;
         color: #D62828 !important;
@@ -100,18 +93,22 @@ st.markdown(
         transition: all 0.3s ease;
       }
 
+      /* Hover: rojo invertido */
+      .stButton > button:hover,
+      section[data-testid="stSidebar"] .stButton > button:hover,
+      button[kind="formSubmit"]:hover,
       div[data-testid="stDownloadButton"] > button:hover {
         background-color: #D62828 !important;
         color: #FFFFFF !important;
-      }
+      }    
 
       /* Inputs y selects activos */
       input, textarea, select {
         font-family: 'Calibri', 'Segoe UI', sans-serif !important;
         font-size: 15px !important;
         padding: 6px 10px !important;
-        background-color: #7F7F7F !important;
-        color: white !important;
+        background-color: #C5C5C5 !important;
+        color: #7F7F7F !important;
         border-radius: 6px !important;
       }
 
