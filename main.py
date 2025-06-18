@@ -366,7 +366,14 @@ for _, row in asegurados_df.iterrows():
         "rol": "cliente"
     }
 
-
+def imagen_base64(ruta_img, ancho="100%"):
+    img_path = Path(ruta_img)
+    if not img_path.exists():
+        st.warning(f"⚠️ Imagen no encontrada en {ruta_img}")
+        return ""
+    with open(img_path, "rb") as f:
+        img_b64 = base64.b64encode(f.read()).decode()
+    return f"<img src='data:image/png;base64,{img_b64}' style='width:{ancho}; border-radius:10px;'/>"
 
 def mostrar_encabezado(texto_derecha=""):
     logo_path = Path("images/atlantida_logo.jpg")
@@ -720,8 +727,12 @@ def autenticacion():
         st.session_state.autenticado = False
 
     if not st.session_state.autenticado:
-        with st.container():
-            encabezado_sin_icono("Bienvenido de Nuevo","h1")
+        encabezado_sin_icono("Bienvenido de Nuevo", "h1")
+
+        # 🔲 División en dos columnas
+        col_form, col_img = st.columns([1, 1])
+
+        with col_form:
             usuario = st.text_input("Usuario")
             contraseña = st.text_input("Contraseña", type="password")
 
@@ -740,7 +751,13 @@ def autenticacion():
                 if st.button("Volver"):
                     st.session_state.mostrar_login = False
                     st.rerun()
+
+        with col_img:
+            st.markdown(imagen_base64("images/imagen_logo.png"), unsafe_allow_html=True)
+
+
         return False
+
     return True
 
 
