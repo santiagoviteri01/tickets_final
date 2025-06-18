@@ -757,7 +757,7 @@ def autenticacion():
             st.markdown(
                 f"""
                 <div style='display: flex; align-items: flex-start; justify-content: center; margin-top: -8rem;'>
-                    {imagen_base64("images/imagen_logo.jpg", ancho="95%")}
+                    {imagen_base64("images/imagen_logo.jpg", ancho="70%")}
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -1155,43 +1155,31 @@ def portal_cliente():
     
         
     mostrar_encabezado(f"Cliente: {st.session_state.usuario_actual}")
+    # Cuadro visual con borde
     with st.container():
-        # usamos HTML para fondo y padding, pero borde lo ponemos al contenedor
-        with st.markdown("", unsafe_allow_html=True):
-            st.write("")  # forzar render visual al inicio del contenedor
+        st.markdown("""
+            <div style="
+                border: 2px solid #7F7F7F;
+                border-radius: 10px;
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+            ">
+        """, unsafe_allow_html=True)
     
-        # CSS real para el borde en el contenedor entero (usaremos st.write + st.markdown con estilo)
-        with st.container():
-            st.markdown(
-                """
-                <style>
-                .portal-box {
-                    border: 2px solid #7F7F7F;
-                    border-radius: 10px;
-                    padding: 1.5rem;
-                    margin-bottom: 2rem;
-                }
-                </style>
-                """,
-                unsafe_allow_html=True
-            )
+        encabezado_sin_icono(
+            f"Portal del Cliente - {st.session_state.usuario_actual}",
+            nivel="h1"
+        )
     
-            st.markdown("<div class='portal-box'>", unsafe_allow_html=True)
+        asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
     
-            encabezado_sin_icono(
-                f"Portal del Cliente - {st.session_state.usuario_actual}",
-                nivel="h1"
-            )
+        tab_seleccionado = st.radio(
+            "Secciones",
+            ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo", "Subir Archivos Adicionales a un Reclamo"],
+            horizontal=True
+        )
     
-            asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
-    
-            tab_seleccionado = st.radio(
-                "Secciones",
-                ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo", "Subir Archivos Adicionales a un Reclamo"],
-                horizontal=True
-            )
-    
-            st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     if tab_seleccionado == "Mis Datos Personales":
         encabezado_con_icono("iconos/verdatos.png", "Mis Datos Personales y del Vehículo", "h1")
