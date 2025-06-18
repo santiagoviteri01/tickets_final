@@ -206,6 +206,14 @@ st.markdown(
         color: #D62828 !important;
         font-weight: bold;
       }
+      section[data-testid="stSidebar"] .stButton > button span {
+        color: #D62828 !important;
+      }
+      section[data-testid="stSidebar"] .stButton > button:hover span {
+        color: #FFFFFF !important;
+      }
+
+      
     </style>
     """,
     unsafe_allow_html=True
