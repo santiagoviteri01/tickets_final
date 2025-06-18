@@ -756,7 +756,7 @@ def autenticacion():
         with col_img: 
             st.markdown(
                 f"""
-                <div style='display: flex; align-items: flex-start; justify-content: center; margin-top: -5rem;'>
+                <div style='display: flex; align-items: flex-start; justify-content: center; margin-top: -8rem;'>
                     {imagen_base64("images/imagen_logo.jpg", ancho="95%")}
                 </div>
                 """,
