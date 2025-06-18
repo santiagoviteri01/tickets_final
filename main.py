@@ -220,6 +220,15 @@ st.markdown(
       section[data-testid="stSidebar"] .stButton > button:hover div {
         color: #FFFFFF !important;
       }
+      
+      section[data-testid="stSidebar"] .stButton > button * {
+        color: #D62828 !important;
+      }  
+
+      /* Hover: texto blanco */
+      section[data-testid="stSidebar"] .stButton > button:hover * {
+        color: #FFFFFF !important;
+      }
 
     </style>
     """,
