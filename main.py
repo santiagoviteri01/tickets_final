@@ -229,6 +229,13 @@ st.markdown(
       section[data-testid="stSidebar"] .stButton > button:hover * {
         color: #FFFFFF !important;
       }
+      
+      .zona-portal {
+        border: 2px solid #7F7F7F;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
 
     </style>
     """,
@@ -1107,6 +1114,7 @@ def gestionar_asegurados():
 # Portal del Cliente
 def portal_cliente():
     mostrar_encabezado(f"Cliente: {st.session_state.usuario_actual}")
+    st.markdown("<div class='zona-portal'>", unsafe_allow_html=True)
     encabezado_sin_icono(
         f"Portal del Cliente - {st.session_state.usuario_actual}",
         nivel="h1"
@@ -1120,6 +1128,8 @@ def portal_cliente():
         st.rerun()
     asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
     tab_seleccionado = st.radio("Secciones", ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo", "Subir Archivos Adicionales a un Reclamo"], horizontal=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
     if tab_seleccionado == "Mis Datos Personales":
         encabezado_con_icono("iconos/verdatos.png", "Mis Datos Personales y del Vehículo", "h1")
         cliente_id = st.session_state.usuario_actual
