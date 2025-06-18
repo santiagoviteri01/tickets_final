@@ -241,6 +241,7 @@ st.markdown(
         border: 2px solid #7F7F7F;
         border-radius: 10px;
         padding: 1.5rem;
+        margin-bottom: 1.5rem;
       }
 
     </style>
@@ -752,8 +753,16 @@ def autenticacion():
                     st.session_state.mostrar_login = False
                     st.rerun()
 
-        with col_img:
-            st.markdown(imagen_base64("images/imagen_logo.jpg"), unsafe_allow_html=True)
+        with col_img: 
+            st.markdown(
+                f"""
+                <div style='display: flex; align-items: flex-start; justify-content: center; margin-top: -5rem;'>
+                    {imagen_base64("images/imagen_logo.jpg", ancho="95%")}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
 
 
         return False
@@ -1146,22 +1155,27 @@ def portal_cliente():
     
         
     mostrar_encabezado(f"Cliente: {st.session_state.usuario_actual}")
-    st.markdown("""
-        <div class='zona-portal-fake'>
-        <div class='zona-portal-visual'>
-    """, unsafe_allow_html=True)
-    encabezado_sin_icono(
-        f"Portal del Cliente - {st.session_state.usuario_actual}",
-        nivel="h1"
-    )
-
-    asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
-
-    tab_seleccionado = st.radio("Secciones", ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo", "Subir Archivos Adicionales a un Reclamo"], horizontal=True)
-    st.markdown("""
-        </div>
-        </div>
-    """, unsafe_allow_html=True)
+    with st.container():
+        # Abrimos el div con borde visual
+        st.markdown("""
+            <div class='zona-portal-visual'>
+        """, unsafe_allow_html=True)
+    
+        encabezado_sin_icono(
+            f"Portal del Cliente - {st.session_state.usuario_actual}",
+            nivel="h1"
+        )
+    
+        asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
+    
+        tab_seleccionado = st.radio(
+            "Secciones",
+            ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo", "Subir Archivos Adicionales a un Reclamo"],
+            horizontal=True
+        )
+    
+        # Cerramos el div
+        st.markdown("</div>", unsafe_allow_html=True)
 
     if tab_seleccionado == "Mis Datos Personales":
         encabezado_con_icono("iconos/verdatos.png", "Mis Datos Personales y del Vehículo", "h1")
