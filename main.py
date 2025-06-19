@@ -1832,7 +1832,6 @@ def portal_administracion():
         gestionar_asegurados()
 
     elif opcion == "Gestión de Reclamos y Tickets":
-        encabezado_con_icono("iconos/informe.png", "Gestión de Reclamos y Tickets", "h1")
         manejar_tickets()
         
 
