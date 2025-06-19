@@ -723,88 +723,120 @@ def landing_page():
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
        
+
+import streamlit.components.v1 as components
+
+def detectar_dispositivo():
+    components.html(
+        """
+        <script>
+        const width = window.innerWidth;
+        const streamlitDoc = window.parent.document;
+        streamlitDoc.dispatchEvent(new CustomEvent("STREAMLIT_MOBILE_WIDTH", {
+            detail: {width: width}
+        }));
+        </script>
+        """,
+        height=0,
+    )
+
+    # Escucha el evento y actualiza session_state
+    if "mobile" not in st.session_state:
+        st.session_state["mobile"] = False
+
+    st.markdown("""
+        <script>
+        const streamlitDoc = window.parent.document;
+        streamlitDoc.addEventListener("STREAMLIT_MOBILE_WIDTH", (event) => {
+            const width = event.detail.width;
+            const mobile = width < 600;
+            window.parent.postMessage({isMobile: mobile}, "*");
+        });
+        </script>
+    """, unsafe_allow_html=True)
+
+    # Recibe el mensaje desde JavaScript y guarda el valor
+    components.html(
+        """
+        <script>
+        window.addEventListener("message", (event) => {
+            const isMobile = event.data.isMobile;
+            if (isMobile !== undefined) {
+                fetch("/_stcore/update_session_state", {
+                    method: "POST",
+                    body: JSON.stringify({mobile: isMobile}),
+                    headers: {"Content-Type": "application/json"}
+                });
+            }
+        });
+        </script>
+        """,
+        height=0,
+    )
+
 def autenticacion():
+    detectar_dispositivo()
+
     if 'autenticado' not in st.session_state:
         st.session_state.autenticado = False
 
+    is_mobile = st.session_state.get("mobile", False)
+
     if not st.session_state.autenticado:
-        with open("images/imagen_logo.jpg", "rb") as f:
-            logo_b64 = base64.b64encode(f.read()).decode()
+        encabezado_sin_icono("Bienvenido de Nuevo", "h1")
 
-        st.markdown(f"""
-        <style>
-        .auth-container {{
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            background-color: #FFFFFF;
-            border-radius: 12px;
-        }}
-
-        .auth-container img {{
-            height: 80px;
-            margin-bottom: 1rem;
-        }}
-
-        .auth-container .title {{
-            font-size: 2.2rem;
-            font-weight: bold;
-            color: #D8272E;
-            margin-bottom: 1rem;
-            text-align: center;
-        }}
-
-        .auth-container .subtitle {{
-            font-size: 1rem;
-            color: #808080;
-            margin-bottom: 2rem;
-            text-align: center;
-        }}
-
-        .stTextInput > div > input {{
-            text-align: center;
-        }}
-
-        @media (max-width: 768px) {{
-            .auth-container .title {{
-                font-size: 1.6rem;
-            }}
-        }}
-        </style>
-
-        <div class="auth-container">
-            <img src="data:image/jpeg;base64,{logo_b64}" alt="Logo" />
-            <div class="title">Inicio de Sesión</div>
-            <div class="subtitle">Ingresa tu usuario y contraseña</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        usuario = st.text_input("Usuario")
-        contraseña = st.text_input("Contraseña", type="password")
-
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Ingresar"):
-                user_data = USUARIOS.get(usuario)
-                if user_data and user_data['password'] == contraseña:
-                    st.session_state.autenticado = True
-                    st.session_state.usuario_actual = usuario
-                    st.session_state.rol = user_data['rol']
+        if is_mobile:
+            st.image("images/imagen_logo.jpg", width=250)
+            usuario = st.text_input("Usuario")
+            contraseña = st.text_input("Contraseña", type="password")
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                if st.button("Ingresar"):
+                    user_data = USUARIOS.get(usuario)
+                    if user_data and user_data['password'] == contraseña:
+                        st.session_state.autenticado = True
+                        st.session_state.usuario_actual = usuario
+                        st.session_state.rol = user_data['rol']
+                        st.rerun()
+                    else:
+                        st.error("❌ Credenciales incorrectas")
+            with col2:
+                if st.button("Volver"):
+                    st.session_state.mostrar_login = False
                     st.rerun()
-                else:
-                    st.error("❌ Credenciales incorrectas")
-
-        with col2:
-            if st.button("Volver"):
-                st.session_state.mostrar_login = False
-                st.rerun()
+        else:
+            col_form, col_img = st.columns([1, 1])
+            with col_form:
+                usuario = st.text_input("Usuario")
+                contraseña = st.text_input("Contraseña", type="password")
+                col1, col2 = st.columns([2, 1])
+                with col1:
+                    if st.button("Ingresar"):
+                        user_data = USUARIOS.get(usuario)
+                        if user_data and user_data['password'] == contraseña:
+                            st.session_state.autenticado = True
+                            st.session_state.usuario_actual = usuario
+                            st.session_state.rol = user_data['rol']
+                            st.rerun()
+                    else:
+                        st.error("❌ Credenciales incorrectas")
+                with col2:
+                    if st.button("Volver"):
+                        st.session_state.mostrar_login = False
+                        st.rerun()
+            with col_img:
+                st.markdown(
+                    f"""
+                    <div style='display: flex; align-items: flex-start; justify-content: center; margin-top: -8rem;'>
+                        {imagen_base64("images/imagen_logo.jpg", ancho="70%")}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
         return False
 
     return True
-
 
 
 from folium.plugins import LocateControl
