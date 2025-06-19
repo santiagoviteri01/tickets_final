@@ -727,13 +727,15 @@ def autenticacion():
     if 'autenticado' not in st.session_state:
         st.session_state.autenticado = False
 
+    # Detectar si el ancho es pequeño (por debajo de 600px lo consideramos móvil)
+    is_mobile = st.get_option("browser.clientWidth") is not None and st.get_option("browser.clientWidth") < 600
+
     if not st.session_state.autenticado:
         encabezado_sin_icono("Bienvenido de Nuevo", "h1")
 
-        # 🔲 División en dos columnas
-        col_form, col_img = st.columns([1, 1])
-
-        with col_form:
+        if is_mobile:
+            # Modo vertical para celulares
+            st.image("images/imagen_logo.jpg", width=250)
             usuario = st.text_input("Usuario")
             contraseña = st.text_input("Contraseña", type="password")
 
@@ -752,22 +754,44 @@ def autenticacion():
                 if st.button("Volver"):
                     st.session_state.mostrar_login = False
                     st.rerun()
+        else:
+            # Modo de escritorio con columnas
+            col_form, col_img = st.columns([1, 1])
 
-        with col_img: 
-            st.markdown(
-                f"""
-                <div style='display: flex; align-items: flex-start; justify-content: center; margin-top: -8rem;'>
-                    {imagen_base64("images/imagen_logo.jpg", ancho="70%")}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            with col_form:
+                usuario = st.text_input("Usuario")
+                contraseña = st.text_input("Contraseña", type="password")
 
+                col1, col2 = st.columns([2, 1])
+                with col1:
+                    if st.button("Ingresar"):
+                        user_data = USUARIOS.get(usuario)
+                        if user_data and user_data['password'] == contraseña:
+                            st.session_state.autenticado = True
+                            st.session_state.usuario_actual = usuario
+                            st.session_state.rol = user_data['rol']
+                            st.rerun()
+                        else:
+                            st.error("❌ Credenciales incorrectas")
+                with col2:
+                    if st.button("Volver"):
+                        st.session_state.mostrar_login = False
+                        st.rerun()
 
+            with col_img:
+                st.markdown(
+                    f"""
+                    <div style='display: flex; align-items: flex-start; justify-content: center; margin-top: -8rem;'>
+                        {imagen_base64("images/imagen_logo.jpg", ancho="70%")}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
         return False
 
     return True
+
 
 
 from folium.plugins import LocateControl
