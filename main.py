@@ -2113,12 +2113,25 @@ def manejar_tickets():
     # ✅ Nuevo bloque más limpio y eficiente
     df = cargar_tickets(clear_cache=st.session_state.get("recargar_tickets", False))
     st.session_state.recargar_tickets = False
-
-    # 3) Radio controlada por session_state
-    opcion_ticket = st.radio(
-        "Seleccione una acción:",
-        ["Ver reclamos en cola", "Registrar nuevo reclamo", "Modificar reclamo existente", "Subir documentación a reclamo"]
-    )
+    with st.container():
+        st.markdown("<hr style='border:1px solid #7F7F7F; margin-top:0rem;'>", unsafe_allow_html=True)
+        # fondo blanco con borde visual simulado como encabezado
+        st.markdown(
+            """
+            <div style="border:1px solid #FFFFFF; border-radius:10px; padding:20px; background-color:#FFFFFF;">
+            """,
+            unsafe_allow_html=True
+        )
+        encabezado_con_icono("iconos/informe.png", "Gestión de Reclamos y Tickets", "h1")
+    
+        # 3) Radio controlada por session_state
+        opcion_ticket = st.radio(
+            "Seleccione una acción:",
+            ["Ver reclamos en cola", "Registrar nuevo reclamo", "Modificar reclamo existente", "Subir documentación a reclamo"]
+        )
+        # Cierre visual del bloque
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<hr style='border:1px solid #7F7F7F; margin-top:1rem;'>", unsafe_allow_html=True)
     
     if opcion_ticket == "Ver reclamos en cola":
         encabezado_sin_icono("Ver reclamos en cola", "h2")
