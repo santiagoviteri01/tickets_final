@@ -776,8 +776,8 @@ def autenticacion():
                             st.session_state.usuario_actual = usuario
                             st.session_state.rol = user_data['rol']
                             st.rerun()
-                    else:
-                        st.error("❌ Credenciales incorrectas")
+                        else:
+                            st.error("❌ Credenciales incorrectas")
                 with col2:
                     if st.button("Volver"):
                         st.session_state.mostrar_login = False
