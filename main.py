@@ -1165,7 +1165,7 @@ def portal_cliente():
             border-radius: 10px;
             padding: 1.5rem;
             margin-top: 1rem;
-            margin-bottom: 2rem;
+            margin-bottom: 10rem;
             background-color: #FFFFFF;
         }
         </style>
