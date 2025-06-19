@@ -11,7 +11,7 @@ import os
 import openai
 from pathlib import Path
 import base64
-TAMANO_GRAFICO = (8, 4)
+TAMANO_GRAFICO = (5, 2.5)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 gris_o= "#7F7F7F"
@@ -302,7 +302,6 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             ax.set_title("Evolución Anual de la Suma Asegurada")
             ax.set_xlabel("Mes")
             ax.set_ylabel("Suma Asegurada")
-            ax.grid(True)
             plt.xticks(rotation=45)
         
             st.pyplot(fig)
@@ -332,7 +331,6 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             ax.set_title("Evolución de la Suma Asegurada")
             ax.set_xlabel("Periodo")
             ax.set_ylabel("Suma Asegurada")
-            ax.grid(True)
             plt.xticks(rotation=45)
         
             st.pyplot(fig)
@@ -365,7 +363,6 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             ax.set_title("Tasa Mensual de Prima vs. Suma Asegurada")
             ax.set_xlabel("Periodo")
             ax.set_ylabel("Tasa (%)")
-            ax.grid(True)
             plt.xticks(rotation=45)
         
             st.pyplot(fig)
@@ -381,9 +378,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             ax.set_title("Top 10 Marcas Más Aseguradas")
             ax.set_xlabel("Marca")
             ax.set_ylabel("Cantidad")
-            ax.grid(axis='y')
             plt.xticks(rotation=45)
-        
             st.pyplot(fig)
 
     
@@ -406,7 +401,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         ).round(2)
     
         with st.sidebar:
-            encabezado_sin_icono("Configuración del Análisis de Reclamos", "h2")
+            st.header("Configuración del Análisis de Reclamos")
             año_analisis = st.selectbox("Seleccionar Año", [2024, 2025], key="año_reclamos")
             if len(resumen_aseguradoras_total) >= 1:
                 aseguradoras_seleccionadas = st.multiselect(
@@ -690,7 +685,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         asegurados['AÑO'] = asegurados['FECHA'].dt.year
     
         with st.sidebar:
-            encabezado_sin_icono("Filtros de Comisiones",nivel="h2")
+            st.header("Filtros de Comisiones")
             
             aseguradoras = ['Todas'] + sorted(asegurados['ASEGURADORA'].dropna().unique())
             aseguradora_sel = st.selectbox("Seleccionar Aseguradora", aseguradoras, key="aseg_comisiones")
@@ -734,7 +729,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     
             # Gráfico apilado por canal
             encabezado_sin_icono("Evolución de Comisiones por Canal",nivel="h2")
-            fig, ax = plt.subplots(figsize=(12, 5))
+            fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
             paleta_colores = ['#7F7F7F', '#C5C5C5', '#D62828', '#F7A9A8']  # Usa solo 4 si tienes 4 canales
 
             df_comisiones[columnas_comision].plot(kind='bar',color=paleta_colores ,stacked=True, ax=ax)
