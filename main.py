@@ -727,66 +727,79 @@ def autenticacion():
     if 'autenticado' not in st.session_state:
         st.session_state.autenticado = False
 
-    # Detectar si el ancho es pequeño (por debajo de 600px lo consideramos móvil)
-    is_mobile = st.get_option("browser.clientWidth") is not None and st.get_option("browser.clientWidth") < 600
-
     if not st.session_state.autenticado:
-        encabezado_sin_icono("Bienvenido de Nuevo", "h1")
+        with open("images/imagen_logo.jpg", "rb") as f:
+            logo_b64 = base64.b64encode(f.read()).decode()
 
-        if is_mobile:
-            # Modo vertical para celulares
-            st.image("images/imagen_logo.jpg", width=250)
-            usuario = st.text_input("Usuario")
-            contraseña = st.text_input("Contraseña", type="password")
+        st.markdown(f"""
+        <style>
+        .auth-container {{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background-color: #FFFFFF;
+            border-radius: 12px;
+        }}
 
-            col1, col2 = st.columns([2, 1])
-            with col1:
-                if st.button("Ingresar"):
-                    user_data = USUARIOS.get(usuario)
-                    if user_data and user_data['password'] == contraseña:
-                        st.session_state.autenticado = True
-                        st.session_state.usuario_actual = usuario
-                        st.session_state.rol = user_data['rol']
-                        st.rerun()
-                    else:
-                        st.error("❌ Credenciales incorrectas")
-            with col2:
-                if st.button("Volver"):
-                    st.session_state.mostrar_login = False
+        .auth-container img {{
+            height: 80px;
+            margin-bottom: 1rem;
+        }}
+
+        .auth-container .title {{
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #D8272E;
+            margin-bottom: 1rem;
+            text-align: center;
+        }}
+
+        .auth-container .subtitle {{
+            font-size: 1rem;
+            color: #808080;
+            margin-bottom: 2rem;
+            text-align: center;
+        }}
+
+        .stTextInput > div > input {{
+            text-align: center;
+        }}
+
+        @media (max-width: 768px) {{
+            .auth-container .title {{
+                font-size: 1.6rem;
+            }}
+        }}
+        </style>
+
+        <div class="auth-container">
+            <img src="data:image/jpeg;base64,{logo_b64}" alt="Logo" />
+            <div class="title">Inicio de Sesión</div>
+            <div class="subtitle">Ingresa tu usuario y contraseña</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        usuario = st.text_input("Usuario")
+        contraseña = st.text_input("Contraseña", type="password")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Ingresar"):
+                user_data = USUARIOS.get(usuario)
+                if user_data and user_data['password'] == contraseña:
+                    st.session_state.autenticado = True
+                    st.session_state.usuario_actual = usuario
+                    st.session_state.rol = user_data['rol']
                     st.rerun()
-        else:
-            # Modo de escritorio con columnas
-            col_form, col_img = st.columns([1, 1])
+                else:
+                    st.error("❌ Credenciales incorrectas")
 
-            with col_form:
-                usuario = st.text_input("Usuario")
-                contraseña = st.text_input("Contraseña", type="password")
-
-                col1, col2 = st.columns([2, 1])
-                with col1:
-                    if st.button("Ingresar"):
-                        user_data = USUARIOS.get(usuario)
-                        if user_data and user_data['password'] == contraseña:
-                            st.session_state.autenticado = True
-                            st.session_state.usuario_actual = usuario
-                            st.session_state.rol = user_data['rol']
-                            st.rerun()
-                        else:
-                            st.error("❌ Credenciales incorrectas")
-                with col2:
-                    if st.button("Volver"):
-                        st.session_state.mostrar_login = False
-                        st.rerun()
-
-            with col_img:
-                st.markdown(
-                    f"""
-                    <div style='display: flex; align-items: flex-start; justify-content: center; margin-top: -8rem;'>
-                        {imagen_base64("images/imagen_logo.jpg", ancho="70%")}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+        with col2:
+            if st.button("Volver"):
+                st.session_state.mostrar_login = False
+                st.rerun()
 
         return False
 
