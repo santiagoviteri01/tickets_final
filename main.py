@@ -1146,6 +1146,7 @@ def gestionar_asegurados():
 # Portal del Cliente
 def portal_cliente():
     st.sidebar.title("Menú Cliente")
+    
     if st.sidebar.button("Cerrar Sesión"):
         st.session_state.autenticado = False
         st.session_state.mostrar_login = False
@@ -1157,37 +1158,34 @@ def portal_cliente():
     mostrar_encabezado(f"Cliente: {st.session_state.usuario_actual}")
     # Cuadro visual con borde
     with st.container():
-        # Borde visual mediante HTML
-        st.markdown("""
-        <style>
-        .cuadro-borde {
-            border: 2px solid #7F7F7F;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-top: 1rem;
-            margin-bottom: 10rem;
-            background-color: #FFFFFF;
-        }
-        </style>
-        <div class="cuadro-borde">
-        """, unsafe_allow_html=True)
+        # Fondo y borde simulados mediante un markdown antes y después
+        st.markdown("---", unsafe_allow_html=True)  # separador superior
     
-        # Contenido visible
-        encabezado_sin_icono(
-            f"Portal del Cliente - {st.session_state.usuario_actual}",
-            nivel="h1"
+        # fondo blanco con borde visual simulado como encabezado
+        st.markdown(
+            """
+            <div style="border:2px solid #7F7F7F; border-radius:10px; padding:20px; background-color:#FFFFFF;">
+            """,
+            unsafe_allow_html=True
         )
     
-        asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
+        # Contenido: título
+        st.markdown(
+            f"<h1 style='color:#D62828; font-family:Calibri, sans-serif;'>Portal del Cliente - {st.session_state.usuario_actual}</h1>",
+            unsafe_allow_html=True
+        )
     
+        # Widget
         tab_seleccionado = st.radio(
             "Secciones",
             ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo", "Subir Archivos Adicionales a un Reclamo"],
             horizontal=True
         )
     
-        # Cierre del div
+        # Cierre visual del bloque
         st.markdown("</div>", unsafe_allow_html=True)
+    
+        st.markdown("---", unsafe_allow_html=True)  # separador inferior
 
     if tab_seleccionado == "Mis Datos Personales":
         encabezado_con_icono("iconos/verdatos.png", "Mis Datos Personales y del Vehículo", "h1")
