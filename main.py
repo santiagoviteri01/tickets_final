@@ -779,6 +779,9 @@ def autenticacion():
 
     if 'autenticado' not in st.session_state:
         st.session_state.autenticado = False
+    if "mobile" not in st.session_state:
+        st.warning("Cargando...")
+        st.stop()  # ⚠️ Esto detiene el render hasta que mobile esté en session_state
 
     is_mobile = st.session_state.get("mobile", False)
 
@@ -786,7 +789,7 @@ def autenticacion():
         encabezado_sin_icono("Bienvenido de Nuevo", "h1")
 
         if is_mobile:
-            st.image("images/imagen_logo.jpg", width=250)
+            #st.image("images/imagen_logo.jpg", width=250)
             usuario = st.text_input("Usuario")
             contraseña = st.text_input("Contraseña", type="password")
             col1, col2 = st.columns([2, 1])
