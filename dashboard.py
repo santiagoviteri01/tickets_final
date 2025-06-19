@@ -136,8 +136,6 @@ def encabezado_con_icono(ruta_icono, texto, nivel="h2"):
     
 def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     
-    encabezado_con_icono("iconos/graficosubida.png", "Análisis de la Cuenta", "h1")
-
     if any(df is None or df.empty for df in [pagados, pendientes, asegurados]):
         st.warning("Por favor verifica que los DataFrames no estén vacíos.")
         return
@@ -197,12 +195,28 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         df_siniestralidad['Monto_Total_Reclamos'] / df_siniestralidad['Prima_Vehiculos'],
         0
     )
-    seccion = st.radio(
-        "Selecciona una sección:",
-        ["Suma Asegurada", "Reclamos", "Siniestralidad","Comisiones por Canal","Generar Informe Ejecutivo"],
-        horizontal=True
-    )
-    
+    with st.container():
+        # Borde visual mediante HTML
+        st.markdown("""
+        <style>
+        .cuadro-borde {
+            border: 2px solid #7F7F7F;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+            background-color: #FFFFFF;
+        }
+        </style>
+        <div class="cuadro-borde">
+        """, unsafe_allow_html=True)
+        encabezado_con_icono("iconos/graficosubida.png", "Análisis de la Cuenta", "h1")
+        seccion = st.radio(
+            "Selecciona una sección:",
+            ["Suma Asegurada", "Reclamos", "Siniestralidad","Comisiones por Canal","Generar Informe Ejecutivo"],
+            horizontal=True
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
     
     if seccion == "Suma Asegurada":
         asegurados['FECHA'] = pd.to_datetime(asegurados['FECHA'], dayfirst=True, errors='coerce')
