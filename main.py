@@ -1159,12 +1159,13 @@ def portal_cliente():
     # Cuadro visual con borde
     with st.container():
         # Fondo y borde simulados mediante un markdown antes y después
-        st.markdown("---", unsafe_allow_html=True)  # separador superior
+        st.markdown("<hr style='border:1px solid #7F7F7F; margin-top:0rem;'>", unsafe_allow_html=True)
+
     
         # fondo blanco con borde visual simulado como encabezado
         st.markdown(
             """
-            <div style="border:2px solid #7F7F7F; border-radius:10px; padding:20px; background-color:#FFFFFF;">
+            <div style="border:1px solid #FFFFFF; border-radius:10px; padding:20px; background-color:#FFFFFF;">
             """,
             unsafe_allow_html=True
         )
@@ -1185,7 +1186,7 @@ def portal_cliente():
         # Cierre visual del bloque
         st.markdown("</div>", unsafe_allow_html=True)
     
-        st.markdown("---", unsafe_allow_html=True)  # separador inferior
+        st.markdown("<hr style='border:1px solid #7F7F7F; margin-top:1rem;'>", unsafe_allow_html=True)
 
     if tab_seleccionado == "Mis Datos Personales":
         encabezado_con_icono("iconos/verdatos.png", "Mis Datos Personales y del Vehículo", "h1")
