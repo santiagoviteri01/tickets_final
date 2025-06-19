@@ -11,7 +11,7 @@ import os
 import openai
 from pathlib import Path
 import base64
-TAMANO_GRAFICO = (5, 2.5)
+TAMANO_GRAFICO = (8, 4)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 gris_o= "#7F7F7F"
