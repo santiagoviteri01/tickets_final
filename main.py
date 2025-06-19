@@ -723,56 +723,11 @@ def landing_page():
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
        
-
-import streamlit.components.v1 as components
-
 def detectar_dispositivo():
-    components.html(
-        """
-        <script>
-        const width = window.innerWidth;
-        const streamlitDoc = window.parent.document;
-        streamlitDoc.dispatchEvent(new CustomEvent("STREAMLIT_MOBILE_WIDTH", {
-            detail: {width: width}
-        }));
-        </script>
-        """,
-        height=0,
-    )
-
-    # Escucha el evento y actualiza session_state
-    if "mobile" not in st.session_state:
-        st.session_state["mobile"] = False
-
-    st.markdown("""
-        <script>
-        const streamlitDoc = window.parent.document;
-        streamlitDoc.addEventListener("STREAMLIT_MOBILE_WIDTH", (event) => {
-            const width = event.detail.width;
-            const mobile = width < 600;
-            window.parent.postMessage({isMobile: mobile}, "*");
-        });
-        </script>
-    """, unsafe_allow_html=True)
-
-    # Recibe el mensaje desde JavaScript y guarda el valor
-    components.html(
-        """
-        <script>
-        window.addEventListener("message", (event) => {
-            const isMobile = event.data.isMobile;
-            if (isMobile !== undefined) {
-                fetch("/_stcore/update_session_state", {
-                    method: "POST",
-                    body: JSON.stringify({mobile: isMobile}),
-                    headers: {"Content-Type": "application/json"}
-                });
-            }
-        });
-        </script>
-        """,
-        height=0,
-    )
+    width = streamlit_js_eval(js_expressions="window.innerWidth", key="GET_WIDTH")
+    if width is None:
+        st.stop()
+    st.session_state["mobile"] = width < 600
 
 def autenticacion():
     detectar_dispositivo()
