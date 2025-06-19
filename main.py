@@ -663,8 +663,11 @@ def landing_page():
             margin: 0 auto 2rem auto;
             text-align: center;
           }}
+
           .hero-image {{
-            max-width: 600px;
+            width: 100%;
+            max-width: 500px;
+            height: auto;
             margin: 0 auto 2rem auto;
             border-radius: 12px;
             box-shadow: 0 6px 16px rgba(0,0,0,0.08);
@@ -757,7 +760,7 @@ def autenticacion():
     is_mobile = st.session_state.get("mobile", False)
 
     if not st.session_state.autenticado:
-        encabezado_sin_icono("Bienvenido de Nuevo", "h1")
+        encabezado_con_icono("iconos/atlantida.png" ,"Bienvenido de Nuevo", "h1")
 
         if is_mobile:
             #st.image("images/imagen_logo.jpg", width=250)
