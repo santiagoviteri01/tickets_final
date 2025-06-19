@@ -197,19 +197,14 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     )
     with st.container():
         # Borde visual mediante HTML
-        st.markdown("""
-        <style>
-        .cuadro-borde {
-            border: 2px solid #7F7F7F;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-top: 1rem;
-            margin-bottom: 2rem;
-            background-color: #FFFFFF;
-        }
-        </style>
-        <div class="cuadro-borde">
-        """, unsafe_allow_html=True)
+        st.markdown("<hr style='border:1px solid #7F7F7F; margin-top:0rem;'>", unsafe_allow_html=True)
+        # fondo blanco con borde visual simulado como encabezado
+        st.markdown(
+            """
+            <div style="border:1px solid #FFFFFF; border-radius:10px; padding:20px; background-color:#FFFFFF;">
+            """,
+            unsafe_allow_html=True
+        )
         encabezado_con_icono("iconos/graficosubida.png", "Análisis de la Cuenta", "h1")
         seccion = st.radio(
             "Selecciona una sección:",
@@ -218,6 +213,9 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         )
         st.markdown("</div>", unsafe_allow_html=True)
     
+        # Cierre visual del bloque
+        st.markdown("<hr style='border:1px solid #7F7F7F; margin-top:1rem;'>", unsafe_allow_html=True)
+        
     if seccion == "Suma Asegurada":
         asegurados['FECHA'] = pd.to_datetime(asegurados['FECHA'], dayfirst=True, errors='coerce')
         asegurados['MES'] = asegurados['FECHA'].dt.month
