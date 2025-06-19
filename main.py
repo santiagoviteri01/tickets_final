@@ -1156,34 +1156,38 @@ def portal_cliente():
         
     mostrar_encabezado(f"Cliente: {st.session_state.usuario_actual}")
     # Cuadro visual con borde
-    # Borde visible con fondo blanco y paddings usando HTML completo
-    st.markdown("""
-    <div style="
-        border: 2px solid #7F7F7F;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-top: 1rem;
-        margin-bottom: 2rem;
-        background-color: #FFFFFF;
-    ">
-    """, unsafe_allow_html=True)
+    with st.container():
+        # Borde visual mediante HTML
+        st.markdown("""
+        <style>
+        .cuadro-borde {
+            border: 2px solid #7F7F7F;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+            background-color: #FFFFFF;
+        }
+        </style>
+        <div class="cuadro-borde">
+        """, unsafe_allow_html=True)
     
-    # Contenido dentro del cuadro
-    encabezado_sin_icono(
-        f"Portal del Cliente - {st.session_state.usuario_actual}",
-        nivel="h1"
-    )
+        # Contenido visible
+        encabezado_sin_icono(
+            f"Portal del Cliente - {st.session_state.usuario_actual}",
+            nivel="h1"
+        )
     
-    asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
+        asegurados_df = cargar_df_sin_cache("aseguradosfiltrados")
     
-    tab_seleccionado = st.radio(
-        "Secciones",
-        ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo", "Subir Archivos Adicionales a un Reclamo"],
-        horizontal=True
-    )
+        tab_seleccionado = st.radio(
+            "Secciones",
+            ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo", "Subir Archivos Adicionales a un Reclamo"],
+            horizontal=True
+        )
     
-    # Cierre del div
-    st.markdown("</div>", unsafe_allow_html=True)
+        # Cierre del div
+        st.markdown("</div>", unsafe_allow_html=True)
 
     if tab_seleccionado == "Mis Datos Personales":
         encabezado_con_icono("iconos/verdatos.png", "Mis Datos Personales y del Vehículo", "h1")
