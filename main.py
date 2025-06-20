@@ -427,13 +427,14 @@ def render_tabla_html(df):
             color: #7F7F7F;
             text-align: center;
             padding: 8px;
-            border-bottom: 1px solid #DDDDDD;
+            border-bottom: 1px solid white;
         }
 
         table.custom-table tr.total-row td {
             background-color: #D62828;
             color: white;
             font-weight: bold;
+            border-top: 1px solid white;
         }
 
     </style>
