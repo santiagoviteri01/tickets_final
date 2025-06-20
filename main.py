@@ -760,10 +760,17 @@ def autenticacion():
     is_mobile = st.session_state.get("mobile", False)
 
     if not st.session_state.autenticado:
-        encabezado_con_icono("iconos/atlantida.png" ,"Bienvenido de Nuevo", "h1")
+        imagen_html = imagen_base64("images/atlantida_logo.jpg", ancho="50%")  # o el icono nuevo
 
         if is_mobile:
-            #st.image("images/imagen_logo.jpg", width=250)
+            st.markdown(
+                f"""
+                <div style='display: flex; justify-content: center; margin-bottom: 1rem;'>
+                    {imagen_html}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
             usuario = st.text_input("Usuario")
             contraseña = st.text_input("Contraseña", type="password")
             col1, col2 = st.columns([2, 1])
@@ -784,6 +791,14 @@ def autenticacion():
         else:
             col_form, col_img = st.columns([1, 1])
             with col_form:
+                st.markdown(
+                    f"""
+                    <div style='display: flex; justify-content: center; margin-bottom: 1rem;'>
+                        {imagen_html}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
                 usuario = st.text_input("Usuario")
                 contraseña = st.text_input("Contraseña", type="password")
                 col1, col2 = st.columns([2, 1])
