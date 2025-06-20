@@ -11,15 +11,17 @@ import os
 import openai
 from pathlib import Path
 import base64
+import streamlit.components.v1 as components
+
 TAMANO_GRAFICO = (8, 4)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 gris_o= "#7F7F7F"
-gris_c= "#C5C5C5"
+gris_c= "#F2F2F2"
 rojo="#D62828"
 rosa_s= "#F7A9A8"
 rosa_c="#FDE4E2"
-palette=['#7F7F7F', '#C5C5C5', '#D62828', '#F7A9A8', '#FDE4E2']
+palette=['#7F7F7F', '#F2F2F2', '#D62828', '#F7A9A8', '#FDE4E2']
 
 st.markdown(
     """
@@ -133,6 +135,70 @@ def encabezado_con_icono(ruta_icono, texto, nivel="h2"):
     </div>
     """
     st.markdown(html, unsafe_allow_html=True)
+
+def render_tabla_html(df):
+    table_html = """
+    <style>
+        .tabla-container {
+            overflow-x: auto;
+            padding: 0.5rem;
+        }
+
+        table.custom-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            font-family: 'Calibri', sans-serif;
+            border: 1px solid #E0E0E0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        table.custom-table th {
+            background-color: #7F7F7F;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            border-bottom: 1px solid #999999;
+        }
+
+        table.custom-table td {
+            background-color: #F2F2F2;
+            color: #7F7F7F;
+            text-align: center;
+            padding: 8px;
+            border-bottom: 1px solid white;
+        }
+
+        table.custom-table tr.total-row td {
+            background-color: #D62828;
+            color: white;
+            font-weight: bold;
+            border-top: 1px solid white;
+        }
+
+    </style>
+    <div class="tabla-container">
+        <table class="custom-table">
+            <thead>
+                <tr>
+    """
+
+    for col in df.columns:
+        table_html += f"<th>{col}</th>"
+    table_html += "</tr></thead><tbody>"
+
+    for index, row in df.iterrows():
+        clase_fila = "total-row" if str(index).lower() == "total" else ""
+        table_html += f'<tr class="{clase_fila}">'
+        for val in row:
+            table_html += f"<td>{val}</td>"
+        table_html += "</tr>"
+
+    table_html += "</tbody></table></div>"
+
+    components.html(table_html, height=420, scrolling=True)
     
 def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     
@@ -417,8 +483,9 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         pendientes_aseguradora_data = pendientes_filtrados[pendientes_filtrados['CIA. DE SEGUROS'].isin(aseguradoras_seleccionadas)]
     
         encabezado_sin_icono("Datos Generales","h2")
-        st.dataframe(pagos_aseguradora_data[['COMPAÑÍA', 'VALOR RECLAMO', 'FECHA SINIESTRO', 'EVENTO']].head(3))
-        st.dataframe(pendientes_aseguradora_data[['CIA. DE SEGUROS', 'VALOR SINIESTRO', 'FECHA DE SINIESTRO', 'ESTADO ACTUAL']].head(3))
+        render_tabla_html(pagos_aseguradora_data[['COMPAÑÍA', 'VALOR RECLAMO', 'FECHA SINIESTRO', 'EVENTO']].head(3))
+
+        render_tabla_html(pendientes_aseguradora_data[['CIA. DE SEGUROS', 'VALOR SINIESTRO', 'FECHA DE SINIESTRO', 'ESTADO ACTUAL']].head(3))
     
         encabezado_sin_icono("Distribución Temporal","h2")
         pagos_aseguradora_data['MES'] = pagos_aseguradora_data['FECHA SINIESTRO'].dt.month
@@ -642,18 +709,13 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
 
         encabezado_sin_icono("Datos Detallados",nivel="h2")
         columnas = ['PERIODO', 'ASEGURADORA', 'Prima_Vehiculos', 'Total_Reclamos', 'Monto_Total_Reclamos', 'Siniestralidad'] if aseguradora_sel != 'Todas' else ['PERIODO', 'Prima_Vehiculos', 'Total_Reclamos', 'Monto_Total_Reclamos', 'Siniestralidad']
-        st.dataframe(
-            df_filtrado[columnas]
-            .style.format({
-                'Prima_Vehiculos': '${:,.2f}',
-                'Total_Reclamos': '{:,.0f}',
-                'Monto_Total_Reclamos': '${:,.2f}',
-                'Siniestralidad': '{:.2%}'
-            })
-            .background_gradient(subset=['Siniestralidad'], cmap='Reds'),
-            use_container_width=True,
-            height=400
-        )
+        df_tabla = df_filtrado[columnas].copy()
+        df_tabla['Prima_Vehiculos'] = df_tabla['Prima_Vehiculos'].map("${:,.2f}".format)
+        df_tabla['Monto_Total_Reclamos'] = df_tabla['Monto_Total_Reclamos'].map("${:,.2f}".format)
+        df_tabla['Total_Reclamos'] = df_tabla['Total_Reclamos'].map("{:,.0f}".format)
+        df_tabla['Siniestralidad'] = df_tabla['Siniestralidad'].map("{:.2%}".format)
+        
+        render_tabla_html(df_tabla)
         encabezado_sin_icono("Indicadores Clave",nivel="h2")
 
         if not df_filtrado.empty:
@@ -757,9 +819,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     
             # Tabla detallada
             encabezado_sin_icono("Tabla Detallada",nivel="h2")
-
-            st.dataframe(df_comisiones[columnas_comision].round(2), use_container_width=True)
-    
+            df_tabla = df_comisiones[columnas_comision].copy().round(2)
+            render_tabla_html(df_tabla)
             # Exportar a Excel
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
