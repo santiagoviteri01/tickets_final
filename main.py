@@ -423,7 +423,7 @@ def render_tabla_html(df):
         }
 
         table.custom-table td {
-            background-color: #C5C5C5;
+            background-color: #F2F2F2;
             color: #7F7F7F;
             text-align: center;
             padding: 8px;
@@ -436,10 +436,6 @@ def render_tabla_html(df):
             font-weight: bold;
         }
 
-        /* Alternar colores (opcional) */
-        table.custom-table tr:nth-child(even):not(.total-row) td {
-            background-color: #D9D9D9;
-        }
     </style>
     <div class="tabla-container">
         <table class="custom-table">
@@ -489,10 +485,11 @@ def mostrar_encabezado(texto_derecha=""):
             top: 0;
             left: 0;
             right: 0;
-            z-index: 1000;
+            z-index: 9999;
             background-color: #FFFFFF;
             padding: 10px 20px;
             border-bottom: 1px solid #ccc;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: row;
             justify-content: space-between;
@@ -534,7 +531,7 @@ def mostrar_encabezado(texto_derecha=""):
     """)
 
     html = html_template.substitute(logo_b64=logo_b64, texto_derecha=texto_derecha)
-    components.html(html, height=100)
+    components.html(html, height=140)
 
 def encabezado_sin_icono(texto, nivel="h2"):
     estilo = {
