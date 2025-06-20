@@ -398,25 +398,36 @@ def estilo_tabla(df: pd.DataFrame) -> Styler:
 def render_tabla_html(df):
     table_html = """
     <style>
+        .tabla-container {
+            overflow-x: auto;
+            padding: 0.5rem;
+        }
+
         table.custom-table {
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             width: 100%;
             font-family: 'Calibri', sans-serif;
+            border: 1px solid #E0E0E0;
+            border-radius: 10px;
+            overflow: hidden;
         }
 
         table.custom-table th {
-            background-color: #4F4F4F;
+            background-color: #7F7F7F;
             color: white;
             font-weight: bold;
             text-align: center;
-            padding: 8px;
+            padding: 10px;
+            border-bottom: 1px solid #999999;
         }
 
         table.custom-table td {
             background-color: #C5C5C5;
-            color: #4F4F4F;
+            color: #7F7F7F;
             text-align: center;
             padding: 8px;
+            border-bottom: 1px solid #DDDDDD;
         }
 
         table.custom-table tr.total-row td {
@@ -424,18 +435,22 @@ def render_tabla_html(df):
             color: white;
             font-weight: bold;
         }
+
+        /* Alternar colores (opcional) */
+        table.custom-table tr:nth-child(even):not(.total-row) td {
+            background-color: #D9D9D9;
+        }
     </style>
-    <table class="custom-table">
-        <thead>
-            <tr>
+    <div class="tabla-container">
+        <table class="custom-table">
+            <thead>
+                <tr>
     """
 
-    # Encabezados
     for col in df.columns:
         table_html += f"<th>{col}</th>"
     table_html += "</tr></thead><tbody>"
 
-    # Filas
     for index, row in df.iterrows():
         clase_fila = "total-row" if str(index).lower() == "total" else ""
         table_html += f'<tr class="{clase_fila}">'
@@ -443,10 +458,10 @@ def render_tabla_html(df):
             table_html += f"<td>{val}</td>"
         table_html += "</tr>"
 
-    table_html += "</tbody></table>"
+    table_html += "</tbody></table></div>"
 
-    # Mostrar con scroll si es necesario
-    components.html(f"<div style='overflow-x:auto'>{table_html}</div>", height=400)
+    components.html(table_html, height=420, scrolling=True)
+
     
 def imagen_base64(ruta_img, ancho="100%"):
     img_path = Path(ruta_img)
