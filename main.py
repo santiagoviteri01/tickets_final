@@ -374,7 +374,7 @@ def estilo_tabla(df: pd.DataFrame) -> Styler:
         if fila.name == 'Total':
             return ['background-color: #D62828; color: white; font-weight: bold;' for _ in fila]
         else:
-            return ['background-color: #C5C5C5; color: #4F4F4F;' for _ in fila]
+            return ['background-color: #C5C5C5; color: #7F7F7F;' for _ in fila]
 
     estilo = df.style\
         .apply(estilo_filas, axis=1)\
@@ -382,7 +382,7 @@ def estilo_tabla(df: pd.DataFrame) -> Styler:
             {
                 'selector': 'th',
                 'props': [
-                    ('background-color', '#4F4F4F'),
+                    ('background-color', '#C5C5C5'),
                     ('color', 'white'),
                     ('font-weight', 'bold'),
                     ('text-align', 'center')
@@ -392,9 +392,62 @@ def estilo_tabla(df: pd.DataFrame) -> Styler:
         .set_properties(**{
             'text-align': 'center',
             'font-family': 'Calibri, sans-serif'
-        })\
-        .hide(axis="index")  # 🔥 Esto oculta la columna de índi
+        })
     return estilo
+    
+def render_tabla_html(df):
+    table_html = """
+    <style>
+        table.custom-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-family: 'Calibri', sans-serif;
+        }
+
+        table.custom-table th {
+            background-color: #4F4F4F;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            padding: 8px;
+        }
+
+        table.custom-table td {
+            background-color: #C5C5C5;
+            color: #4F4F4F;
+            text-align: center;
+            padding: 8px;
+        }
+
+        table.custom-table tr.total-row td {
+            background-color: #D62828;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+    <table class="custom-table">
+        <thead>
+            <tr>
+    """
+
+    # Encabezados
+    for col in df.columns:
+        table_html += f"<th>{col}</th>"
+    table_html += "</tr></thead><tbody>"
+
+    # Filas
+    for index, row in df.iterrows():
+        clase_fila = "total-row" if str(index).lower() == "total" else ""
+        table_html += f'<tr class="{clase_fila}">'
+        for val in row:
+            table_html += f"<td>{val}</td>"
+        table_html += "</tr>"
+
+    table_html += "</tbody></table>"
+
+    # Mostrar con scroll si es necesario
+    components.html(f"<div style='overflow-x:auto'>{table_html}</div>", height=400)
+    
 def imagen_base64(ruta_img, ancho="100%"):
     img_path = Path(ruta_img)
     if not img_path.exists():
@@ -1205,8 +1258,8 @@ def gestionar_asegurados():
             st.session_state["df_original"] = df_original
             persistir_en_sheet(df_original)
             st.success("✅ Cambios guardados")
-            df_registro = registro_act.to_frame().T.reset_index(drop=True)
-            st.write(estilo_tabla(df_registro))
+            df_registro = registro_act.to_frame().T
+            render_tabla_html(df_registro)
 
 
     # 📄 EMITIR CERTIFICADO
@@ -1877,12 +1930,9 @@ def mostrar_conversaciones_bot():
 
     # Tabla detallada
     encabezado_sin_icono("Detalle de Conversaciones", "h2")
-    st.write(
-        estilo_tabla(
-                df_filtrado[['fecha', 'numero', 'conversacion', 'categoria']].sort_values(by="fecha", ascending=False).reset_index(drop=True)
-            ),
-            use_container_width=True
-    )
+    df_mostrar = df_filtrado[['fecha', 'numero', 'conversacion', 'categoria']]\
+    .sort_values(by="fecha", ascending=False)
+    render_tabla_html(df_mostrar)
 
     # Descarga CSV
     csv = df_filtrado.to_csv(index=False).encode("utf-8")
@@ -2248,8 +2298,8 @@ def manejar_tickets():
 
         st.metric("Reclamos Pendientes", len(cola))
         df_tabla = cola[['Número','Título','Cliente','Estado','Fecha_Modificacion']]\
-            .sort_values('Fecha_Modificacion', ascending=False).reset_index(drop=True)
-        st.write(estilo_tabla(df_tabla), use_container_width=True)
+            .sort_values('Fecha_Modificacion', ascending=False)
+        render_tabla_html(df_tabla)
 
         # 1) Selección
         selected = st.number_input(
@@ -2700,7 +2750,7 @@ def descargar_tickets():
 
         encabezado_sin_icono("Vista Previa", "h3")
         base=df.tail()
-        st.write(estilo_tabla(base), use_container_width=True)
+        render_tabla_html(base)
     else:
         st.warning(f"⚠️ No hay datos disponibles en la hoja seleccionada ({hoja}).")
 
