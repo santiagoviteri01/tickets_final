@@ -392,7 +392,8 @@ def estilo_tabla(df: pd.DataFrame) -> Styler:
         .set_properties(**{
             'text-align': 'center',
             'font-family': 'Calibri, sans-serif'
-        })
+        })\
+        .hide(axis="index")  # 🔥 Esto oculta la columna de índi
     return estilo
 def imagen_base64(ruta_img, ancho="100%"):
     img_path = Path(ruta_img)
@@ -415,58 +416,57 @@ def mostrar_encabezado(texto_derecha=""):
 
     html_template = Template("""
     <style>
-        .encabezado-container {
-            position: sticky;
+        .encabezado-fijo {
+            position: fixed;
             top: 0;
+            left: 0;
+            right: 0;
             z-index: 1000;
+            background-color: #FFFFFF;
+            padding: 10px 20px;
+            border-bottom: 1px solid #ccc;
             display: flex;
             flex-direction: row;
             justify-content: space-between;
             align-items: center;
-            background-color: #FFFFFF;
-            padding: 0.5rem 1rem;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            margin-bottom: 1.5rem;
-            height: auto;
-            flex-wrap: wrap;
+            font-family: 'Calibri', sans-serif;
         }
-    
-        .encabezado-container img {
-            height: 50px;
-            margin-bottom: 0.5rem;
+
+        .encabezado-fijo img {
+            height: 40px;
         }
-    
+
         .encabezado-texto {
-            font-family: 'Calibri', 'Segoe UI', sans-serif;
             color: #7F7F7F;
             font-weight: bold;
-            font-size: 16px;
-            text-align: right;
-            flex-grow: 1;
+            font-size: 18px;
         }
-    
+
         @media (max-width: 768px) {
-            .encabezado-container {
+            .encabezado-fijo {
                 flex-direction: column;
                 align-items: flex-start;
+                padding: 10px;
             }
-    
+
             .encabezado-texto {
-                text-align: left;
-                font-size: 14px;
-                margin-top: 0.5rem;
+                font-size: 16px;
+                margin-top: 5px;
             }
         }
     </style>
-    
-    <div class="encabezado-container">
+
+    <div class="encabezado-fijo">
         <img src="data:image/jpeg;base64,$logo_b64" alt="Atlántida Logo">
         <div class="encabezado-texto">$texto_derecha</div>
     </div>
+
+    <!-- Espacio para que no se tape el contenido -->
+    <div style="height:80px;"></div>
     """)
 
     html = html_template.substitute(logo_b64=logo_b64, texto_derecha=texto_derecha)
-    st.markdown(html, unsafe_allow_html=True)
+    components.html(html, height=100)
 
 def encabezado_sin_icono(texto, nivel="h2"):
     estilo = {
@@ -1205,8 +1205,8 @@ def gestionar_asegurados():
             st.session_state["df_original"] = df_original
             persistir_en_sheet(df_original)
             st.success("✅ Cambios guardados")
-            df_registro = registro_act.to_frame().T
-            st.dataframe(estilo_tabla(df_registro))
+            df_registro = registro_act.to_frame().T.reset_index(drop=True)
+            st.write(estilo_tabla(df_registro))
 
 
     # 📄 EMITIR CERTIFICADO
@@ -1877,9 +1877,9 @@ def mostrar_conversaciones_bot():
 
     # Tabla detallada
     encabezado_sin_icono("Detalle de Conversaciones", "h2")
-    st.dataframe(
+    st.write(
         estilo_tabla(
-                df_filtrado[['fecha', 'numero', 'conversacion', 'categoria']].sort_values(by="fecha", ascending=False)
+                df_filtrado[['fecha', 'numero', 'conversacion', 'categoria']].sort_values(by="fecha", ascending=False).reset_index(drop=True)
             ),
             use_container_width=True
     )
@@ -2248,8 +2248,8 @@ def manejar_tickets():
 
         st.metric("Reclamos Pendientes", len(cola))
         df_tabla = cola[['Número','Título','Cliente','Estado','Fecha_Modificacion']]\
-            .sort_values('Fecha_Modificacion', ascending=False)
-        st.dataframe(estilo_tabla(df_tabla), use_container_width=True, height=300)
+            .sort_values('Fecha_Modificacion', ascending=False).reset_index(drop=True)
+        st.write(estilo_tabla(df_tabla), use_container_width=True)
 
         # 1) Selección
         selected = st.number_input(
@@ -2700,7 +2700,7 @@ def descargar_tickets():
 
         encabezado_sin_icono("Vista Previa", "h3")
         base=df.tail()
-        st.dataframe(estilo_tabla(base), use_container_width=True)
+        st.write(estilo_tabla(base), use_container_width=True)
     else:
         st.warning(f"⚠️ No hay datos disponibles en la hoja seleccionada ({hoja}).")
 
