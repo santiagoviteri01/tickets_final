@@ -198,7 +198,7 @@ def render_tabla_html(df):
 
     table_html += "</tbody></table></div>"
 
-    components.html(table_html, height=420, scrolling=True)
+    components.html(table_html, height=height, scrolling=True)
     
 def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     
@@ -393,7 +393,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         
             # Plot con matplotlib
             fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
-            evolucion.plot(ax=ax, marker='o', legend=False, color=gris_c)
+            evolucion.plot(ax=ax, marker='o', legend=False, color=gris_o)
             ax.set_title("Evolución de la Suma Asegurada")
             ax.set_xlabel("Periodo")
             ax.set_ylabel("Suma Asegurada")
@@ -425,7 +425,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         
             # Graficar con matplotlib
             fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
-            ax.plot(tasa_mensual['Periodo'], tasa_mensual['Tasa'],color=gris_c, marker='o')
+            ax.plot(tasa_mensual['Periodo'], tasa_mensual['Tasa'],color=gris_o, marker='o')
             ax.set_title("Tasa Mensual de Prima vs. Suma Asegurada")
             ax.set_xlabel("Periodo")
             ax.set_ylabel("Tasa (%)")
@@ -440,7 +440,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         
             # Graficar con matplotlib
             fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
-            top_marcas.plot(kind='barh', color=gris_c,ax=ax)
+            top_marcas.plot(kind='barh', color=gris_o,ax=ax)
             ax.set_title("Top 10 Marcas Más Aseguradas")
             ax.set_xlabel("Marca")
             ax.set_ylabel("Cantidad")
@@ -483,9 +483,9 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         pendientes_aseguradora_data = pendientes_filtrados[pendientes_filtrados['CIA. DE SEGUROS'].isin(aseguradoras_seleccionadas)]
     
         encabezado_sin_icono("Datos Generales","h2")
-        render_tabla_html(pagos_aseguradora_data[['COMPAÑÍA', 'VALOR RECLAMO', 'FECHA SINIESTRO', 'EVENTO']].head(3))
+        render_tabla_html(pagos_aseguradora_data[['COMPAÑÍA', 'VALOR RECLAMO', 'FECHA SINIESTRO', 'EVENTO']].head(3),height=250)
 
-        render_tabla_html(pendientes_aseguradora_data[['CIA. DE SEGUROS', 'VALOR SINIESTRO', 'FECHA DE SINIESTRO', 'ESTADO ACTUAL']].head(3))
+        render_tabla_html(pendientes_aseguradora_data[['CIA. DE SEGUROS', 'VALOR SINIESTRO', 'FECHA DE SINIESTRO', 'ESTADO ACTUAL']].head(3),height=250)
     
         encabezado_sin_icono("Distribución Temporal","h2")
         pagos_aseguradora_data['MES'] = pagos_aseguradora_data['FECHA SINIESTRO'].dt.month
@@ -502,7 +502,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         if grafico_valores == "Histograma":
             bins_hist = st.slider("Número de Bins", 10, 100, 30, 5)
             fig = plt.figure(figsize=TAMANO_GRAFICO)
-            sns.histplot(pagos_aseguradora_data['VALOR RECLAMO'],color=gris_c ,bins=bins_hist, kde=True)
+            sns.histplot(pagos_aseguradora_data['VALOR RECLAMO'],color=gris_o ,bins=bins_hist, kde=True)
             st.pyplot(fig)
         elif grafico_valores == "Boxplot":
             fig = plt.figure(figsize=TAMANO_GRAFICO)
@@ -515,7 +515,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             labels = [f"{bins[i]}-{bins[i+1]}" for i in range(len(bins)-1)]
             pagos_aseguradora_data['Rango'] = pd.cut(pagos_aseguradora_data['VALOR RECLAMO'], bins=bins, labels=labels, right=False)
             fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
-            sns.countplot(y='Rango', data=pagos_aseguradora_data, order=labels, color=gris_c, ax=ax)
+            sns.countplot(y='Rango', data=pagos_aseguradora_data, order=labels, color=gris_o, ax=ax)
             st.pyplot(fig)
     
         # Nuevo selector de tipo de severidad
@@ -685,7 +685,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         # Gráfico
         df_filtrado = df_filtrado.sort_values('FECHA')
         fig, ax = plt.subplots(figsize=(14, 6))
-        sns.lineplot(data=df_filtrado, x='PERIODO', y='Siniestralidad', marker='o', color=gris_c, ax=ax)
+        sns.lineplot(data=df_filtrado, x='PERIODO', y='Siniestralidad', marker='o', color=rojo, ax=ax)
         ax.set_ylabel("Ratio Siniestralidad", color='#E53935')
         ax.tick_params(axis='y', colors='#E53935')
     
@@ -715,7 +715,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         df_tabla['Total_Reclamos'] = df_tabla['Total_Reclamos'].map("{:,.0f}".format)
         df_tabla['Siniestralidad'] = df_tabla['Siniestralidad'].map("{:.2%}".format)
         
-        render_tabla_html(df_tabla)
+        render_tabla_html(df_tabla,height=450)
         encabezado_sin_icono("Indicadores Clave",nivel="h2")
 
         if not df_filtrado.empty:
@@ -806,7 +806,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             canal_seleccionado = st.selectbox("Selecciona el canal a visualizar:", columnas_comision)
             if canal_seleccionado in df_comisiones.columns:
                 fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
-                ax.plot(df_comisiones.index, df_comisiones[canal_seleccionado], color=gris_c ,marker='o', label=canal_seleccionado)
+                ax.plot(df_comisiones.index, df_comisiones[canal_seleccionado], color=gris_o ,marker='o', label=canal_seleccionado)
                 ax.set_title(f"Evolución de {canal_seleccionado}")
                 ax.set_xlabel("Periodo")
                 ax.set_ylabel("USD ($)")
@@ -818,7 +818,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             # Tabla detallada
             encabezado_sin_icono("Tabla Detallada",nivel="h2")
             df_tabla = df_comisiones[columnas_comision].copy().round(2)
-            render_tabla_html(df_tabla)
+            render_tabla_html(df_tabla,height=250)
             # Exportar a Excel
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
