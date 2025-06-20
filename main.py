@@ -366,7 +366,32 @@ for _, row in asegurados_df.iterrows():
         "password": client_id,  # Contraseña = ID en texto plano
         "rol": "cliente"
     }
+    
+def estilo_tabla(df: pd.DataFrame) -> pd.io.formats.style.Styler:
+    def estilo_filas(fila):
+        if fila.name == 'Total':
+            return ['background-color: #D62828; color: white; font-weight: bold;' for _ in fila]
+        else:
+            return ['background-color: #C5C5C5; color: #4F4F4F;' for _ in fila]
 
+    estilo = df.style\
+        .apply(estilo_filas, axis=1)\
+        .set_table_styles([
+            {
+                'selector': 'th',
+                'props': [
+                    ('background-color', '#4F4F4F'),
+                    ('color', 'white'),
+                    ('font-weight', 'bold'),
+                    ('text-align', 'center')
+                ]
+            }
+        ])\
+        .set_properties(**{
+            'text-align': 'center',
+            'font-family': 'Calibri, sans-serif'
+        })
+    return estilo
 def imagen_base64(ruta_img, ancho="100%"):
     img_path = Path(ruta_img)
     if not img_path.exists():
@@ -389,6 +414,9 @@ def mostrar_encabezado(texto_derecha=""):
     html_template = Template("""
     <style>
         .encabezado-container {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
             display: flex;
             flex-direction: row;
             justify-content: space-between;
@@ -400,27 +428,27 @@ def mostrar_encabezado(texto_derecha=""):
             height: auto;
             flex-wrap: wrap;
         }
-
+    
         .encabezado-container img {
             height: 50px;
             margin-bottom: 0.5rem;
         }
-
+    
         .encabezado-texto {
             font-family: 'Calibri', 'Segoe UI', sans-serif;
-            color: #333333;
+            color: #7F7F7F;
             font-weight: bold;
             font-size: 16px;
             text-align: right;
             flex-grow: 1;
         }
-
+    
         @media (max-width: 768px) {
             .encabezado-container {
                 flex-direction: column;
                 align-items: flex-start;
             }
-
+    
             .encabezado-texto {
                 text-align: left;
                 font-size: 14px;
@@ -428,7 +456,7 @@ def mostrar_encabezado(texto_derecha=""):
             }
         }
     </style>
-
+    
     <div class="encabezado-container">
         <img src="data:image/jpeg;base64,$logo_b64" alt="Atlántida Logo">
         <div class="encabezado-texto">$texto_derecha</div>
@@ -1175,7 +1203,9 @@ def gestionar_asegurados():
             st.session_state["df_original"] = df_original
             persistir_en_sheet(df_original)
             st.success("✅ Cambios guardados")
-            st.dataframe(registro_act.to_frame().T)
+            df_registro = registro_act.to_frame().T
+            st.dataframe(estilo_tabla(df_registro))
+
 
     # 📄 EMITIR CERTIFICADO
     if st.button("Emitir Certificado de Cobertura"):
@@ -1832,7 +1862,7 @@ def mostrar_conversaciones_bot():
     if conteo.empty:
         st.warning("⚠️ No hay datos de sentimiento disponibles para graficar.")
     else:
-        fig, ax = plt.subplots(figsize=(6, 6))  # más espacio visual
+        fig, ax = plt.subplots(figsize=(4, 4))  # más espacio visual
         ax.pie(
             conteo,
             labels=conteo.index,
@@ -1845,8 +1875,12 @@ def mostrar_conversaciones_bot():
 
     # Tabla detallada
     encabezado_sin_icono("Detalle de Conversaciones", "h2")
-
-    st.dataframe(df_filtrado[['fecha', 'numero', 'conversacion', 'categoria']].sort_values(by="fecha", ascending=False))
+    st.dataframe(
+        estilo_tabla(
+                df_filtrado[['fecha', 'numero', 'conversacion', 'categoria']].sort_values(by="fecha", ascending=False)
+            ),
+            use_container_width=True
+    )
 
     # Descarga CSV
     csv = df_filtrado.to_csv(index=False).encode("utf-8")
@@ -2211,11 +2245,9 @@ def manejar_tickets():
             return
 
         st.metric("Reclamos Pendientes", len(cola))
-        st.dataframe(
-            cola[['Número','Título','Cliente','Estado','Fecha_Modificacion']]
-            .sort_values('Fecha_Modificacion', ascending=False),
-            use_container_width=True, height=300
-        )
+        df_tabla = cola[['Número','Título','Cliente','Estado','Fecha_Modificacion']]\
+            .sort_values('Fecha_Modificacion', ascending=False)
+        st.dataframe(estilo_tabla(df_tabla), use_container_width=True, height=300)
 
         # 1) Selección
         selected = st.number_input(
@@ -2665,7 +2697,8 @@ def descargar_tickets():
             )
 
         encabezado_sin_icono("Vista Previa", "h3")
-        st.dataframe(df.tail(), use_container_width=True)
+        base=df.tail()
+        st.dataframe(estilo_tabla(base), use_container_width=True)
     else:
         st.warning(f"⚠️ No hay datos disponibles en la hoja seleccionada ({hoja}).")
 
