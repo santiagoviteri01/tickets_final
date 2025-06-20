@@ -798,7 +798,6 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             ax.set_ylabel("USD ($)")
             ax.set_title("Pago de Comisiones por Canal y Mes")
             ax.legend(title="Canal", bbox_to_anchor=(1.05, 1), loc='upper left')
-            ax.grid(True)
             plt.xticks(rotation=45)
             st.pyplot(fig)
     
@@ -811,7 +810,6 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 ax.set_title(f"Evolución de {canal_seleccionado}")
                 ax.set_xlabel("Periodo")
                 ax.set_ylabel("USD ($)")
-                ax.grid(True)
                 plt.xticks(rotation=45)
                 st.pyplot(fig)
             else:
