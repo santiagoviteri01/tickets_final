@@ -395,7 +395,7 @@ def estilo_tabla(df: pd.DataFrame) -> Styler:
         })
     return estilo
     
-def render_tabla_html(df):
+def render_tabla_html(df,height):
     table_html = """
     <style>
         .tabla-container {
@@ -457,7 +457,7 @@ def render_tabla_html(df):
 
     table_html += "</tbody></table></div>"
 
-    components.html(table_html, height=420, scrolling=True)
+    components.html(table_html, height, scrolling=True)
 
     
 def imagen_base64(ruta_img, ancho="100%"):
@@ -1272,7 +1272,7 @@ def gestionar_asegurados():
             persistir_en_sheet(df_original)
             st.success("✅ Cambios guardados")
             df_registro = registro_act.to_frame().T
-            render_tabla_html(df_registro)
+            render_tabla_html(df_registro,height=150)
 
 
     # 📄 EMITIR CERTIFICADO
@@ -1945,7 +1945,7 @@ def mostrar_conversaciones_bot():
     encabezado_sin_icono("Detalle de Conversaciones", "h2")
     df_mostrar = df_filtrado[['fecha', 'numero', 'conversacion', 'categoria']]\
     .sort_values(by="fecha", ascending=False)
-    render_tabla_html(df_mostrar)
+    render_tabla_html(df_mostrar,height=250)
 
     # Descarga CSV
     csv = df_filtrado.to_csv(index=False).encode("utf-8")
@@ -2312,7 +2312,7 @@ def manejar_tickets():
         st.metric("Reclamos Pendientes", len(cola))
         df_tabla = cola[['Número','Título','Cliente','Estado','Fecha_Modificacion']]\
             .sort_values('Fecha_Modificacion', ascending=False)
-        render_tabla_html(df_tabla)
+        render_tabla_html(df_tabla,height=250)
 
         # 1) Selección
         selected = st.number_input(
@@ -2763,7 +2763,7 @@ def descargar_tickets():
 
         encabezado_sin_icono("Vista Previa", "h3")
         base=df.tail()
-        render_tabla_html(base)
+        render_tabla_html(base,height=400)
     else:
         st.warning(f"⚠️ No hay datos disponibles en la hoja seleccionada ({hoja}).")
 
