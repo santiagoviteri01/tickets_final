@@ -457,7 +457,7 @@ def render_tabla_html(df,height):
 
     table_html += "</tbody></table></div>"
 
-    components.html(table_html, height, scrolling=True)
+    components.html(table_html, height=height, scrolling=True)
 
     
 def imagen_base64(ruta_img, ancho="100%"):
