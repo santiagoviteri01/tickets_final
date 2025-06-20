@@ -33,6 +33,8 @@ from email.message import EmailMessage
 import base64
 from string import Template
 import matplotlib.pyplot as plt
+from pandas.io.formats.style import Styler  # ✅ importa Styler explícitamente
+
 
 st.set_page_config(
     page_title="Insurapp",
@@ -367,7 +369,7 @@ for _, row in asegurados_df.iterrows():
         "rol": "cliente"
     }
     
-def estilo_tabla(df: pd.DataFrame) -> pd.io.formats.style.Styler:
+def estilo_tabla(df: pd.DataFrame) -> Styler:
     def estilo_filas(fila):
         if fila.name == 'Total':
             return ['background-color: #D62828; color: white; font-weight: bold;' for _ in fila]
