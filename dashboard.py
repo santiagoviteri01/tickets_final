@@ -136,7 +136,7 @@ def encabezado_con_icono(ruta_icono, texto, nivel="h2"):
     """
     st.markdown(html, unsafe_allow_html=True)
 
-def render_tabla_html(df):
+def render_tabla_html(df,height):
     table_html = """
     <style>
         .tabla-container {
