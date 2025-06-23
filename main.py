@@ -470,83 +470,92 @@ def imagen_base64(ruta_img, ancho="100%"):
     return f"<img src='data:image/png;base64,{img_b64}' style='width:{ancho}; border-radius:10px;'/>"
 
 def mostrar_encabezado(texto_derecha=""):
+    # Ruta al logo
     logo_path = Path("images/atlantida_logo.jpg")
-
     if not logo_path.exists():
         st.warning("⚠️ Logo no encontrado en 'images/atlantida_logo.jpg'")
         return
 
+    # Codificar logo en base64
     with open(logo_path, "rb") as f:
         logo_b64 = base64.b64encode(f.read()).decode()
 
+    # Plantilla HTML+CSS con header "sticky"
     html_template = Template("""
     <style>
-        .encabezado-fijo {
-            position: fixed;
+        /* Contenedor con scroll interno */
+        .contenedor {
+            height: 100vh;       /* altura total de la ventana */
+            overflow-y: auto;    /* habilita scroll vertical */
+        }
+
+        /* Header pegajoso */
+        .encabezado {
+            position: sticky;
             top: 0;
-            left: 0;
-            right: 0;
-            z-index: 9999;
             background-color: #FFFFFF;
             padding: 10px 20px;
             border-bottom: 1px solid #ccc;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             display: flex;
-            flex-direction: row;
             justify-content: space-between;
             align-items: center;
             font-family: 'Calibri', sans-serif;
+            z-index: 999;
         }
 
-        .encabezado-fijo img {
+        .encabezado img {
             height: 40px;
         }
 
-        .encabezado-texto {
+        .texto-derecha {
             color: #7F7F7F;
             font-weight: bold;
             font-size: 18px;
         }
 
         @media (max-width: 768px) {
-            .encabezado-fijo {
+            .encabezado {
                 flex-direction: column;
                 align-items: flex-start;
                 padding: 10px;
             }
-
-            .encabezado-texto {
+            .texto-derecha {
                 font-size: 16px;
                 margin-top: 5px;
             }
         }
+
+        /* Ejemplo de contenido de prueba */
+        .contenido {
+            padding: 20px;
+            font-family: 'Calibri', sans-serif;
+        }
     </style>
 
-    <div class="encabezado-fijo">
-        <img src="data:image/jpeg;base64,$logo_b64" alt="Atlántida Logo">
-        <div class="encabezado-texto">$texto_derecha</div>
-    </div>
+    <div class="contenedor">
+        <div class="encabezado">
+            <img src="data:image/jpeg;base64,$logo_b64" alt="Atlántida Logo">
+            <div class="texto-derecha">$texto_derecha</div>
+        </div>
 
-    <!-- Espacio para que no se tape el contenido -->
-    <div style="height:80px;"></div>
+        <!-- Aquí va tu contenido principal, solo como ejemplo añadimos párrafos largos -->
+        <div class="contenido">
+            <p>Este es tu contenido. Cuando se alargue, el encabezado se quedará pegado en la parte superior y el resto hará scroll bajo él.</p>
+            <!-- Repite o genera mucho texto para probar el scroll -->
+            ${contenido_demo}
+        </div>
+    </div>
     """)
 
-    html = html_template.substitute(logo_b64=logo_b64, texto_derecha=texto_derecha)
-    components.html(html, height=140)
+    # Generar contenido de demo para probar scroll
+    demo = "<p>“Lorem ipsum dolor sit amet...”</p>" * 50
+    html = html_template.substitute(logo_b64=logo_b64,
+                                    texto_derecha=texto_derecha,
+                                    contenido_demo=demo)
 
-def encabezado_sin_icono(texto, nivel="h2"):
-    estilo = {
-        "h1": "font-size:28px; font-weight:bold;",
-        "h2": "font-size:22px; font-weight:bold;",
-        "h3": "font-size:18px;",
-    }.get(nivel, "font-size:22px; font-weight:bold;")
-
-    html = f"""
-    <div style='margin-bottom:10px;'>
-        <span style='{estilo} color:#D8272E; font-family:Calibri, sans-serif;'>{texto}</span>
-    </div>
-    """
-    st.markdown(html, unsafe_allow_html=True)
+    # Renderizar con scroll habilitado en el iframe
+    components.html(html, height=600, scrolling=True)
     
 def encabezado_con_icono(ruta_icono, texto, nivel="h2"):
     tamaños = {"h1": 28, "h2": 22, "h3": 18}
