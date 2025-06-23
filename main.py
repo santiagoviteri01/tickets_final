@@ -34,6 +34,7 @@ import base64
 from string import Template
 import matplotlib.pyplot as plt
 from pandas.io.formats.style import Styler  # ✅ importa Styler explícitamente
+from typing import Literal
 
 
 st.set_page_config(
@@ -534,52 +535,123 @@ def mostrar_encabezado(texto_derecha=""):
     html = html_template.substitute(logo_b64=logo_b64, texto_derecha=texto_derecha)
     components.html(html, height=140)
 
-MARGINS = {"top": "2.875rem", "bottom": "0"}
 
-STICKY_CONTAINER_HTML = """
-<style>
-div[data-testid="stVerticalBlock"] div:has(div.fixed-header-{i}) {{
-    position: sticky;
-    {position}: {margin};
-    background-color: white;
-    z-index: 9999;
+# ————— OPAQUE CONTAINER HELPERS —————
+OPAQUE_CONTAINER_CSS = """
+:root {{
+    --background-color: #ffffff;
 }}
-</style>
-<div class='fixed-header-{i}'/>
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div.opaque-container-{id}):not(:has(div.not-opaque-container)) div[data-testid="stVerticalBlock"]:has(div.opaque-container-{id}):not(:has(div.not-opaque-container)) > div[data-testid="stVerticalBlockBorderWrapper"] {{
+    background-color: var(--background-color);
+    width: 100%;
+}}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div.opaque-container-{id}):not(:has(div.not-opaque-container)) div[data-testid="stVerticalBlock"]:has(div.opaque-container-{id}):not(:has(div.not-opaque-container)) > div[data-testid="element-container"] {{
+    display: none;
+}}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div.not-opaque-container):not(:has(div[class^='opaque-container-'])) {{
+    display: none;
+}}
 """.strip()
 
-_count = 0
-def sticky_container(
-    *,
-    mode: Literal["top", "bottom"] = "top",
-    margin: str | None = None,
-):
-    global _count
-    if margin is None:
-        margin = MARGINS[mode]
-    html = STICKY_CONTAINER_HTML.format(position=mode, margin=margin, i=_count)
-    _count += 1
-    c = st.container()
-    c.markdown(html, unsafe_allow_html=True)
-    return c
+OPAQUE_CONTAINER_JS = """
+const root = parent.document.querySelector('.stApp');
+let lastBackgroundColor = null;
+function updateContainerBackground(currentBackground) {
+    parent.document.documentElement.style.setProperty('--background-color', currentBackground);
+}
+function checkForBackgroundColorChange() {
+    const style = window.getComputedStyle(root);
+    const currentBackgroundColor = style.backgroundColor;
+    if (currentBackgroundColor !== lastBackgroundColor) {
+        lastBackgroundColor = currentBackgroundColor;
+        updateContainerBackground(lastBackgroundColor);
+    }
+}
+document.addEventListener("DOMContentLoaded", () => {
+    checkForBackgroundColorChange();
+    const observer = new MutationObserver((mutationsList) => {
+        for(let m of mutationsList) {
+            if (m.type === 'attributes' && (m.attributeName==='class'||m.attributeName==='style')) {
+                checkForBackgroundColorChange();
+            }
+        }
+    });
+    observer.observe(root, { attributes: true });
+});
+""".strip()
 
-# —————— your header HTML builder ——————
-def header_html(texto_derecha: str) -> str:
-    logo = Path("images/atlantida_logo.jpg")
-    if not logo.exists():
-        return "<!-- logo not found -->"
-    b64 = base64.b64encode(logo.read_bytes()).decode()
-    return f"""
-    <div style="display:flex; justify-content:space-between;
-                align-items:center; padding:10px 20px;
-                border-bottom:1px solid #ccc;
-                font-family:Calibri,sans-serif;">
-      <img src="data:image/jpeg;base64,{b64}" style="height:40px"/>
-      <div style="font-weight:bold; color:#7F7F7F; font-size:18px;">
-        {texto_derecha}
-      </div>
-    </div>
-    """
+def st_opaque_container(*, height: int=None, border: bool=None, key: str=None):
+    opaque = st.container()
+    non_opaque = st.container()
+    css = OPAQUE_CONTAINER_CSS.format(id=key)
+    with opaque:
+        html(f"<script>{OPAQUE_CONTAINER_JS}</script>", scrolling=False, height=0)
+        st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+        st.markdown(f"<div class='opaque-container-{key}'></div>", unsafe_allow_html=True)
+    with non_opaque:
+        st.markdown("<div class='not-opaque-container'></div>", unsafe_allow_html=True)
+    return opaque.container(height=height, border=border)
+
+# ————— FIXED CONTAINER HELPERS —————
+FIXED_CONTAINER_CSS = """
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div.fixed-container-{id}):not(:has(div.not-fixed-container)) {{
+    position: {mode};
+    {position}: {margin};
+    width: inherit;
+    z-index: 9999;
+    background-color: inherit;
+}}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div.fixed-container-{id}):not(:has(div.not-fixed-container)) 
+    div[data-testid="stVerticalBlock"]:has(div.fixed-container-{id}):not(:has(div.not-fixed-container)) 
+    > div[data-testid="element-container"] {{ display: none; }}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div.not-fixed-container):not(:has(div[class^='fixed-container-'])) {{ display: none; }}
+""".strip()
+
+MARGINS = {"top": "2.875rem", "bottom": "0"}
+
+def st_fixed_container(
+    *, height: int=None, border: bool=None,
+    mode: Literal["fixed","sticky"]="fixed",
+    position: Literal["top","bottom"]="top",
+    margin: str=None, transparent: bool=False, key: str=None
+):
+    if margin is None: margin = MARGINS[position]
+    fixed = st.container()
+    non_fixed = st.container()
+    css = FIXED_CONTAINER_CSS.format(mode=mode, position=position, margin=margin, id=key)
+    with fixed:
+        st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+        st.markdown(f"<div class='fixed-container-{key}'></div>", unsafe_allow_html=True)
+    with non_fixed:
+        st.markdown("<div class='not-fixed-container'></div>", unsafe_allow_html=True)
+    with fixed:
+        if transparent:
+            return st.container(height=height, border=border)
+        return st_opaque_container(height=height, border=border, key=f"opaque_{key}")
+
+# ————— HEADER FUNCTION USING st_fixed_container —————
+def mostrar_encabezado(texto_derecha=""):
+    logo_path = Path("images/atlantida_logo.jpg")
+    if not logo_path.exists():
+        st.warning("⚠️ Logo no encontrado en 'images/atlantida_logo.jpg'")
+        return
+    b64 = base64.b64encode(logo_path.read_bytes()).decode()
+
+    with st_fixed_container(mode="fixed", position="top", border=True, key="hdr"):
+        cols = st.columns([1, 6, 1])
+        with cols[0]:
+            st.image(f"data:image/jpeg;base64,{b64}", use_column_width=False)
+        with cols[1]:
+            st.markdown(
+                f"<h3 style='margin:0; color:#7F7F7F; "
+                "font-family:Calibri,sans-serif;'>"
+                f"{texto_derecha}</h3>",
+                unsafe_allow_html=True
+            )
+        with cols[2]:
+            if st.button("Cerrar Sesión", use_container_width=True):
+                st.session_state.autenticado = False
+                st.session_state.mostrar_login = False
     
 def encabezado_sin_icono(texto, nivel="h2"):
     estilo = {
