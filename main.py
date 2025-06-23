@@ -470,62 +470,43 @@ def imagen_base64(ruta_img, ancho="100%"):
     return f"<img src='data:image/png;base64,{img_b64}' style='width:{ancho}; border-radius:10px;'/>"
 
 def mostrar_encabezado(texto_derecha=""):
-    # 1) Cargar y codificar el logo
     logo_path = Path("images/atlantida_logo.jpg")
     if not logo_path.exists():
-        st.warning("⚠️ Logo no encontrado en 'images/atlantida_logo.jpg'")
+        st.warning("⚠️ Logo no encontrado")
         return
     with open(logo_path, "rb") as f:
         logo_b64 = base64.b64encode(f.read()).decode()
 
-    # 2) Inyectar CSS + HTML con position: sticky
     st.markdown(f"""
     <style>
-      /* Header sticky */
       .encabezado {{
-        position: sticky;
-        top: 0;
+        /* ya no es sticky */
+        position: static;
         width: 100%;
-        background-color: #FFFFFF;
+        background-color: #FFF;
         padding: 10px 20px;
-        border-bottom: 1px solid #ccc;
+        border-bottom: 1px solid #CCC;
         box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        z-index: 9999;
+        z-index: 999;
         font-family: 'Calibri', sans-serif;
       }}
-      .encabezado img {{
-        height: 40px;
-      }}
+      .encabezado img {{ height: 40px; }}
       .texto-derecha {{
         color: #7F7F7F;
         font-weight: bold;
         font-size: 18px;
       }}
-
-      @media (max-width: 768px) {{
-        .encabezado {{
-          flex-direction: column;
-          align-items: flex-start;
-          padding: 10px;
-        }}
-        .texto-derecha {{
-          font-size: 16px;
-          margin-top: 5px;
-        }}
-      }}
-
-      /* Para que el contenido no se “pegue” debajo del header */
-      .streamlit-container {{
-        padding-top: 80px;
+      @media (max-width:768px) {{
+        .encabezado {{ flex-direction: column; align-items: flex-start; }}
+        .texto-derecha {{ font-size:16px; margin-top:5px; }}
       }}
     </style>
 
-    <!-- Header -->
     <div class="encabezado">
-      <img src="data:image/jpeg;base64,{logo_b64}" alt="Atlántida Logo">
+      <img src="data:image/jpeg;base64,{logo_b64}" alt="Logo">
       <div class="texto-derecha">{texto_derecha}</div>
     </div>
     """, unsafe_allow_html=True)
