@@ -535,11 +535,9 @@ def mostrar_encabezado(texto_derecha=""):
     html = html_template.substitute(logo_b64=logo_b64, texto_derecha=texto_derecha)
     components.html(html, height=140)
 
-
-# ————— OPAQUE CONTAINER HELPERS —————
 OPAQUE_CONTAINER_CSS = """
 :root {{
-    --background-color: #ffffff;
+    --background-color: #ffffff; /* Default background color */
 }}
 div[data-testid="stVerticalBlockBorderWrapper"]:has(div.opaque-container-{id}):not(:has(div.not-opaque-container)) div[data-testid="stVerticalBlock"]:has(div.opaque-container-{id}):not(:has(div.not-opaque-container)) > div[data-testid="stVerticalBlockBorderWrapper"] {{
     background-color: var(--background-color);
@@ -558,78 +556,124 @@ const root = parent.document.querySelector('.stApp');
 let lastBackgroundColor = null;
 function updateContainerBackground(currentBackground) {
     parent.document.documentElement.style.setProperty('--background-color', currentBackground);
+    ;
 }
 function checkForBackgroundColorChange() {
     const style = window.getComputedStyle(root);
     const currentBackgroundColor = style.backgroundColor;
     if (currentBackgroundColor !== lastBackgroundColor) {
-        lastBackgroundColor = currentBackgroundColor;
+        lastBackgroundColor = currentBackgroundColor; // Update the last known value
         updateContainerBackground(lastBackgroundColor);
     }
 }
-document.addEventListener("DOMContentLoaded", () => {
-    checkForBackgroundColorChange();
-    const observer = new MutationObserver((mutationsList) => {
-        for(let m of mutationsList) {
-            if (m.type === 'attributes' && (m.attributeName==='class'||m.attributeName==='style')) {
-                checkForBackgroundColorChange();
-            }
+const observerCallback = (mutationsList, observer) => {
+    for(let mutation of mutationsList) {
+        if (mutation.type === 'attributes' && (mutation.attributeName === 'class' || mutation.attributeName === 'style')) {
+            checkForBackgroundColorChange();
         }
-    });
-    observer.observe(root, { attributes: true });
-});
+    }
+};
+const main = () => {
+    checkForBackgroundColorChange();
+    const observer = new MutationObserver(observerCallback);
+    observer.observe(root, { attributes: true, childList: false, subtree: false });
+}
+// main();
+document.addEventListener("DOMContentLoaded", main);
 """.strip()
 
-def st_opaque_container(*, height: int=None, border: bool=None, key: str=None):
-    opaque = st.container()
-    non_opaque = st.container()
+
+def st_opaque_container(
+    *,
+    height: int | None = None,
+    border: bool | None = None,
+    key: str | None = None,
+):
+    global opaque_counter
+
+    opaque_container = st.container()
+    non_opaque_container = st.container()
     css = OPAQUE_CONTAINER_CSS.format(id=key)
-    with opaque:
+    with opaque_container:
         html(f"<script>{OPAQUE_CONTAINER_JS}</script>", scrolling=False, height=0)
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-        st.markdown(f"<div class='opaque-container-{key}'></div>", unsafe_allow_html=True)
-    with non_opaque:
-        st.markdown("<div class='not-opaque-container'></div>", unsafe_allow_html=True)
-    return opaque.container(height=height, border=border)
+        st.markdown(
+            f"<div class='opaque-container-{key}'></div>",
+            unsafe_allow_html=True,
+        )
+    with non_opaque_container:
+        st.markdown(
+            f"<div class='not-opaque-container'></div>",
+            unsafe_allow_html=True,
+        )
 
-# ————— FIXED CONTAINER HELPERS —————
+    return opaque_container.container(height=height, border=border)
+
+
 FIXED_CONTAINER_CSS = """
-div[data-testid="stVerticalBlockBorderWrapper"]:has(div.fixed-container-{id}):not(:has(div.not-fixed-container)) {{
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div.fixed-container-{id}):not(:has(div.not-fixed-container)){{
+    background-color: transparent;
     position: {mode};
-    {position}: {margin};
     width: inherit;
-    z-index: 9999;
     background-color: inherit;
+    {position}: {margin};
+    z-index: 999;
 }}
-div[data-testid="stVerticalBlockBorderWrapper"]:has(div.fixed-container-{id}):not(:has(div.not-fixed-container)) 
-    div[data-testid="stVerticalBlock"]:has(div.fixed-container-{id}):not(:has(div.not-fixed-container)) 
-    > div[data-testid="element-container"] {{ display: none; }}
-div[data-testid="stVerticalBlockBorderWrapper"]:has(div.not-fixed-container):not(:has(div[class^='fixed-container-'])) {{ display: none; }}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div.fixed-container-{id}):not(:has(div.not-fixed-container)) div[data-testid="stVerticalBlock"]:has(div.fixed-container-{id}):not(:has(div.not-fixed-container)) > div[data-testid="element-container"] {{
+    display: none;
+}}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div.not-fixed-container):not(:has(div[class^='fixed-container-'])) {{
+    display: none;
+}}
 """.strip()
 
-MARGINS = {"top": "2.875rem", "bottom": "0"}
+MARGINS = {
+    "top": "2.875rem",
+    "bottom": "0",
+}
+
 
 def st_fixed_container(
-    *, height: int=None, border: bool=None,
-    mode: Literal["fixed","sticky"]="fixed",
-    position: Literal["top","bottom"]="top",
-    margin: str=None, transparent: bool=False, key: str=None
+    *,
+    height: int | None = None,
+    border: bool | None = None,
+    mode: Literal["fixed", "sticky"] = "fixed",
+    position: Literal["top", "bottom"] = "top",
+    margin: str | None = None,
+    transparent: bool = False,
+    key: str | None = None,
 ):
-    if margin is None: margin = MARGINS[position]
-    fixed = st.container()
-    non_fixed = st.container()
-    css = FIXED_CONTAINER_CSS.format(mode=mode, position=position, margin=margin, id=key)
-    with fixed:
+    if margin is None:
+        margin = MARGINS[position]
+    global fixed_counter
+    fixed_container = st.container()
+    non_fixed_container = st.container()
+    css = FIXED_CONTAINER_CSS.format(
+        mode=mode,
+        position=position,
+        margin=margin,
+        id=key,
+    )
+    with fixed_container:
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-        st.markdown(f"<div class='fixed-container-{key}'></div>", unsafe_allow_html=True)
-    with non_fixed:
-        st.markdown("<div class='not-fixed-container'></div>", unsafe_allow_html=True)
-    with fixed:
+        st.markdown(
+            f"<div class='fixed-container-{key}'></div>",
+            unsafe_allow_html=True,
+        )
+    with non_fixed_container:
+        st.markdown(
+            f"<div class='not-fixed-container'></div>",
+            unsafe_allow_html=True,
+        )
+
+    with fixed_container:
         if transparent:
             return st.container(height=height, border=border)
+
         return st_opaque_container(height=height, border=border, key=f"opaque_{key}")
 
-# ————— HEADER FUNCTION USING st_fixed_container —————
+
+# ————— TU HEADER USANDO st_fixed_container_header —————
 def mostrar_encabezado(texto_derecha=""):
     logo_path = Path("images/atlantida_logo.jpg")
     if not logo_path.exists():
@@ -637,10 +681,11 @@ def mostrar_encabezado(texto_derecha=""):
         return
     b64 = base64.b64encode(logo_path.read_bytes()).decode()
 
-    with st_fixed_container(mode="fixed", position="top", border=True, key="hdr"):
+    # 1) Inyecta el header fijo + spacer
+    with st_fixed_container_header(key="hdr"):
         cols = st.columns([1, 6, 1])
         with cols[0]:
-            st.image(f"data:image/jpeg;base64,{b64}", use_column_width=False)
+            st.image(f"data:image/jpeg;base64,{b64}", width=40)
         with cols[1]:
             st.markdown(
                 f"<h3 style='margin:0; color:#7F7F7F; "
@@ -1433,9 +1478,26 @@ def portal_cliente():
         time.sleep(1)
         st.rerun()
     
-        
-    with sticky_container(mode="top"):
-        st.markdown(header_html(f"Cliente: {st.session_state.usuario_actual}"), unsafe_allow_html=True)
+    # ——— Header fijo arriba ———
+    with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
+        col1, col2, col3 = st.columns([1, 8, 1])
+        with col1:
+            b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode()
+            st.image(f"data:image/jpeg;base64,{b64}", width=40)
+        with col2:
+            st.markdown(
+                f"""
+                <h3 style='margin:0; color:#7F7F7F; font-family:Calibri,sans-serif;'>
+                  Cliente: {st.session_state.usuario_actual}
+                </h3>
+                """,
+                unsafe_allow_html=True
+            )
+        with col3:
+            if st.button("Cerrar Sesión", use_container_width=True):
+                st.session_state.autenticado = False
+                st.experimental_rerun()
+                
     # Cuadro visual con borde
     with st.container():
         # Fondo y borde simulados mediante un markdown antes y después
@@ -2076,8 +2138,23 @@ def mostrar_conversaciones_bot():
 
 # Portal de Administración (Usuarios)
 def portal_administracion():
-    with sticky_container(mode="top"):
-        st.markdown(header_html("Portal Administrativo"), unsafe_allow_html=True)
+    with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_admin"):
+        col1, col2, col3 = st.columns([1, 8, 1])
+        with col1:
+            b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode()
+            st.image(f"data:image/jpeg;base64,{b64}", width=40)
+        with col2:
+            st.markdown(
+                "<h3 style='margin:0; color:#7F7F7F; "
+                "font-family:Calibri,sans-serif;'>"
+                "Portal Administrativo"
+                "</h3>",
+                unsafe_allow_html=True
+            )
+        with col3:
+            if st.button("Cerrar Sesión", use_container_width=True):
+                st.session_state.autenticado = False
+                st.experimental_rerun()
     st.sidebar.title("Menú Admin")
     opciones = [
         "Inicio", 
