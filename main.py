@@ -471,45 +471,69 @@ def imagen_base64(ruta_img, ancho="100%"):
 
 def mostrar_encabezado(texto_derecha=""):
     logo_path = Path("images/atlantida_logo.jpg")
+
     if not logo_path.exists():
-        st.warning("⚠️ Logo no encontrado")
+        st.warning("⚠️ Logo no encontrado en 'images/atlantida_logo.jpg'")
         return
+
     with open(logo_path, "rb") as f:
         logo_b64 = base64.b64encode(f.read()).decode()
 
-    st.markdown(f"""
+    html_template = Template("""
     <style>
-      .encabezado {{
-        /* ya no es sticky */
-        position: static;
-        width: 100%;
-        background-color: #FFF;
-        padding: 10px 20px;
-        border-bottom: 1px solid #CCC;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 999;
-        font-family: 'Calibri', sans-serif;
-      }}
-      .encabezado img {{ height: 40px; }}
-      .texto-derecha {{
-        color: #7F7F7F;
-        font-weight: bold;
-        font-size: 18px;
-      }}
-      @media (max-width:768px) {{
-        .encabezado {{ flex-direction: column; align-items: flex-start; }}
-        .texto-derecha {{ font-size:16px; margin-top:5px; }}
-      }}
+        .encabezado-fijo {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 9999;
+            background-color: #FFFFFF;
+            padding: 10px 20px;
+            border-bottom: 1px solid #ccc;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Calibri', sans-serif;
+        }
+
+        .encabezado-fijo img {
+            height: 40px;
+        }
+
+        .encabezado-texto {
+            color: #7F7F7F;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .encabezado-fijo {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 10px;
+            }
+
+            .encabezado-texto {
+                font-size: 16px;
+                margin-top: 5px;
+            }
+        }
     </style>
 
-    <div class="encabezado">
-      <img src="data:image/jpeg;base64,{logo_b64}" alt="Logo">
-      <div class="texto-derecha">{texto_derecha}</div>
+    <div class="encabezado-fijo">
+        <img src="data:image/jpeg;base64,$logo_b64" alt="Atlántida Logo">
+        <div class="encabezado-texto">$texto_derecha</div>
     </div>
-    """, unsafe_allow_html=True)
+
+    <!-- Espacio para que no se tape el contenido -->
+    <div style="height:80px;"></div>
+    """)
+
+    html = html_template.substitute(logo_b64=logo_b64, texto_derecha=texto_derecha)
+    components.html(html, height=140)
+
 
 def encabezado_sin_icono(texto, nivel="h2"):
     estilo = {
