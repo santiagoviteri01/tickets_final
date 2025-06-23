@@ -533,14 +533,9 @@ def mostrar_encabezado(texto_derecha=""):
 def encabezado_sin_icono(texto, nivel="h2"):
     estilo = {
         "h1": "font-size:28px; font-weight:bold;",
-        "h2": "font-size:22px; font-weight:bold;",Add commentMore actions
+        "h2": "font-size:22px; font-weight:bold;",
         "h3": "font-size:18px;",
     }.get(nivel, "font-size:22px; font-weight:bold;")
-    # Generar contenido de demo para probar scroll
-    demo = "<p>“Lorem ipsum dolor sit amet...”</p>" * 50
-    html = html_template.substitute(logo_b64=logo_b64,
-                                    texto_derecha=texto_derecha,
-                                    contenido_demo=demo)
 
     html = f"""
     <div style='margin-bottom:10px;'>
@@ -548,8 +543,7 @@ def encabezado_sin_icono(texto, nivel="h2"):
     </div>
     """
     st.markdown(html, unsafe_allow_html=True)
-    # Renderizar con scroll habilitado en el iframe
-    components.html(html, height=600, scrolling=True)
+
     
 def encabezado_con_icono(ruta_icono, texto, nivel="h2"):
     tamaños = {"h1": 28, "h2": 22, "h3": 18}
