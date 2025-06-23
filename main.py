@@ -534,7 +534,53 @@ def mostrar_encabezado(texto_derecha=""):
     html = html_template.substitute(logo_b64=logo_b64, texto_derecha=texto_derecha)
     components.html(html, height=140)
 
+MARGINS = {"top": "2.875rem", "bottom": "0"}
 
+STICKY_CONTAINER_HTML = """
+<style>
+div[data-testid="stVerticalBlock"] div:has(div.fixed-header-{i}) {{
+    position: sticky;
+    {position}: {margin};
+    background-color: white;
+    z-index: 9999;
+}}
+</style>
+<div class='fixed-header-{i}'/>
+""".strip()
+
+_count = 0
+def sticky_container(
+    *,
+    mode: Literal["top", "bottom"] = "top",
+    margin: str | None = None,
+):
+    global _count
+    if margin is None:
+        margin = MARGINS[mode]
+    html = STICKY_CONTAINER_HTML.format(position=mode, margin=margin, i=_count)
+    _count += 1
+    c = st.container()
+    c.markdown(html, unsafe_allow_html=True)
+    return c
+
+# —————— your header HTML builder ——————
+def header_html(texto_derecha: str) -> str:
+    logo = Path("images/atlantida_logo.jpg")
+    if not logo.exists():
+        return "<!-- logo not found -->"
+    b64 = base64.b64encode(logo.read_bytes()).decode()
+    return f"""
+    <div style="display:flex; justify-content:space-between;
+                align-items:center; padding:10px 20px;
+                border-bottom:1px solid #ccc;
+                font-family:Calibri,sans-serif;">
+      <img src="data:image/jpeg;base64,{b64}" style="height:40px"/>
+      <div style="font-weight:bold; color:#7F7F7F; font-size:18px;">
+        {texto_derecha}
+      </div>
+    </div>
+    """
+    
 def encabezado_sin_icono(texto, nivel="h2"):
     estilo = {
         "h1": "font-size:28px; font-weight:bold;",
@@ -1316,7 +1362,8 @@ def portal_cliente():
         st.rerun()
     
         
-    mostrar_encabezado(f"Cliente: {st.session_state.usuario_actual}")
+    with sticky_container(mode="top"):
+        st.markdown(header_html(f"Cliente: {st.session_state.usuario_actual}"), unsafe_allow_html=True)
     # Cuadro visual con borde
     with st.container():
         # Fondo y borde simulados mediante un markdown antes y después
@@ -1957,7 +2004,8 @@ def mostrar_conversaciones_bot():
 
 # Portal de Administración (Usuarios)
 def portal_administracion():
-    mostrar_encabezado("Portal Administrativo")
+    with sticky_container(mode="top"):
+        st.markdown(header_html("Portal Administrativo"), unsafe_allow_html=True)
     st.sidebar.title("Menú Admin")
     opciones = [
         "Inicio", 
