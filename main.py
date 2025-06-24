@@ -1463,7 +1463,10 @@ def portal_cliente():
         col1, col2, col3 = st.columns([1, 8, 1])
         with col1:
             b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode()
-            st.image(f"data:image/jpeg;base64,{b64}", height=40)
+            st.markdown(
+                f"<img src='data:image/jpeg;base64,{b64}' style='height:40px;' />",
+                unsafe_allow_html=True
+            )
         with col2:
             st.markdown(
                 f"""
@@ -2122,7 +2125,10 @@ def portal_administracion():
         col1, col2, col3 = st.columns([1, 8, 1])
         with col1:
             b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode()
-            st.image(f"data:image/jpeg;base64,{b64}", height=40)
+            st.markdown(
+                f"<img src='data:image/jpeg;base64,{b64}' style='height:40px;' />",
+                unsafe_allow_html=True
+            )
         with col2:
             st.markdown(
                 "<h3 style='margin:0; color:#7F7F7F; "
@@ -2134,7 +2140,7 @@ def portal_administracion():
         with col3:
             if st.button("Cerrar Sesión", use_container_width=True):
                 st.session_state.autenticado = False
-                st.experimental_rerun()
+
     st.sidebar.title("Menú Admin")
     opciones = [
         "Inicio", 
