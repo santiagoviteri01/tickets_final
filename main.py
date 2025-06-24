@@ -1470,9 +1470,11 @@ def portal_cliente():
         with col2:
             st.markdown(
                 f"""
-                <h3 style='margin:0; color:#7F7F7F; font-family:Calibri,sans-serif;'>
-                  Cliente: {st.session_state.usuario_actual}
-                </h3>
+                <div style="margin-left: -50px;">
+                  <h3 style="margin:0; color:#7F7F7F; font-family:Calibri,sans-serif;">
+                    Cliente: {st.session_state.usuario_actual}
+                  </h3>
+                </div>
                 """,
                 unsafe_allow_html=True
             )
