@@ -1460,11 +1460,11 @@ def portal_cliente():
     
     # ——— Header fijo arriba ———
     with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
-        col1, col2, col3 = st.columns([1, 8, 1])
+        col1, col2 = st.columns([1, 8])
         with col1:
             b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode()
             st.markdown(
-                f"<img src='data:image/jpeg;base64,{b64}' style='height:40px;' />",
+                f"<img src='data:image/jpeg;base64,{b64}' style='height:60px;' />",
                 unsafe_allow_html=True
             )
         with col2:
@@ -1476,10 +1476,10 @@ def portal_cliente():
                 """,
                 unsafe_allow_html=True
             )
-        with col3:
-            if st.button("Cerrar Sesión", use_container_width=True):
-                st.session_state.autenticado = False
-                st.experimental_rerun()
+            
+        st.markdown("<div style='height:220px;'></div>", unsafe_allow_html=True)
+
+
                 
     # Cuadro visual con borde
     with st.container():
@@ -2122,24 +2122,27 @@ def mostrar_conversaciones_bot():
 # Portal de Administración (Usuarios)
 def portal_administracion():
     with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_admin"):
-        col1, col2, col3 = st.columns([1, 8, 1])
+        col1, col2 = st.columns([1, 8])
         with col1:
             b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode()
             st.markdown(
-                f"<img src='data:image/jpeg;base64,{b64}' style='height:40px;' />",
+                f"<img src='data:image/jpeg;base64,{b64}' "
+                "style='height:60px; margin:10px;'/>",
                 unsafe_allow_html=True
             )
         with col2:
             st.markdown(
-                "<h3 style='margin:0; color:#7F7F7F; "
-                "font-family:Calibri,sans-serif;'>"
-                "Portal Administrativo"
-                "</h3>",
+                """
+                <h3 style='margin:0; color:#7F7F7F; 
+                    font-family:Calibri,sans-serif;'>
+                  Portal Administrativo
+                </h3>
+                """,
                 unsafe_allow_html=True
             )
-        with col3:
-            if st.button("Cerrar Sesión", use_container_width=True):
-                st.session_state.autenticado = False
+
+    # 3) Espaciador de exactamente la altura del header (80px)
+    st.markdown("<div style='height:220px;'></div>", unsafe_allow_html=True)
 
     st.sidebar.title("Menú Admin")
     opciones = [
