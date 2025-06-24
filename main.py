@@ -34,7 +34,7 @@ import base64
 from string import Template
 import matplotlib.pyplot as plt
 from pandas.io.formats.style import Styler  # ✅ importa Styler explícitamente
-from typing import Literal
+from typing import Literal, Optional
 
 
 st.set_page_config(
@@ -583,31 +583,23 @@ document.addEventListener("DOMContentLoaded", main);
 """.strip()
 
 
+# ————— OPAQUE CONTAINER HELPERS —————
 def st_opaque_container(
     *,
-    height: int | None = None,
-    border: bool | None = None,
-    key: str | None = None,
+    height: Optional[int] = None,
+    border: Optional[bool] = None,
+    key: Optional[str] = None,
 ):
-    global opaque_counter
-
-    opaque_container = st.container()
-    non_opaque_container = st.container()
+    opaque = st.container()
+    non_opaque = st.container()
     css = OPAQUE_CONTAINER_CSS.format(id=key)
-    with opaque_container:
+    with opaque:
         html(f"<script>{OPAQUE_CONTAINER_JS}</script>", scrolling=False, height=0)
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-        st.markdown(
-            f"<div class='opaque-container-{key}'></div>",
-            unsafe_allow_html=True,
-        )
-    with non_opaque_container:
-        st.markdown(
-            f"<div class='not-opaque-container'></div>",
-            unsafe_allow_html=True,
-        )
-
-    return opaque_container.container(height=height, border=border)
+        st.markdown(f"<div class='opaque-container-{key}'></div>", unsafe_allow_html=True)
+    with non_opaque:
+        st.markdown("<div class='not-opaque-container'></div>", unsafe_allow_html=True)
+    return opaque.container(height=height, border=border)
 
 
 FIXED_CONTAINER_CSS = """
@@ -633,43 +625,30 @@ MARGINS = {
 }
 
 
+# ————— FIXED CONTAINER HELPERS —————
 def st_fixed_container(
     *,
-    height: int | None = None,
-    border: bool | None = None,
+    height: Optional[int] = None,
+    border: Optional[bool] = None,
     mode: Literal["fixed", "sticky"] = "fixed",
     position: Literal["top", "bottom"] = "top",
-    margin: str | None = None,
+    margin: Optional[str] = None,
     transparent: bool = False,
-    key: str | None = None,
+    key: Optional[str] = None,
 ):
     if margin is None:
         margin = MARGINS[position]
-    global fixed_counter
-    fixed_container = st.container()
-    non_fixed_container = st.container()
-    css = FIXED_CONTAINER_CSS.format(
-        mode=mode,
-        position=position,
-        margin=margin,
-        id=key,
-    )
-    with fixed_container:
+    fixed = st.container()
+    non_fixed = st.container()
+    css = FIXED_CONTAINER_CSS.format(id=key, mode=mode, position=position, margin=margin)
+    with fixed:
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-        st.markdown(
-            f"<div class='fixed-container-{key}'></div>",
-            unsafe_allow_html=True,
-        )
-    with non_fixed_container:
-        st.markdown(
-            f"<div class='not-fixed-container'></div>",
-            unsafe_allow_html=True,
-        )
-
-    with fixed_container:
+        st.markdown(f"<div class='fixed-container-{key}'></div>", unsafe_allow_html=True)
+    with non_fixed:
+        st.markdown("<div class='not-fixed-container'></div>", unsafe_allow_html=True)
+    with fixed:
         if transparent:
             return st.container(height=height, border=border)
-
         return st_opaque_container(height=height, border=border, key=f"opaque_{key}")
 
 
