@@ -35,6 +35,7 @@ from string import Template
 import matplotlib.pyplot as plt
 from pandas.io.formats.style import Styler  # ✅ importa Styler explícitamente
 from typing import Literal, Optional
+from streamlit.components.v1 import html
 
 
 st.set_page_config(
