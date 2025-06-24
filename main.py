@@ -1460,7 +1460,7 @@ def portal_cliente():
     
     # ——— Header fijo arriba ———
     with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
-        col1, col2 = st.columns([0.5, 9.5])
+        col1, col2 = st.columns(2)
         with col1:
             b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode()
             st.markdown(
@@ -1477,7 +1477,7 @@ def portal_cliente():
                 unsafe_allow_html=True
             )
             
-        st.markdown("<div style='height:160px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:120px;'></div>", unsafe_allow_html=True)
 
 
                 
@@ -2122,7 +2122,7 @@ def mostrar_conversaciones_bot():
 # Portal de Administración (Usuarios)
 def portal_administracion():
     with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_admin"):
-        col1, col2 = st.columns([0.5, 9.5])
+        col1, col2 = st.columns(2)
         with col1:
             b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode()
             st.markdown(
@@ -2142,7 +2142,7 @@ def portal_administracion():
             )
 
     # 3) Espaciador de exactamente la altura del header (80px)
-    st.markdown("<div style='height:160px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:120px;'></div>", unsafe_allow_html=True)
 
     st.sidebar.title("Menú Admin")
     opciones = [
