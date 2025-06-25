@@ -1450,7 +1450,8 @@ def gestionar_asegurados():
 # Portal del Cliente
 def portal_cliente():
     st.sidebar.title("Menú Cliente")
-    
+    tab_seleccionado = ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo", "Subir Archivos Adicionales a un Reclamo"]
+    tab_seleccionado = st.sidebar.radio("Opciones", tab_seleccionado)
     if st.sidebar.button("Cerrar Sesión"):
         st.session_state.autenticado = False
         st.session_state.mostrar_login = False
@@ -1481,7 +1482,7 @@ def portal_cliente():
         with col2:
             st.markdown(
                 f"""
-                <div class="header-text" style="margin-left:-40px;">
+                <div class="header-text" style="margin-left:-20px;">
                   <h5 style="margin:0; color:#7F7F7F; font-family:Calibri,sans-serif;">
                     Cliente: {st.session_state.usuario_actual}
                   </h5>
@@ -1500,8 +1501,6 @@ def portal_cliente():
     with st.container():
         # Fondo y borde simulados mediante un markdown antes y después
         st.markdown("<hr style='border:1px solid #7F7F7F; margin-top:0rem;'>", unsafe_allow_html=True)
-
-    
         # fondo blanco con borde visual simulado como encabezado
         st.markdown(
             """
@@ -1512,17 +1511,9 @@ def portal_cliente():
     
         # Contenido: título
         st.markdown(
-            f"<h1 style='color:#D62828; font-family:Calibri, sans-serif;'>Portal del Cliente - {st.session_state.usuario_actual}</h1>",
+            f"<h2 style='color:#D62828; font-family:Calibri, sans-serif;'>Portal del Cliente - {st.session_state.usuario_actual}</h2>",
             unsafe_allow_html=True
         )
-    
-        # Widget
-        tab_seleccionado = st.radio(
-            "Secciones",
-            ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo", "Subir Archivos Adicionales a un Reclamo"],
-            horizontal=True
-        )
-    
         # Cierre visual del bloque
         st.markdown("</div>", unsafe_allow_html=True)
     
@@ -2137,7 +2128,7 @@ def mostrar_conversaciones_bot():
 # Portal de Administración (Usuarios)
 def portal_administracion():
     with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_admin"):
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns([1, 6, 1], gap="small")
         with col1:
             b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode()
             st.markdown(
@@ -2148,13 +2139,15 @@ def portal_administracion():
         with col2:
             st.markdown(
                 """
-                <h3 style='margin:0; color:#7F7F7F; 
+                <h5 style='margin:0; color:#7F7F7F; 
                     font-family:Calibri,sans-serif;'>
                   Portal Administrativo
-                </h3>
+                </h5>
                 """,
                 unsafe_allow_html=True
             )
+        with col3:
+            st.write("")
 
     # 3) Espaciador de exactamente la altura del header (80px)
     st.markdown("<div style='height:120px;'></div>", unsafe_allow_html=True)
@@ -2168,15 +2161,19 @@ def portal_administracion():
         "Ver Reclamos", 
         "Analisis de Chatbot",
         "Descargar Datos"
-    ]
-    
+    ]   
     
     if st.session_state.usuario_actual == "mauriciodavila":
         opciones.insert(2, "Gestión de Cotizaciones")
-
-    opciones.append("Cerrar Sesión")
     
     opcion = st.sidebar.radio("Opciones", opciones)
+
+    if st.sidebar.button("Cerrar Sesión"):
+        st.session_state.autenticado = False
+        st.session_state.mostrar_login = False
+        st.success("Sesión cerrada exitosamente")
+        time.sleep(1)
+        st.rerun()
 
     if opcion == "Inicio":
         encabezado_con_icono("iconos/home.png", "Panel de Administración", "h1")
@@ -2214,12 +2211,6 @@ def portal_administracion():
     elif opcion == "Gestión de Cotizaciones" and st.session_state.usuario_actual == "mauriciodavila":
         modulo_cotizaciones_mauricio()
         
-    elif opcion == "Cerrar Sesión":
-        st.session_state.autenticado = False
-        st.session_state.mostrar_login = False
-        st.success("Sesión cerrada exitosamente")
-        time.sleep(1)
-        st.rerun()
 
 
 def procesar_tiempos_estado(tiempos_cambio):
