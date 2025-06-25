@@ -1458,9 +1458,20 @@ def portal_cliente():
         time.sleep(1)
         st.rerun()
     
+    st.markdown(
+        """
+        <style>
+          @media (max-width: 600px) {
+            .header-text { display: none !important; }
+          }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
     # ——— Header fijo arriba ———
     with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns([1, 6, 1], gap="small")
         with col1:
             b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode()
             st.markdown(
@@ -1470,15 +1481,17 @@ def portal_cliente():
         with col2:
             st.markdown(
                 f"""
-                <div style="margin-left: -50px;">
-                  <h3 style="margin:0; color:#7F7F7F; font-family:Calibri,sans-serif;">
+                <div class="header-text" style="margin-left:-40px;">
+                  <h5 style="margin:0; color:#7F7F7F; font-family:Calibri,sans-serif;">
                     Cliente: {st.session_state.usuario_actual}
-                  </h3>
+                  </h5>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
-            
+        with col3:
+            st.write("")
+                
     st.markdown("<div style='height:120px;'></div>", unsafe_allow_html=True)
 
 
