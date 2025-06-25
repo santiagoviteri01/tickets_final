@@ -446,6 +446,59 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             ax.set_ylabel("Cantidad")
             plt.xticks(rotation=45)
             st.pyplot(fig)
+            
+        encabezado_sin_icono("Tablas Resumen", nivel="h2")
+
+        # 1) Primas por Aseguradora (US$) por Mes y Año + Total
+        df_primas = df_filtrado.groupby(
+            ['ASEGURADORA', 'MES_NOMBRE', 'AÑO']
+        )['PRIMA TOTAL VEHÍCULOS'].sum().reset_index()
+        pivot_primas = df_primas.pivot_table(
+            index=['ASEGURADORA','MES_NOMBRE'],
+            columns='AÑO',
+            values='PRIMA TOTAL VEHÍCULOS',
+            aggfunc='sum',
+            margins=True,
+            margins_name='Total'
+        ).fillna(0).round(2)
+        render_tabla_html(pivot_primas, height=300)
+
+        # 2) # de Unidades (conteo de registros) por Aseguradora y Año
+        df_unidades = df_filtrado.groupby(
+            ['ASEGURADORA','AÑO']
+        )['PRIMA TOTAL VEHÍCULOS'].count().reset_index(name='Unidades')
+        pivot_unidades = df_unidades.pivot_table(
+            index='ASEGURADORA',
+            columns='AÑO',
+            values='Unidades',
+            aggfunc='sum',
+            margins=True,
+            margins_name='Total'
+        ).fillna(0).astype(int)
+        render_tabla_html(pivot_unidades, height=200)
+
+        # 3) Participación Aseguradora (%) por Año
+        pivot_part = df_filtrado.pivot_table(
+            index='ASEGURADORA',
+            columns='AÑO',
+            values='PRIMA TOTAL VEHÍCULOS',
+            aggfunc='sum',
+            margins=True,
+            margins_name='Total'
+        )
+        pivot_part = (pivot_part.div(pivot_part.loc['Total'], axis=1) * 100).round(2).astype(str) + '%'
+        render_tabla_html(pivot_part, height=200)
+
+        # 4) Crecimiento Año a Año
+        totales_ano = df_filtrado.groupby('AÑO')['PRIMA TOTAL VEHÍCULOS'].sum().sort_index()
+        df_crec = pd.DataFrame({
+            'T. Primas': totales_ano,
+            'T. Primas LY': totales_ano.shift(1)
+        })
+        df_crec['%Crecimiento Primas'] = ((df_crec['T. Primas'] - df_crec['T. Primas LY'])
+                                          / df_crec['T. Primas LY'] * 100).round(2)
+        df_crec = df_crec.dropna()
+        render_tabla_html(df_crec, height=200)
 
     
     elif seccion == "Reclamos":
