@@ -682,17 +682,20 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     
         # ——— Datos Generales ———
         encabezado_sin_icono("Datos Generales", "h2")
+        encabezado_sin_icono("Reclamos Pagados", "h3")
+
         render_tabla_html(
             pagos_aseguradora_data[['COMPAÑÍA','VALOR RECLAMO','FECHA SINIESTRO','EVENTO']],
             height=250
         )
+        encabezado_sin_icono("Reclamos Pendientes", "h3")
+
         render_tabla_html(
             pendientes_aseguradora_data[['CIA. DE SEGUROS','VALOR SINIESTRO','FECHA DE SINIESTRO','ESTADO ACTUAL']],
             height=250
         )
     
         encabezado_sin_icono("Distribución Temporal Continua", "h2")
-        
         # 1) Crear columna PERIODO (timestamp al primer día de cada mes)
         pagos_aseguradora_data['PERIODO'] = (
             pagos_aseguradora_data['FECHA SINIESTRO']
@@ -708,10 +711,15 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             .reset_index(name='Reclamos')
             .sort_values('PERIODO')
         )
-        
         # 3) Dibujar línea de serie temporal
         fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
-        ax.plot(df_time['PERIODO'], df_time['Reclamos'], marker='o')
+       ax.plot(
+            df_time['PERIODO'],
+            df_time['Reclamos'],
+            marker='o',
+            color=gris_o,            # línea en gris_c
+            markerfacecolor=rojo   # relleno del marcador también en gris_c
+        )
         ax.set_title('Reclamos Mensuales (Continuos)')
         ax.set_ylabel('Número de Reclamos')
         ax.set_xlabel('Periodo')
@@ -869,9 +877,19 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         # 5) # de Unidades / Mes y Año
         encabezado_sin_icono("# Unidades / Mes y Año", nivel="h3")
         df_extra = pagos_aseguradora_data.copy()
+        
+        # 1) Crear MES_NOMBRE y Año
         df_extra['MES_NOMBRE'] = df_extra['FECHA SINIESTRO'].dt.month.apply(lambda x: meses_orden[x-1])
         df_extra['AÑO']        = df_extra['FECHA SINIESTRO'].dt.year
         
+        # 2) Categorizar MES_NOMBRE con orden
+        df_extra['MES_NOMBRE'] = pd.Categorical(
+            df_extra['MES_NOMBRE'],
+            categories=meses_orden,
+            ordered=True
+        )
+        
+        # 3) Pivot para unidades
         pivot_unid = (
             df_extra
             .groupby(['MES_NOMBRE','AÑO'])
@@ -887,12 +905,19 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             )
             .fillna(0)
             .astype(int)
-            .reset_index()
         )
+        
+        # 4) Reindexar para forzar orden cronológico + Total al final
+        pivot_unid = pivot_unid.reindex(index=meses_orden + ['Total'])
+        
+        # 5) Volver a columna y mostrar
+        pivot_unid = pivot_unid.reset_index()
         render_tabla_html(pivot_unid, height=300)
         
-        # 6) Promedio Valor Reclamo (US$) / Mes y Año
+        
+        # ——— Promedio Valor Reclamo (US$) / Mes y Año ———
         encabezado_sin_icono("Promedio Valor Reclamo (US$) / Mes y Año", nivel="h3")
+        # (df_extra ya tiene MES_NOMBRE categórico)
         pivot_prom = (
             df_extra
             .groupby(['MES_NOMBRE','AÑO'])['VALOR RECLAMO']
@@ -908,8 +933,11 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 margins_name='Total'
             )
             .fillna(0)
-            .reset_index()
         )
+        
+        # Reindexar igual que arriba
+        pivot_prom = pivot_prom.reindex(index=meses_orden + ['Total'])
+        pivot_prom = pivot_prom.reset_index()
         render_tabla_html(pivot_prom, height=300)
         encabezado_sin_icono("Métricas Clave", "h2")
 
