@@ -451,22 +451,42 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
 
         # 1) Primas por Aseguradora (US$) por Mes y Año + Total
         encabezado_sin_icono("Primas por Aseguradora (US$) por Mes y Año + Total", nivel="h3")
-        df_primas = df_filtrado.groupby(
+        
+        # 1) Creamos MES_NOMBRE en español a partir de tu lista meses_orden
+        df_pri = df_filtrado.copy()
+        df_pri['MES_NOMBRE'] = df_pri['MES'].apply(lambda x: meses_orden[x-1])
+        
+        # 2) Agrupamos y sumamos
+        df_pri = df_pri.groupby(
             ['ASEGURADORA', 'MES_NOMBRE', 'AÑO']
         )['PRIMA TOTAL VEHÍCULOS'].sum().reset_index()
-
-        pivot_primas = df_primas.pivot_table(
-            index=['ASEGURADORA', 'MES_NOMBRE'],
+        
+        # 3) Forzamos el orden cronológico de MES_NOMBRE
+        df_pri['MES_NOMBRE'] = pd.Categorical(
+            df_pri['MES_NOMBRE'],
+            categories=meses_orden,
+            ordered=True
+        )
+        
+        # 4) Pivotamos con totales
+        pivot_pri = df_pri.pivot_table(
+            index=['ASEGURADORA','MES_NOMBRE'],
             columns='AÑO',
             values='PRIMA TOTAL VEHÍCULOS',
             aggfunc='sum',
             margins=True,
             margins_name='Total'
         ).fillna(0).round(2)
-
-        # Llevamos el índice a columnas
-        pivot_primas = pivot_primas.reset_index()
-        render_tabla_html(pivot_primas, height=300)
+        
+        # 5) Llevamos índice a columnas y ocultamos duplicados de ASEGURADORA
+        pivot_pri = pivot_pri.reset_index()
+        pivot_pri['ASEGURADORA'] = pivot_pri['ASEGURADORA'].mask(
+            pivot_pri['ASEGURADORA'].duplicated(), 
+            ''
+        )
+        
+        # 6) Lo mostramos
+        render_tabla_html(pivot_pri, height=300)
 
 
         # 2) # de Unidades (conteo de registros) por Aseguradora y Año
@@ -523,6 +543,87 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
 
         df_crec = df_crec.dropna().reset_index()  # 'AÑO' vuelve a ser columna
         render_tabla_html(df_crec, height=200)
+        # ——— Otras Tablas y Métricas ———
+        # Prepara MES_NOMBRE en español y orden cronológico
+        df_extra = df_filtrado.copy()
+        df_extra['MES_NOMBRE'] = df_extra['MES'].apply(lambda x: meses_orden[x-1])
+        df_extra['MES_NOMBRE'] = pd.Categorical(
+            df_extra['MES_NOMBRE'],
+            categories=meses_orden,
+            ordered=True
+        )
+
+        # 1) # de Unidades / Mes y Año
+        encabezado_sin_icono("# de Unidades / Mes y Año", nivel="h3")
+        df_unid = (
+            df_extra
+            .groupby(['MES_NOMBRE','AÑO'])
+            .size()
+            .reset_index(name='Unidades')
+        )
+        pivot_unid = df_unid.pivot_table(
+            index='MES_NOMBRE',
+            columns='AÑO',
+            values='Unidades',
+            aggfunc='sum',
+            margins=True,
+            margins_name='Total'
+        ).fillna(0).astype(int)
+        render_tabla_html(pivot_unid.reset_index(), height=300)
+
+
+        # 2) Promedio Prima Neta (US$) / Mes y Año
+        encabezado_sin_icono("Promedio Prima Neta (US$) / Mes y Año", nivel="h3")
+        df_prima_neta = (
+            df_extra
+            .groupby(['MES_NOMBRE','AÑO'])['PRIMA TOTAL VEHÍCULOS']
+            .mean()
+            .reset_index()
+        )
+        pivot_prima_neta = df_prima_neta.pivot_table(
+            index='MES_NOMBRE',
+            columns='AÑO',
+            values='PRIMA TOTAL VEHÍCULOS',
+            aggfunc='mean',
+            margins=True,
+            margins_name='Total'
+        ).round(2).fillna(0)
+        render_tabla_html(pivot_prima_neta.reset_index(), height=300)
+
+
+        # 3) Promedio Valor Asegurado (US$) / Mes y Año
+        encabezado_sin_icono("Promedio Valor Asegurado (US$) / Mes y Año", nivel="h3")
+        df_valor_aseg = (
+            df_extra
+            .groupby(['MES_NOMBRE','AÑO'])['VALOR ASEGURADO']
+            .mean()
+            .reset_index()
+        )
+        pivot_valor_aseg = df_valor_aseg.pivot_table(
+            index='MES_NOMBRE',
+            columns='AÑO',
+            values='VALOR ASEGURADO',
+            aggfunc='mean',
+            margins=True,
+            margins_name='Total'
+        ).round(2).fillna(0)
+        render_tabla_html(pivot_valor_aseg.reset_index(), height=300)
+
+
+        # 4) Indicadores YTD
+        encabezado_sin_icono("Indicadores YTD", nivel="h3")
+        año_actual = datetime.now().year
+        mes_actual = datetime.now().month
+        df_ytd = df_extra[(df_extra['AÑO']==año_actual) & (df_extra['MES']<=mes_actual)]
+
+        total_veh = len(df_ytd)
+        prom_pri_ytd = df_ytd['PRIMA TOTAL VEHÍCULOS'].mean() if total_veh else 0
+        prom_val_ytd = df_ytd['VALOR ASEGURADO'].mean() if total_veh else 0
+
+        c1, c2, c3 = st.columns(3)
+        c1.metric("# Vehículos YTD", f"{total_veh}")
+        c2.metric("Promedio Prima YTD (US$)", f"${prom_pri_ytd:,.2f}")
+        c3.metric("Promedio Valor Asegurado YTD (US$)", f"${prom_val_ytd:,.2f}")
 
     
     elif seccion == "Reclamos":
