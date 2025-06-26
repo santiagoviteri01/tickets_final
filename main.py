@@ -1077,6 +1077,12 @@ geolocator = Nominatim(user_agent="mi_app_insurapp")
 from streamlit.runtime.scriptrunner import RerunException
 # Si no necesitas reverse geocoding, puedes eliminar Geolocator
 def obtener_ubicacion():
+    # 0) Detecto si es móvil
+    mobile = st.session_state.get("mobile", False)
+    map_width  = "100%" if mobile else 600
+    map_height = 300    if mobile else 450
+    zoom_start = 14     if mobile else 16
+
     # 1) Pedir permiso la primera vez
     if "ubicacion_coords" not in st.session_state:
         encabezado_con_icono("iconos/pingps.png", "Solicitando permiso de ubicación…", "h3")
@@ -1102,7 +1108,7 @@ def obtener_ubicacion():
     lon = st.session_state.ubicacion_coords["lon"]
 
     # 3) Construir mapa y marcador fijo
-    m = folium.Map(location=[lat, lon], zoom_start=16)
+    m = folium.Map(location=[lat, lon], zoom_start=zoom_start, width=map_width, height=map_height)
     LocateControl(auto_start=False, flyTo=True).add_to(m)
     folium.Marker(
         [lat, lon],
@@ -1113,11 +1119,11 @@ def obtener_ubicacion():
     # 4) Mostrar y capturar clic (la “manito”)
     salida = st_folium(
         m,
-        height=450,
-        width=700,
+        height=map_height,
+        width=map_width,
         returned_objects=["last_clicked"]
     )
-        # — Aquí el mensaje de ayuda —
+    # — Aquí el mensaje de ayuda —
     st.info(
         "Para ajustar tu ubicación, haz zoom al mapa "
         "y dale doble click (o tap) a la pantalla."
@@ -1129,10 +1135,12 @@ def obtener_ubicacion():
         nueva = {"lat": click["lat"], "lon": click["lng"]}
         st.session_state.ubicacion_coords = nueva
         st.success(f"🔄 Coordenadas ajustadas: {nueva['lat']:.6f}, {nueva['lon']:.6f}")
+
     # 6) Generar URIs siempre con las coords en session_state
     lat_cur = st.session_state.ubicacion_coords["lat"]
     lon_cur = st.session_state.ubicacion_coords["lon"]
     web_uri = f"https://www.google.com/maps/search/?api=1&query={lat_cur},{lon_cur}"
+
     # 7) Mostrar enlace para móvil y escritorio
     st.markdown(
         f"**Enlace Web:** {web_uri}",
@@ -1142,6 +1150,7 @@ def obtener_ubicacion():
     # 8) Confirmar ubicación
     if st.form_submit_button("Confirmar ubicación"):
         pass
+
     web_uri = f"https://maps.google.com/maps?q={lat},{lon}"
     return web_uri
   
