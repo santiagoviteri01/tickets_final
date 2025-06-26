@@ -713,12 +713,12 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         )
         # 3) Dibujar línea de serie temporal
         fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
-       ax.plot(
-            df_time['PERIODO'],
-            df_time['Reclamos'],
-            marker='o',
-            color=gris_o,            # línea en gris_c
-            markerfacecolor=rojo   # relleno del marcador también en gris_c
+        ax.plot(
+                df_time['PERIODO'],
+                df_time['Reclamos'],
+                marker='o',
+                color=gris_o,            # línea en gris_c
+                markerfacecolor=rojo   # relleno del marcador también en gris_c
         )
         ax.set_title('Reclamos Mensuales (Continuos)')
         ax.set_ylabel('Número de Reclamos')
