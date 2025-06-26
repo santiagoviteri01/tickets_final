@@ -1152,7 +1152,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 .copy()
                 .round(2)
             )
-            render_tabla_html(df_tabla, height=250))
+            render_tabla_html(df_tabla, height=250)
             # Exportar a Excel
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
