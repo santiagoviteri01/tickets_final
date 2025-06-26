@@ -661,9 +661,9 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         pendientes_aseguradora_data = pendientes_filtrados[pendientes_filtrados['CIA. DE SEGUROS'].isin(aseguradoras_seleccionadas)]
     
         encabezado_sin_icono("Datos Generales","h2")
-        render_tabla_html(pagos_aseguradora_data[['COMPAÑÍA', 'VALOR RECLAMO', 'FECHA SINIESTRO', 'EVENTO']].head(3),height=250)
+        render_tabla_html(pagos_aseguradora_data[['COMPAÑÍA', 'VALOR RECLAMO', 'FECHA SINIESTRO', 'EVENTO']],height=250)
 
-        render_tabla_html(pendientes_aseguradora_data[['CIA. DE SEGUROS', 'VALOR SINIESTRO', 'FECHA DE SINIESTRO', 'ESTADO ACTUAL']].head(3),height=250)
+        render_tabla_html(pendientes_aseguradora_data[['CIA. DE SEGUROS', 'VALOR SINIESTRO', 'FECHA DE SINIESTRO', 'ESTADO ACTUAL']],height=250)
     
         encabezado_sin_icono("Distribución Temporal","h2")
         pagos_aseguradora_data['MES'] = pagos_aseguradora_data['FECHA SINIESTRO'].dt.month
@@ -730,6 +730,156 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         for col, titulo in zip(cols, titulos):
             plot_severidad(tipo_severidad, col, titulo)
 
+        encabezado_sin_icono("Tablas Resumen", nivel="h2")
+
+        # 1) Valor de Reclamos (US$) por Compañía, Mes y Año + Total
+        encabezado_sin_icono("Valor de Reclamos (US$) por Compañía, Mes y Año + Total", nivel="h3")
+        df_pri = pagos_aseguradora_data.copy()
+        df_pri['MES_NOMBRE'] = df_pri['FECHA SINIESTRO'].dt.month.apply(lambda x: meses_orden[x-1])
+        df_pri['AÑO']       = df_pri['FECHA SINIESTRO'].dt.year
+        
+        # Pivot con totales
+        pivot_pri = (
+            df_pri
+            .groupby(['COMPAÑÍA','MES_NOMBRE','AÑO'])['VALOR RECLAMO']
+            .sum()
+            .reset_index()
+        )
+        pivot_pri['MES_NOMBRE'] = pd.Categorical(pivot_pri['MES_NOMBRE'], categories=meses_orden, ordered=True)
+        pivot_pri = pivot_pri.pivot_table(
+            index=['COMPAÑÍA','MES_NOMBRE'],
+            columns='AÑO',
+            values='VALOR RECLAMO',
+            aggfunc='sum',
+            margins=True,
+            margins_name='Total'
+        ).fillna(0).round(2)
+        pivot_pri = pivot_pri.reset_index()
+        pivot_pri['COMPAÑÍA'] = pivot_pri['COMPAÑÍA'].mask(pivot_pri['COMPAÑÍA'].duplicated(), '')
+        render_tabla_html(pivot_pri, height=300)
+        
+        # 2) # de Reclamos por Compañía y Año
+        encabezado_sin_icono("# de Reclamos por Compañía y Año", nivel="h3")
+        df_uni = pagos_aseguradora_data.copy()
+        df_uni['AÑO'] = df_uni['FECHA SINIESTRO'].dt.year
+        
+        pivot_unidades = (
+            df_uni
+            .groupby(['COMPAÑÍA','AÑO'])
+            .size()
+            .reset_index(name='Unidades')
+            .pivot_table(
+                index='COMPAÑÍA',
+                columns='AÑO',
+                values='Unidades',
+                aggfunc='sum',
+                margins=True,
+                margins_name='Total'
+            )
+            .fillna(0)
+            .astype(int)
+            .reset_index()
+        )
+        render_tabla_html(pivot_unidades, height=200)
+        
+        # 3) Participación (%) por Compañía y Año
+        encabezado_sin_icono("Participación de Valor Reclamos (%) por Compañía y Año", nivel="h3")
+        pivot_part = pagos_aseguradora_data.copy()
+        pivot_part['AÑO'] = pivot_part['FECHA SINIESTRO'].dt.year
+        
+        pivot_part = pivot_part.pivot_table(
+            index='COMPAÑÍA',
+            columns='AÑO',
+            values='VALOR RECLAMO',
+            aggfunc='sum',
+            margins=True,
+            margins_name='Total'
+        )
+        pivot_part = (pivot_part.div(pivot_part.loc['Total'], axis=1) * 100).round(2).astype(str) + '%'
+        pivot_part = pivot_part.reset_index()
+        render_tabla_html(pivot_part, height=200)
+        
+        # 4) Crecimiento Año a Año de Valor Reclamos
+        encabezado_sin_icono("Crecimiento Año a Año de Valor Reclamos", nivel="h3")
+        totales_ano = (
+            pagos_aseguradora_data
+            .assign(AÑO=pagos_aseguradora_data['FECHA SINIESTRO'].dt.year)
+            .groupby('AÑO')['VALOR RECLAMO']
+            .sum()
+            .sort_index()
+        )
+        df_crec = pd.DataFrame({
+            'T. Reclamos':    totales_ano,
+            'T. Reclamos LY': totales_ano.shift(1)
+        })
+        df_crec['%Crecimiento'] = (
+            (df_crec['T. Reclamos'] - df_crec['T. Reclamos LY'])
+            / df_crec['T. Reclamos LY'] * 100
+        ).round(2)
+        df_crec = df_crec.dropna().reset_index().rename(columns={'index':'AÑO'})
+        render_tabla_html(df_crec, height=200)
+        
+        # 5) # de Unidades / Mes y Año
+        encabezado_sin_icono("# Unidades / Mes y Año", nivel="h3")
+        df_extra = pagos_aseguradora_data.copy()
+        df_extra['MES_NOMBRE'] = df_extra['FECHA SINIESTRO'].dt.month.apply(lambda x: meses_orden[x-1])
+        df_extra['AÑO']        = df_extra['FECHA SINIESTRO'].dt.year
+        
+        pivot_unid = (
+            df_extra
+            .groupby(['MES_NOMBRE','AÑO'])
+            .size()
+            .reset_index(name='Unidades')
+            .pivot_table(
+                index='MES_NOMBRE',
+                columns='AÑO',
+                values='Unidades',
+                aggfunc='sum',
+                margins=True,
+                margins_name='Total'
+            )
+            .fillna(0)
+            .astype(int)
+            .reset_index()
+        )
+        render_tabla_html(pivot_unid, height=300)
+        
+        # 6) Promedio Valor Reclamo (US$) / Mes y Año
+        encabezado_sin_icono("Promedio Valor Reclamo (US$) / Mes y Año", nivel="h3")
+        pivot_prom = (
+            df_extra
+            .groupby(['MES_NOMBRE','AÑO'])['VALOR RECLAMO']
+            .mean()
+            .round(2)
+            .reset_index()
+            .pivot_table(
+                index='MES_NOMBRE',
+                columns='AÑO',
+                values='VALOR RECLAMO',
+                aggfunc='mean',
+                margins=True,
+                margins_name='Total'
+            )
+            .fillna(0)
+            .reset_index()
+        )
+        render_tabla_html(pivot_prom, height=300)
+        encabezado_sin_icono("Métricas Clave", "h2")
+
+        # ——— KPIs ———
+        # Cálculos rápidos
+        total_pagados    = len(pagos_aseguradora_data)
+        total_pendientes = len(pendientes_aseguradora_data)
+        valor_total      = pagos_aseguradora_data['VALOR RECLAMO'].sum()
+        valor_promedio   = pagos_aseguradora_data['VALOR RECLAMO'].mean()
+        valor_max        = pagos_aseguradora_data['VALOR RECLAMO'].max()
+        
+        # Mostrar como métricas en tres columnas
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Reclamos Pagados",    f"{total_pagados}",    f"{total_pendientes} pendientes")
+        col2.metric("Valor Total Pagado",   f"${valor_total:,.2f}", f"Promedio ${valor_promedio:,.2f}")
+        col3.metric("Mayor Reclamo",        f"${valor_max:,.2f}")
+    
         encabezado_sin_icono("Generar Informe Anual","h2")
 
         if st.button("Generar Informe"):
@@ -994,9 +1144,15 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 st.warning(f"El canal '{canal_seleccionado}' no está disponible en los datos.")
     
             # Tabla detallada
-            encabezado_sin_icono("Tabla Detallada",nivel="h2")
-            df_tabla = df_comisiones[columnas_comision].copy().round(2)
-            render_tabla_html(df_tabla,height=250)
+            encabezado_sin_icono("Tabla de Comisiones Detallada", nivel="h3")
+            # 1) Resetear índice para que 'Periodo' vuelva a ser columna
+            df_tabla = (
+                df_comisiones
+                .reset_index()[['Periodo'] + columnas_comision]  # traemos Periodo + comisiones
+                .copy()
+                .round(2)
+            )
+            render_tabla_html(df_tabla, height=250))
             # Exportar a Excel
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
