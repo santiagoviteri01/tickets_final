@@ -628,50 +628,97 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     
     elif seccion == "Reclamos":
         encabezado_con_icono("iconos/reclamos.png", "Reclamos", "h2")
-        # Asegurar formato de fecha
-        pagados['FECHA SINIESTRO'] = pd.to_datetime(pagados['FECHA SINIESTRO'], errors='coerce')
+    
+        # ——— Formateo de fechas y extracción de año base ———
+        pagados['FECHA SINIESTRO']      = pd.to_datetime(pagados['FECHA SINIESTRO'],      errors='coerce')
         pendientes['FECHA DE SINIESTRO'] = pd.to_datetime(pendientes['FECHA DE SINIESTRO'], errors='coerce')
+        pagados['BASE']     = pagados['FECHA SINIESTRO'].dt.year.astype('Int64')
+        pendientes['BASE']  = pendientes['FECHA DE SINIESTRO'].dt.year.astype('Int64')
     
-        # Forzar que BASE sea el año de la fecha siniestro
-        pagados['BASE'] = pagados['FECHA SINIESTRO'].dt.year.astype('Int64')
-        pendientes['BASE'] = pendientes['FECHA DE SINIESTRO'].dt.year.astype('Int64')
-        orden_meses = meses_orden
+        # ——— Resumen para poblar multiselect de aseguradoras ———
+        resumen_aseguradoras_total = (
+            pagados
+            .groupby('COMPAÑÍA')
+            .agg(
+                Media_Reclamo=('VALOR RECLAMO', 'mean'),
+                Mediana_Reclamo=('VALOR RECLAMO', 'median'),
+                Total_Reclamo=('VALOR RECLAMO', 'sum'),
+                Media_Deducible=('DEDUCIBLE', 'mean')
+            )
+            .round(2)
+        )
     
-        resumen_aseguradoras_total = pagados.groupby('COMPAÑÍA').agg(
-            Media_Reclamo=('VALOR RECLAMO', 'mean'),
-            Mediana_Reclamo=('VALOR RECLAMO', 'median'),
-            Total_Reclamo=('VALOR RECLAMO', 'sum'),
-            Media_Deducible=('DEDUCIBLE', 'mean')
-        ).round(2)
-    
+        # ——— Sidebar: año con opción "Todos" + selección de aseguradoras ———
         with st.sidebar:
             st.header("Configuración del Análisis de Reclamos")
-            año_analisis = st.selectbox("Seleccionar Año", [2024, 2025], key="año_reclamos")
-            if len(resumen_aseguradoras_total) >= 1:
-                aseguradoras_seleccionadas = st.multiselect(
-                    "Selecciona las aseguradoras para comparar",
-                    options=resumen_aseguradoras_total.index.tolist(),
-                    default=resumen_aseguradoras_total.index.tolist()[:2]
-                )
     
-        pagados_filtrados = pagados[pagados['BASE'] == año_analisis].reset_index(drop=True)
-        pendientes_filtrados = pendientes[pendientes['BASE'] == año_analisis].reset_index(drop=True)
+            # Preparo lista de años dinámicamente y agrego "Todos"
+            años_disponibles = sorted(pagados['BASE'].dropna().unique().tolist())
+            opciones_años     = ["Todos"] + [str(a) for a in años_disponibles]
+            año_analisis     = st.selectbox("Seleccionar Año", opciones_años, key="año_reclamos")
     
-        pagos_aseguradora_data = pagados_filtrados[pagados_filtrados['COMPAÑÍA'].isin(aseguradoras_seleccionadas)]
+            # Multiselect de aseguradoras
+            aseguradoras = resumen_aseguradoras_total.index.tolist()
+            default_aseg = aseguradoras[:2] if len(aseguradoras) >= 2 else aseguradoras
+            aseguradoras_seleccionadas = st.multiselect(
+                "Selecciona Aseguradoras",
+                options=aseguradoras,
+                default=default_aseg,
+                key="aseg_reclamos"
+            )
+    
+        # ——— Filtrado según año (o todos) ———
+        if año_analisis != "Todos":
+            año_int = int(año_analisis)
+            pagados_filtrados    = pagados[pagados['BASE'] == año_int].reset_index(drop=True)
+            pendientes_filtrados = pendientes[pendientes['BASE'] == año_int].reset_index(drop=True)
+        else:
+            pagados_filtrados    = pagados.copy().reset_index(drop=True)
+            pendientes_filtrados = pendientes.copy().reset_index(drop=True)
+    
+        # ——— Filtrado según aseguradora ———
+        pagos_aseguradora_data      = pagados_filtrados[pagados_filtrados['COMPAÑÍA'].isin(aseguradoras_seleccionadas)]
         pendientes_aseguradora_data = pendientes_filtrados[pendientes_filtrados['CIA. DE SEGUROS'].isin(aseguradoras_seleccionadas)]
     
-        encabezado_sin_icono("Datos Generales","h2")
-        render_tabla_html(pagos_aseguradora_data[['COMPAÑÍA', 'VALOR RECLAMO', 'FECHA SINIESTRO', 'EVENTO']],height=250)
-
-        render_tabla_html(pendientes_aseguradora_data[['CIA. DE SEGUROS', 'VALOR SINIESTRO', 'FECHA DE SINIESTRO', 'ESTADO ACTUAL']],height=250)
+        # ——— Datos Generales ———
+        encabezado_sin_icono("Datos Generales", "h2")
+        render_tabla_html(
+            pagos_aseguradora_data[['COMPAÑÍA','VALOR RECLAMO','FECHA SINIESTRO','EVENTO']],
+            height=250
+        )
+        render_tabla_html(
+            pendientes_aseguradora_data[['CIA. DE SEGUROS','VALOR SINIESTRO','FECHA DE SINIESTRO','ESTADO ACTUAL']],
+            height=250
+        )
     
-        encabezado_sin_icono("Distribución Temporal","h2")
-        pagos_aseguradora_data['MES'] = pagos_aseguradora_data['FECHA SINIESTRO'].dt.month
+        encabezado_sin_icono("Distribución Temporal Continua", "h2")
+        
+        # 1) Crear columna PERIODO (timestamp al primer día de cada mes)
+        pagos_aseguradora_data['PERIODO'] = (
+            pagos_aseguradora_data['FECHA SINIESTRO']
+            .dt.to_period('M')      # convertir a periodo mensual
+            .dt.to_timestamp()      # volver a timestamp (primer día del mes)
+        )
+        
+        # 2) Agrupar por PERIODO
+        df_time = (
+            pagos_aseguradora_data
+            .groupby('PERIODO')
+            .size()
+            .reset_index(name='Reclamos')
+            .sort_values('PERIODO')
+        )
+        
+        # 3) Dibujar línea de serie temporal
         fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
-        sns.countplot(data=pagos_aseguradora_data, x='MES', palette=palette, ax=ax)
-        ax.set_xticks(range(0, 12))
-        ax.set_xticklabels(meses_orden, rotation=45)
-        ax.set_title('Reclamos por Mes')
+        ax.plot(df_time['PERIODO'], df_time['Reclamos'], marker='o')
+        ax.set_title('Reclamos Mensuales (Continuos)')
+        ax.set_ylabel('Número de Reclamos')
+        ax.set_xlabel('Periodo')
+        # Formatear etiquetas X como "Ene-2024", "Feb-2024", etc.
+        xticks = df_time['PERIODO'][::3]
+        ax.set_xticks(xticks)
+        ax.set_xticklabels(xticks.dt.strftime('%b-%Y'), rotation=45, ha='right')        
         st.pyplot(fig)
     
         st.header("Análisis de Valores")
