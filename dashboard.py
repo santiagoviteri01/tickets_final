@@ -958,8 +958,25 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         encabezado_sin_icono("Generar Informe Anual","h2")
 
         if st.button("Generar Informe"):
-            resumen_mes = pagados_filtrados.pivot_table(values='VALOR RECLAMO', index='MES', columns='COMPAÑÍA', aggfunc=['sum', 'count'], fill_value=0, margins=True)
-            resumen_mes.columns = [f"{aggfunc} {col}" for aggfunc, col in resumen_mes.columns]
+                # ——— Crear columna PERIODO en pagados_filtrados ———
+            pagados_filtrados['PERIODO'] = (
+                pagados_filtrados['FECHA SINIESTRO']
+                .dt.to_period('M')      # convierte a periodo mensual “2024-01”, etc.
+                .dt.to_timestamp()      # vuelve a timestamp (1er día del mes)
+            )
+        
+            # ——— Pivot: ahora por PERIODO en lugar de MES ———
+            resumen_periodo = pagados_filtrados.pivot_table(
+                values='VALOR RECLAMO',
+                index='PERIODO',
+                columns='COMPAÑÍA',
+                aggfunc=['sum', 'count'],
+                fill_value=0,
+                margins=True,
+                margins_name='Total'
+            )
+            # Aplanar multiíndice de columnas
+            resumen_periodo.columns = [f"{aggfunc} {aseg}" for aggfunc, aseg in resumen_periodo.columns]
             talleres = pagados_filtrados.pivot_table(values='VALOR RECLAMO', index='TALLER DE REPARACION', columns='COMPAÑÍA', aggfunc='count', fill_value=0)
             causas = pagados_filtrados.pivot_table(values='VALOR RECLAMO', index='EVENTO', aggfunc=['sum', 'count'], fill_value=0)
             causas.columns = ['Total_Reclamo', 'Cantidad_Reclamos']
@@ -980,7 +997,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
 
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                resumen_mes.to_excel(writer, sheet_name='Resumen Mes')
+                resumen_periodo.to_excel(writer, sheet_name='Resumen Por Periodo')
                 talleres.to_excel(writer, sheet_name='Talleres')
                 causas.to_excel(writer, sheet_name='Causas')
                 pendientes_estado.to_excel(writer, sheet_name='Pendientes')
