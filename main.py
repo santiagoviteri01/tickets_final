@@ -1116,12 +1116,29 @@ def obtener_ubicacion():
     zoom      = 14 if mobile else 16
     map_h     = 300 if mobile else 450
 
-    # … tu lógica para pedir permiso y poblar st.session_state["ubicacion_coords"] …
+    # 1) Pedir permiso la primera vez
+    if "ubicacion_coords" not in st.session_state:
+        encabezado_con_icono("iconos/pingps.png", "Solicitando permiso de ubicación…", "h3")
 
-    lat, lon = (
-        st.session_state.ubicacion_coords["lat"],
-        st.session_state.ubicacion_coords["lon"],
-    )
+        js = """
+        new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(
+                pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude}),
+                err => reject(err.message),
+                {enableHighAccuracy: true, timeout:10000, maximumAge:0}
+            );
+        })
+        """
+        coords = streamlit_js_eval(js_expressions=js, key="get_geo")
+        if not coords or "lat" not in coords:
+            st.warning("Para continuar, **permite** el acceso a tu ubicación.")
+            return ""
+        st.session_state.ubicacion_coords = {"lat": coords["lat"], "lon": coords["lon"]}
+        st.success("Permiso concedido y ubicación obtenida.")
+    
+    # 2) Leer coords actuales
+    lat = st.session_state.ubicacion_coords["lat"]
+    lon = st.session_state.ubicacion_coords["lon"]
 
     # 2) Construyo un Map que ocupe 100% del ancho/alto de su contenedor
     m = folium.Map(
