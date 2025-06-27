@@ -1078,87 +1078,78 @@ geolocator = Nominatim(user_agent="mi_app_insurapp")
 from streamlit.runtime.scriptrunner import RerunException
 # Si no necesitas reverse geocoding, puedes eliminar Geolocator
 def obtener_ubicacion():
-    # 0) Detecto si es móvil
+    # 0) Layout wide + CSS global
     st.set_page_config(layout="wide")
-
-    mobile = st.session_state.get("mobile", False)
-    map_width  = "100%" if mobile else 600
-    map_height = 300    if mobile else 450
-    zoom_start = 14     if mobile else 16
-
-    # 1) Pedir permiso la primera vez
-    if "ubicacion_coords" not in st.session_state:
-        encabezado_con_icono("iconos/pingps.png", "Solicitando permiso de ubicación…", "h3")
-
-        js = """
-        new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(
-                pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude}),
-                err => reject(err.message),
-                {enableHighAccuracy: true, timeout:10000, maximumAge:0}
-            );
-        })
+    st.markdown(
         """
-        coords = streamlit_js_eval(js_expressions=js, key="get_geo")
-        if not coords or "lat" not in coords:
-            st.warning("Para continuar, **permite** el acceso a tu ubicación.")
-            return ""
-        st.session_state.ubicacion_coords = {"lat": coords["lat"], "lon": coords["lon"]}
-        st.success("Permiso concedido y ubicación obtenida.")
+        <style>
+        /* ————— Quitar padding/margen del App Container ————— */
+        [data-testid="stAppViewContainer"] > .main {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        /* Streamlit añade bloques internos con padding: lo quitamos */
+        [data-testid="stAppViewContainer"] [class*="block-container"] {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
 
-    # 2) Leer coords actuales
-    lat = st.session_state.ubicacion_coords["lat"]
-    lon = st.session_state.ubicacion_coords["lon"]
-    # 3) Construir mapa y marcador fijo
-    m = folium.Map(location=[lat, lon], zoom_start=zoom_start, width=map_width, height=map_height)
+        /* ————— Folium al 100% de su contenedor ————— */
+        .leaflet-container,
+        .leaflet-map-pane,
+        .leaflet-pane,
+        .leaflet-layer,
+        .leaflet-tile {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            box-sizing: border-box;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # 1) Detecto si es móvil
+    mobile    = st.session_state.get("mobile", False)
+    zoom      = 14 if mobile else 16
+    map_h     = 300 if mobile else 450
+
+    # … tu lógica para pedir permiso y poblar st.session_state["ubicacion_coords"] …
+
+    lat, lon = (
+        st.session_state.ubicacion_coords["lat"],
+        st.session_state.ubicacion_coords["lon"],
+    )
+
+    # 2) Construyo un Map que ocupe 100% del ancho/alto de su contenedor
+    m = folium.Map(
+        location=[lat, lon],
+        zoom_start=zoom,
+        width="100%",     # <–– 100%
+        height="100%",    # <–– 100%
+    )
     LocateControl(auto_start=False, flyTo=True).add_to(m)
     folium.Marker(
         [lat, lon],
+        popup="📍 Ubicación seleccionada",
         icon=folium.Icon(color="red", icon="map-pin", prefix="fa"),
-        popup="📍 Ubicación seleccionada"
     ).add_to(m)
-    # 2) Renderizar el HTML completo (con <head> + CSS) en un componente
-    map_html = m.get_root().render()
-    full_html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <style>
-        html, body, .leaflet-container {{
-          margin: 0 !important;
-          padding: 0 !important;
-          width: 100% !important;
-          height: 100% !important;
-          box-sizing: border-box;
-        }}
-      </style>
-    </head>
-    <body>
-      {map_html}
-    </body>
-    </html>
-    """
 
-    components.html(
-        full_html,
-        width=map_width,
-        height=map_height,
-        scrolling=False,
-    )
-    # 4) Mostrar y capturar clic (la “manito”)
-    salida = st_folium(
-        m,
-        height=map_height,
-        width=map_width,
-        returned_objects=["last_clicked"]
-    )
-    # — Aquí el mensaje de ayuda —
-    st.info(
-        "Para ajustar tu ubicación, haz zoom al mapa "
-        "y dale doble click (o tap) a la pantalla."
-    )
+    # 3) Creamos 3 columnas para centrar / expandir el mapa
+    col1, col2, col3 = st.columns([1, 8, 1])
+    with col2:
+        # Aquí va SOLO UNA llamada a st_folium
+        salida = st_folium(
+            m,
+            width="100%",       # ocupa 100% de col2
+            height=map_h,       # la altura que quieras
+            returned_objects=["last_clicked"],
+        )
 
-    # 5) Si hubo clic, actualizamos coords y refrescamos
+    # 4) Ayuda, clics y resto de lógica
+    st.info("Para ajustar: haz zoom y doble-click (o tap).")
     if salida and salida.get("last_clicked"):
         click = salida["last_clicked"]
         nueva = {"lat": click["lat"], "lon": click["lng"]}
