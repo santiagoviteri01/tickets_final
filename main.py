@@ -36,6 +36,7 @@ import matplotlib.pyplot as plt
 from pandas.io.formats.style import Styler  # ✅ importa Styler explícitamente
 from typing import Literal, Optional
 from streamlit.components.v1 import html
+from folium import Element
 
 
 st.set_page_config(
@@ -1115,7 +1116,19 @@ def obtener_ubicacion():
         icon=folium.Icon(color="red", icon="map-pin", prefix="fa"),
         popup="📍 Ubicación seleccionada"
     ).add_to(m)
-
+    
+    css = """
+    <style>
+      .leaflet-container, 
+      .leaflet-container > img, 
+      .leaflet-container > div {
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box;
+      }
+    </style>
+    """
+    m.get_root().html.add_child(Element(css))
     # 4) Mostrar y capturar clic (la “manito”)
     salida = st_folium(
         m,
