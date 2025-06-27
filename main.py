@@ -1079,6 +1079,8 @@ from streamlit.runtime.scriptrunner import RerunException
 # Si no necesitas reverse geocoding, puedes eliminar Geolocator
 def obtener_ubicacion():
     # 0) Detecto si es móvil
+    st.set_page_config(layout="wide")
+
     mobile = st.session_state.get("mobile", False)
     map_width  = "100%" if mobile else 600
     map_height = 300    if mobile else 450
@@ -1107,32 +1109,6 @@ def obtener_ubicacion():
     # 2) Leer coords actuales
     lat = st.session_state.ubicacion_coords["lat"]
     lon = st.session_state.ubicacion_coords["lon"]
-    st.markdown(
-        """
-        <style>
-        /* 1) Quitar el padding general de bloque en Streamlit */
-        .main .block-container {
-            padding: 0 !important;
-        }
-        /* 2) Forzar sin márgenes ni relleno en el contenedor de Leaflet */
-        .leaflet-container {
-            margin: 0 !important;
-            padding: 0 !important;
-            box-sizing: border-box;
-        }
-        /* 3) Asegurar que el canvas de Leaflet ocupe todo el contenedor */
-        .leaflet-map-pane,
-        .leaflet-pane,
-        .leaflet-layer,
-        .leaflet-tile {
-            width: 100% !important;
-            height: 100% !important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
     # 3) Construir mapa y marcador fijo
     m = folium.Map(location=[lat, lon], zoom_start=zoom_start, width=map_width, height=map_height)
     LocateControl(auto_start=False, flyTo=True).add_to(m)
@@ -1141,7 +1117,34 @@ def obtener_ubicacion():
         icon=folium.Icon(color="red", icon="map-pin", prefix="fa"),
         popup="📍 Ubicación seleccionada"
     ).add_to(m)
-    
+    # 2) Renderizar el HTML completo (con <head> + CSS) en un componente
+    map_html = m.get_root().render()
+    full_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        html, body, .leaflet-container {{
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          box-sizing: border-box;
+        }}
+      </style>
+    </head>
+    <body>
+      {map_html}
+    </body>
+    </html>
+    """
+
+    components.html(
+        full_html,
+        width=map_width,
+        height=map_height,
+        scrolling=False,
+    )
     # 4) Mostrar y capturar clic (la “manito”)
     salida = st_folium(
         m,
