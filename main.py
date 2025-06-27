@@ -1079,32 +1079,19 @@ from streamlit.runtime.scriptrunner import RerunException
 # Si no necesitas reverse geocoding, puedes eliminar Geolocator
 def obtener_ubicacion():
     # 0) Layout wide + CSS global
-    st.set_page_config(layout="wide")
+    st.set_page_config(layout="center")
     st.markdown(
         """
         <style>
-        /* ————— Quitar padding/margen del App Container ————— */
+        /* 1) Limitar la altura del bloque principal que contiene todo */
         [data-testid="stAppViewContainer"] > .main {
-            padding: 0 !important;
-            margin: 0 !important;
+            max-height: 600px !important;   /* aquí pones la altura máxima que quieras */
+            overflow-y: auto !important;    /* si hace falta scroll vertical */
         }
-        /* Streamlit añade bloques internos con padding: lo quitamos */
-        [data-testid="stAppViewContainer"] [class*="block-container"] {
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-
-        /* ————— Folium al 100% de su contenedor ————— */
-        .leaflet-container,
-        .leaflet-map-pane,
-        .leaflet-pane,
-        .leaflet-layer,
-        .leaflet-tile {
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            box-sizing: border-box;
+        /* 2) Fijar la altura del contenedor de Leaflet */
+        .leaflet-container {
+            height: 450px !important;       /* sea la que uses en st_folium */
+            max-height: 450px !important;
         }
         </style>
         """,
@@ -1152,30 +1139,12 @@ def obtener_ubicacion():
     LocateControl(auto_start=False, flyTo=True).add_to(m)
     folium.Marker([lat, lon], popup="📍", icon=folium.Icon(color="red")).add_to(m)
 
-    # --- WRAPPER HTML para centrar y limitar tamaño ---
-    st.markdown(
-        f"""
-        <div style="
-             max-width: {map_width}px;
-             width: 100%;
-             height: {map_height}px;
-             margin: 0 auto;
-             ">
-        """,
-        unsafe_allow_html=True,
-    )
-
-    # Aquí va SOLO UNA llamada a st_folium
     salida = st_folium(
         m,
         width=map_width,
         height=map_height,
         returned_objects=["last_clicked"],
     )
-
-    # Cerramos el div
-    st.markdown("</div>", unsafe_allow_html=True)
-
 
     # 4) Ayuda, clics y resto de lógica
     st.info("Para ajustar: haz zoom y doble-click (o tap).")
