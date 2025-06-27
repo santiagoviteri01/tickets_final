@@ -1140,30 +1140,42 @@ def obtener_ubicacion():
     lat = st.session_state.ubicacion_coords["lat"]
     lon = st.session_state.ubicacion_coords["lon"]
 
-    # 2) Construyo un Map que ocupe 100% del ancho/alto de su contenedor
+    # Construyo el mapa (fija ancho y alto en px o %)
+    map_width  = 600    # ó "80%" / "100%"
+    map_height = 450    # ó "60vh"
     m = folium.Map(
         location=[lat, lon],
-        zoom_start=zoom,
-        width="100%",     # <–– 100%
-        height="100%",    # <–– 100%
+        zoom_start=16,
+        width=map_width,
+        height=map_height,
     )
     LocateControl(auto_start=False, flyTo=True).add_to(m)
-    folium.Marker(
-        [lat, lon],
-        popup="📍 Ubicación seleccionada",
-        icon=folium.Icon(color="red", icon="map-pin", prefix="fa"),
-    ).add_to(m)
+    folium.Marker([lat, lon], popup="📍", icon=folium.Icon(color="red")).add_to(m)
 
-    # 3) Creamos 3 columnas para centrar / expandir el mapa
-    col1, col2, col3 = st.columns([1, 8, 1])
-    with col2:
-        # Aquí va SOLO UNA llamada a st_folium
-        salida = st_folium(
-            m,
-            width="100%",       # ocupa 100% de col2
-            height=map_h,       # la altura que quieras
-            returned_objects=["last_clicked"],
-        )
+    # --- WRAPPER HTML para centrar y limitar tamaño ---
+    st.markdown(
+        f"""
+        <div style="
+             max-width: {map_width}px;
+             width: 100%;
+             height: {map_height}px;
+             margin: 0 auto;
+             ">
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Aquí va SOLO UNA llamada a st_folium
+    salida = st_folium(
+        m,
+        width=map_width,
+        height=map_height,
+        returned_objects=["last_clicked"],
+    )
+
+    # Cerramos el div
+    st.markdown("</div>", unsafe_allow_html=True)
+
 
     # 4) Ayuda, clics y resto de lógica
     st.info("Para ajustar: haz zoom y doble-click (o tap).")
