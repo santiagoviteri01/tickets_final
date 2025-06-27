@@ -1080,62 +1080,80 @@ from streamlit.runtime.scriptrunner import RerunException
 def obtener_ubicacion():
     st.set_page_config(layout="centered")
 
-    # 1) Si aún no tengo coords, muestro un form para pedir permiso
+    # 1) Si no tenemos coords aún, mostramos el botón y salimos
     if "ubicacion_coords" not in st.session_state:
-        st.write("## Paso 1: Permite el acceso a tu ubicación")
-        with st.form("permiso_form"):
-            permiso = st.form_submit_button("Permitir ubicación")
-        if permiso:
+        st.write("## Paso 1: Permitir acceso a tu ubicación")
+        if st.button("Permitir ubicación"):
             js = """
             new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(
-                    pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude}),
-                    err => reject(err.message),
-                    {enableHighAccuracy: true, timeout:10000, maximumAge:0}
-                );
+              navigator.geolocation.getCurrentPosition(
+                pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude}),
+                err => reject(err.message),
+                {enableHighAccuracy: true, timeout:10000}
+              );
             })
             """
             coords = streamlit_js_eval(js_expressions=js, key="get_geo")
             if coords and "lat" in coords:
                 st.session_state.ubicacion_coords = coords
-                st.success("✅ Permiso concedido.")
+                st.success("✅ Ubicación obtenida.")
             else:
                 st.error("❌ No se pudo obtener la ubicación.")
-        return  # Salimos, el mapa NO se renderiza hasta tener coords
+        # Importante: aquí retornamos vacío para que **no** se dibuje el mapa
+        return ""
 
-    # 2) Una vez que ya tengo coords, muestro el mapa “limpio”
+    # 2) Con coords ya en session_state, dibujamos solo el mapa
     lat = st.session_state.ubicacion_coords["lat"]
     lon = st.session_state.ubicacion_coords["lon"]
 
-    # (Opcional) CSS para centrar y quitar padding/margin
+    # (Opcional) CSS para centrar tu bloque y quitar padding
     st.markdown(
         """
         <style>
-        [data-testid="stAppViewContainer"] > .main {padding:0; margin:0 auto; max-width:650px;}
-        .leaflet-container {margin:0 auto!important;}
+        [data-testid="stAppViewContainer"] > .main {
+            padding: 0 !important;
+            margin: 0 auto !important;
+            max-width: 650px !important;
+        }
+        .leaflet-container {
+            margin: 0 auto !important;
+        }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-    # 3) Construyo y muestro el mapa **solo una vez**
-    m = folium.Map(location=[lat, lon], zoom_start=16, width=600, height=450)
+    # 3) Construir y mostrar el mapa
+    map_w, map_h = 600, 450
+    m = folium.Map(
+        location=[lat, lon],
+        zoom_start=16,
+        width=map_w,
+        height=map_h,
+    )
     LocateControl(auto_start=False, flyTo=True).add_to(m)
     folium.Marker([lat, lon], popup="📍 Ubicación", icon=folium.Icon(color="red")).add_to(m)
-    salida = st_folium(m, width=600, height=450, returned_objects=["last_clicked"])
 
-    # 4) Ajuste tras clic
-    st.info("Haz zoom y doble-click (o tap) para ajustar tu ubicación.")
+    salida = st_folium(
+        m,
+        width=map_w,
+        height=map_h,
+        returned_objects=["last_clicked"],
+        key="mapa_ubicacion",
+    )
+
+    # 4) Ajuste tras doble-click
+    st.info("🔍 Haz zoom y doble-click (o tap) para ajustar ubicación.")
     if salida and salida.get("last_clicked"):
         c = salida["last_clicked"]
         st.session_state.ubicacion_coords = {"lat": c["lat"], "lon": c["lng"]}
-        st.experimental_rerun()
+        st.experimental_rerun()  # <-- Aquí en la mayoría de versiones sí funciona para re-dibujar ya con la nueva coords
 
-    # 5) Enlace y confirmación
-    web_uri = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-    st.markdown(f"**Enlace Web:** {web_uri}")
+    # 5) Enlace y botón de confirmación
+    uri = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+    st.markdown(f"**Enlace Web:** {uri}")
     if st.button("Confirmar ubicación"):
-        return web_uri
+        return uri
 
     return ""
   
