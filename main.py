@@ -1078,84 +1078,99 @@ geolocator = Nominatim(user_agent="mi_app_insurapp")
 from streamlit.runtime.scriptrunner import RerunException
 # Si no necesitas reverse geocoding, puedes eliminar Geolocator
 def obtener_ubicacion():
-    st.set_page_config(layout="centered")
-
-    # 1) Si no tenemos coords aún, mostramos el botón y salimos
-    if "ubicacion_coords" not in st.session_state:
-        st.write("## Paso 1: Permitir acceso a tu ubicación")
-        if st.button("Permitir ubicación"):
-            js = """
-            new Promise((resolve, reject) => {
-              navigator.geolocation.getCurrentPosition(
-                pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude}),
-                err => reject(err.message),
-                {enableHighAccuracy: true, timeout:10000}
-              );
-            })
-            """
-            coords = streamlit_js_eval(js_expressions=js, key="get_geo")
-            if coords and "lat" in coords:
-                st.session_state.ubicacion_coords = coords
-                st.success("✅ Ubicación obtenida.")
-            else:
-                st.error("❌ No se pudo obtener la ubicación.")
-        # Importante: aquí retornamos vacío para que **no** se dibuje el mapa
-        return ""
-
-    # 2) Con coords ya en session_state, dibujamos solo el mapa
-    lat = st.session_state.ubicacion_coords["lat"]
-    lon = st.session_state.ubicacion_coords["lon"]
-
-    # (Opcional) CSS para centrar tu bloque y quitar padding
+    # 0) Layout wide + CSS global
+    st.set_page_config(layout="center")
     st.markdown(
         """
         <style>
+        /* 1) Limitar la altura del bloque principal que contiene todo */
         [data-testid="stAppViewContainer"] > .main {
-            padding: 0 !important;
-            margin: 0 auto !important;
-            max-width: 650px !important;
+            max-height: 600px !important;   /* aquí pones la altura máxima que quieras */
+            overflow-y: auto !important;    /* si hace falta scroll vertical */
         }
+        /* 2) Fijar la altura del contenedor de Leaflet */
         .leaflet-container {
-            margin: 0 auto !important;
+            height: 450px !important;       /* sea la que uses en st_folium */
+            max-height: 450px !important;
         }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-    # 3) Construir y mostrar el mapa
-    map_w, map_h = 600, 450
+    # 1) Detecto si es móvil
+    mobile    = st.session_state.get("mobile", False)
+    zoom      = 14 if mobile else 16
+    map_h     = 300 if mobile else 450
+
+    # 1) Pedir permiso la primera vez
+    if "ubicacion_coords" not in st.session_state:
+        encabezado_con_icono("iconos/pingps.png", "Solicitando permiso de ubicación…", "h3")
+
+        js = """
+        new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(
+                pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude}),
+                err => reject(err.message),
+                {enableHighAccuracy: true, timeout:10000, maximumAge:0}
+            );
+        })
+        """
+        coords = streamlit_js_eval(js_expressions=js, key="get_geo")
+        if not coords or "lat" not in coords:
+            st.warning("Para continuar, **permite** el acceso a tu ubicación.")
+            return ""
+        st.session_state.ubicacion_coords = {"lat": coords["lat"], "lon": coords["lon"]}
+        st.success("Permiso concedido y ubicación obtenida.")
+    
+    # 2) Leer coords actuales
+    lat = st.session_state.ubicacion_coords["lat"]
+    lon = st.session_state.ubicacion_coords["lon"]
+
+    # Construyo el mapa (fija ancho y alto en px o %)
+    map_width  = 600    # ó "80%" / "100%"
+    map_height = 450    # ó "60vh"
     m = folium.Map(
         location=[lat, lon],
         zoom_start=16,
-        width=map_w,
-        height=map_h,
+        width=map_width,
+        height=map_height,
     )
     LocateControl(auto_start=False, flyTo=True).add_to(m)
-    folium.Marker([lat, lon], popup="📍 Ubicación", icon=folium.Icon(color="red")).add_to(m)
+    folium.Marker([lat, lon], popup="📍", icon=folium.Icon(color="red")).add_to(m)
 
     salida = st_folium(
         m,
-        width=map_w,
-        height=map_h,
+        width=map_width,
+        height=map_height,
         returned_objects=["last_clicked"],
-        key="mapa_ubicacion",
     )
 
-    # 4) Ajuste tras doble-click
-    st.info("🔍 Haz zoom y doble-click (o tap) para ajustar ubicación.")
+    # 4) Ayuda, clics y resto de lógica
+    st.info("Para ajustar: haz zoom y doble-click (o tap).")
     if salida and salida.get("last_clicked"):
-        c = salida["last_clicked"]
-        st.session_state.ubicacion_coords = {"lat": c["lat"], "lon": c["lng"]}
-        st.experimental_rerun()  # <-- Aquí en la mayoría de versiones sí funciona para re-dibujar ya con la nueva coords
+        click = salida["last_clicked"]
+        nueva = {"lat": click["lat"], "lon": click["lng"]}
+        st.session_state.ubicacion_coords = nueva
+        st.success(f"🔄 Coordenadas ajustadas: {nueva['lat']:.6f}, {nueva['lon']:.6f}")
 
-    # 5) Enlace y botón de confirmación
-    uri = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-    st.markdown(f"**Enlace Web:** {uri}")
-    if st.button("Confirmar ubicación"):
-        return uri
+    # 6) Generar URIs siempre con las coords en session_state
+    lat_cur = st.session_state.ubicacion_coords["lat"]
+    lon_cur = st.session_state.ubicacion_coords["lon"]
+    web_uri = f"https://www.google.com/maps/search/?api=1&query={lat_cur},{lon_cur}"
 
-    return ""
+    # 7) Mostrar enlace para móvil y escritorio
+    st.markdown(
+        f"**Enlace Web:** {web_uri}",
+        unsafe_allow_html=True
+    )
+
+    # 8) Confirmar ubicación
+    if st.form_submit_button("Confirmar ubicación"):
+        pass
+
+    web_uri = f"https://maps.google.com/maps?q={lat},{lon}"
+    return web_uri
   
 from PIL import Image
 from ultralytics import YOLO
