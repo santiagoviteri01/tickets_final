@@ -1079,7 +1079,7 @@ from streamlit.runtime.scriptrunner import RerunException
 # Si no necesitas reverse geocoding, puedes eliminar Geolocator
 def obtener_ubicacion():
     # 0) Layout wide + CSS global
-    st.set_page_config(layout="center")
+    st.set_page_config(layout="centered")
     st.markdown(
         """
         <style>
