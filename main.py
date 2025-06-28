@@ -1166,11 +1166,12 @@ def obtener_ubicacion():
     )
 
     # 8) Confirmar ubicación
-    if st.form_submit_button("Confirmar ubicación"):
-        pass
+    if st.button("Confirmar ubicación", key="confirm_ubi"):
+        # cuando el usuario confirma devolvemos la URI
+        return f"https://maps.google.com/maps?q={lat_cur},{lon_cur}"
 
-    web_uri = f"https://maps.google.com/maps?q={lat},{lon}"
-    return web_uri
+    # si no confirma, devolvemos None o cadena vacía
+    return ""
   
 from PIL import Image
 from ultralytics import YOLO
