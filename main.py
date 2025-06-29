@@ -1086,7 +1086,7 @@ def obtener_ubicacion():
         /* 1) Limitar la altura del bloque principal que contiene todo */
         [data-testid="stAppViewContainer"] > .main {
             max-height: 600px !important;   /* aquí pones la altura máxima que quieras */
-            overflow-y: auto !important;    /* si hace falta scroll vertical */
+            overflow-y: 600px !important;    /* si hace falta scroll vertical */
         }
         /* 2) Fijar la altura del contenedor de Leaflet */
         .leaflet-container {
@@ -1166,12 +1166,12 @@ def obtener_ubicacion():
     )
 
     # 8) Confirmar ubicación
-    if st.button("Confirmar ubicación", key="confirm_ubi"):
-        # cuando el usuario confirma devolvemos la URI
-        return f"https://maps.google.com/maps?q={lat_cur},{lon_cur}"
+    if st.form_submit_button("confirmar ubicación"):
+        pass
 
-    # si no confirma, devolvemos None o cadena vacía
-    return ""
+    web_uri = f"https://maps.google.com/maps?q={lat},{lon}"
+    return web_uri
+
   
 from PIL import Image
 from ultralytics import YOLO
