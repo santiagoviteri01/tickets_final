@@ -1074,6 +1074,8 @@ def autenticacion():
 
 
 from folium.plugins import LocateControl
+from folium.plugins import Fullscreen
+
 geolocator = Nominatim(user_agent="mi_app_insurapp")
 from streamlit.runtime.scriptrunner import RerunException
 # Si no necesitas reverse geocoding, puedes eliminar Geolocator
@@ -1152,6 +1154,7 @@ def obtener_ubicacion():
     )
     LocateControl(auto_start=False, flyTo=True).add_to(m)
     folium.Marker([lat, lon], popup="📍", icon=folium.Icon(color="red")).add_to(m)
+    Fullscreen(position="topleft").add_to(m)
 
     salida = st_folium(
         m,
