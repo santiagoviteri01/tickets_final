@@ -622,7 +622,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(div.not-fixed-container):not
 """.strip()
 
 MARGINS = {
-    "top": "-120px",
+    "top": "-100px",
     "bottom": "0",
 }
 
@@ -1829,8 +1829,8 @@ def portal_cliente():
         ubicacion_actual = ""
 
         if necesita_grua == "Sí" or asistencia_legal == "Sí":
+            permiso_ubicacion = st.button("Permitir Ubicación")
             ubicacion_actual = obtener_ubicacion()
-            permiso_ubicacion = st.button("Confirmar ubicación")
 
             
         if siniestro_vehicular == "No" or auto_detectado:
