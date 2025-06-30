@@ -622,7 +622,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(div.not-fixed-container):not
 """.strip()
 
 MARGINS = {
-    "top": "-50px",
+    "top": "-80px",
     "bottom": "0",
 }
 
@@ -664,7 +664,7 @@ def mostrar_encabezado(texto_derecha=""):
 
     # 1) Inyecta el header fijo + spacer
     with st_fixed_container_header(key="hdr"):
-        cols = st.columns([1, 6, 1])
+        cols = st.columns([3, 6, 1])
         with cols[0]:
             st.image(f"data:image/jpeg;base64,{b64}", width=40)
         with cols[1]:
@@ -1500,7 +1500,7 @@ def portal_cliente():
 
     # ——— Header fijo arriba ———
     with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
-        col1, col2, col3 = st.columns([1, 6, 1], gap="small")
+        col1, col2, col3 = st.columns([3, 6, 1], gap="small")
         with col1:
             b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode()
             st.markdown(
@@ -2156,7 +2156,7 @@ def mostrar_conversaciones_bot():
 # Portal de Administración (Usuarios)
 def portal_administracion():
     with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_admin"):
-        col1, col2, col3 = st.columns([1, 6, 1], gap="small")
+        col1, col2, col3 = st.columns([3, 6, 1], gap="small")
         with col1:
             b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode()
             st.markdown(
