@@ -622,7 +622,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(div.not-fixed-container):not
 """.strip()
 
 MARGINS = {
-    "top": "-100px",
+    "top": "-110px",
     "bottom": "0",
 }
 
@@ -1092,7 +1092,7 @@ def obtener_ubicacion():
           /* 2) Forzar al mapa a quedarse justo en 600×450px y centrado */
           .leaflet-container {
             width: 600px !important;
-            height: 450px !important;
+            height: 300px !important;
             margin: 0 auto !important;
             padding: 0 !important;
             box-sizing: border-box;
@@ -1101,7 +1101,7 @@ def obtener_ubicacion():
           /* 3) Como st_folium mete el mapa en un <iframe>, también podemos apuntar a él */
           iframe[src*="leaflet"] {
             width: 600px !important;
-            height: 450px !important;
+            height: 300px !important;
           }
         </style>
         """,
@@ -1518,16 +1518,7 @@ def portal_cliente():
                 unsafe_allow_html=True
             )
         with col2:
-            st.markdown(
-                f"""
-                <div class="header-text" style="margin-left:-20px;">
-                  <h5 style="margin:0; color:#7F7F7F; font-family:Calibri,sans-serif;">
-                    Cliente
-                  </h5>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            st.write("")
         with col3:
             st.write("")
                 
@@ -1838,10 +1829,13 @@ def portal_cliente():
             
             # Sección de ubicación automática con GPS solo si es necesario
         ubicacion_actual = ""
+        ubicacion_container = st.container()  # Contenedor para organizar mejor
+
 
         if necesita_grua == "Sí" or asistencia_legal == "Sí":
             permiso_ubicacion = st.button("Permitir Ubicación")
-            ubicacion_actual = obtener_ubicacion()
+            with ubicacion_container:
+                ubicacion_actual = obtener_ubicacion()
 
             
         if siniestro_vehicular == "No" or auto_detectado:
