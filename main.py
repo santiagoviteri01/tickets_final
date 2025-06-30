@@ -1107,6 +1107,10 @@ def obtener_ubicacion():
         """,
         unsafe_allow_html=True,
     )
+    if "map_initialized" not in st.session_state:
+        with st.spinner("Preparando mapa, por favor espere..."):
+            time.sleep(5)  # Espera estratégica para la primera carga
+        st.session_state.map_initialized = True
 
     # 1) Detecto si es móvil
     mobile    = st.session_state.get("mobile", False)
