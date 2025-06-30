@@ -1082,16 +1082,27 @@ def obtener_ubicacion():
     st.markdown(
         """
         <style>
-        /* 1) Limitar la altura del bloque principal que contiene todo */
-        [data-testid="stAppViewContainer"] > .main {
-            max-height: 600px !important;   /* aquí pones la altura máxima que quieras */
-            overflow-y: 600px !important;    /* si hace falta scroll vertical */
-        }
-        /* 2) Fijar la altura del contenedor de Leaflet */
-        .leaflet-container {
-            height: 450px !important;       /* sea la que uses en st_folium */
-            max-height: 450px !important;
-        }
+          /* 1) Quitar padding/márgenes extra de Streamlit */
+          [data-testid="stAppViewContainer"] > .main {
+            padding: 0 !important;
+            margin: 0 auto !important;
+            max-width: 600px !important;    /* opcional: limitas el ancho total */
+          }
+    
+          /* 2) Forzar al mapa a quedarse justo en 600×450px y centrado */
+          .leaflet-container {
+            width: 600px !important;
+            height: 450px !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            box-sizing: border-box;
+          }
+    
+          /* 3) Como st_folium mete el mapa en un <iframe>, también podemos apuntar a él */
+          iframe[src*="leaflet"] {
+            width: 600px !important;
+            height: 450px !important;
+          }
         </style>
         """,
         unsafe_allow_html=True,
