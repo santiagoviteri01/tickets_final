@@ -622,7 +622,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(div.not-fixed-container):not
 """.strip()
 
 MARGINS = {
-    "top": "-80px",
+    "top": "-120px",
     "bottom": "0",
 }
 
@@ -1079,7 +1079,6 @@ from streamlit.runtime.scriptrunner import RerunException
 # Si no necesitas reverse geocoding, puedes eliminar Geolocator
 def obtener_ubicacion():
     # 0) Layout wide + CSS global
-    st.set_page_config(layout="centered")
     st.markdown(
         """
         <style>
@@ -1166,7 +1165,7 @@ def obtener_ubicacion():
     )
 
     # 8) Confirmar ubicación
-    if st.form_submit_button("confirmar ubicación"):
+    if st.button("confirmar ubicación"):
         pass
 
     web_uri = f"https://maps.google.com/maps?q={lat},{lon}"
@@ -1512,7 +1511,7 @@ def portal_cliente():
                 f"""
                 <div class="header-text" style="margin-left:-20px;">
                   <h5 style="margin:0; color:#7F7F7F; font-family:Calibri,sans-serif;">
-                    Cliente: {st.session_state.usuario_actual}
+                    Cliente
                   </h5>
                 </div>
                 """,
@@ -1731,17 +1730,6 @@ def portal_cliente():
             )
     
             ciudad_ocurrencia = st.text_input("Ciudad de ocurrencia*")
-            encabezado_sin_icono("Asistencia Adicional",nivel="h2")
-            necesita_grua = st.selectbox("¿Necesitas grúa?", ["No", "Sí"])
-            asistencia_legal = st.selectbox("¿Necesitas asistencia legal en el punto?", ["No", "Sí"])
-            enviar_asistencias = st.form_submit_button("Enviar Asistencias")
-            
-            # Sección de ubicación automática con GPS solo si es necesario
-            ubicacion_actual = ""
-
-            if necesita_grua == "Sí" or asistencia_legal == "Sí":
-                ubicacion_actual = obtener_ubicacion()
-                permiso_ubicacion = st.form_submit_button("permitir ubicación")
             encabezado_sin_icono("Información sobre el Siniestro",nivel="h2")
             siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
             enviar_vehiculos = st.form_submit_button("Enviar Foto")
@@ -1831,108 +1819,120 @@ def portal_cliente():
                         #col3.image(overlay_final, caption="🎯 Imagen Final", use_container_width=True)
                     else:
                         st.warning("No se detectaron daños en la imagen.")
+            
+            encabezado_sin_icono("Asistencia Adicional",nivel="h2")
+            necesita_grua = st.selectbox("¿Necesitas grúa?", ["No", "Sí"])
+            asistencia_legal = st.selectbox("¿Necesitas asistencia legal en el punto?", ["No", "Sí"])
+            enviar_asistencias = st.form_submit_button("Enviar Asistencias")
+            
+            # Sección de ubicación automática con GPS solo si es necesario
+        ubicacion_actual = ""
+
+        if necesita_grua == "Sí" or asistencia_legal == "Sí":
+            ubicacion_actual = obtener_ubicacion()
+            permiso_ubicacion = st.button("Confirmar ubicación")
 
             
-            if siniestro_vehicular == "No" or auto_detectado:
-                enviar_reclamo = st.form_submit_button("Enviar Reclamo")
+        if siniestro_vehicular == "No" or auto_detectado:
+            enviar_reclamo = st.button("Enviar Reclamo")
+        else:
+            # Podrías opcionalmente dejar el botón gris o simplemente mostrar un aviso
+            st.info("Para enviar el reclamo debes subir primero una foto con un automóvil.")
+    
+        if enviar_reclamo:
+            if not all([titulo, descripcion, ciudad_ocurrencia, fecha_ocurrencia]):
+                st.error("❌ Por favor completa todos los campos obligatorios.")
             else:
-                # Podrías opcionalmente dejar el botón gris o simplemente mostrar un aviso
-                st.info("Para enviar el reclamo debes subir primero una foto con un automóvil.")
-    
-            if enviar_reclamo:
-                if not all([titulo, descripcion, ciudad_ocurrencia, fecha_ocurrencia]):
-                    st.error("❌ Por favor completa todos los campos obligatorios.")
-                else:
-                    # Subir imagen a S3 si existe
-                    foto_url = None
-                    if foto_siniestro:
-                        s3 = boto3.client(
-                            's3',
-                            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-                            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
-                            region_name='us-east-1'
-                        )
-                        extension = foto_siniestro.name.split('.')[-1]
-                        unique_filename = f"reclamos/{str(uuid.uuid4())}.{extension}"
-                        bucket_name = 'insurapp-fotos'
-                        buffer = io.BytesIO()
-                        # Ajusta el formato según tu extensión (jpg, png…)
-                        overlay_final.save(buffer, format="JPEG")
-                        buffer.seek(0)
-                    
-                        # Sube el buffer, en lugar de overlay_final directamente
-                        s3.upload_fileobj(
-                            buffer,
-                            bucket_name,
-                            unique_filename,
-                            ExtraArgs={'ContentType': 'image/jpeg', 'ACL': 'public-read'}
-                        )
-                        foto_url = f"https://{bucket_name}.s3.us-east-1.amazonaws.com/{unique_filename}"
-    
-                    # Calcular número de ticket nuevo
-                    df = cargar_datos()
-                    ultimo_ticket = df['Número'].max() if not df.empty else 0
-                    nuevo_numero = int(ultimo_ticket) + 1
-    
-                    # Crear diccionario del reclamo
-                    nuevo_reclamos = {
-                        'Número': nuevo_numero,
-                        'Título': titulo,
-                        'Área': area,
-                        'Estado': 'creado por usuario',
-                        'Descripción': descripcion,
-                        'Fecha_Creación': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        'Usuario_Creación': st.session_state.usuario_actual,
-                        'Fecha_Modificacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        'Usuario_Modificacion': 'cliente',
-                        'Tiempo_Cambio': '0d',
-                        'Cliente': st.session_state.usuario_actual,
-                        'Cedula': datos.get('CÉDULA'),
-                        'CONCESIONARIO': datos.get('CONCESIONARIO'),
-                        'ID': datos.get('ID'),
-                        'ASEGURADORA': datos.get('ASEGURADORA'),
-                        'CIUDAD OCURRENCIA': ciudad_ocurrencia,
-                        'TALLER': "SIN TALLER DEFINIDO",
-                        'MARCA': datos.get('MARCA'),
-                        'MODELO': datos.get('MODELO'),
-                        'AÑOCARRO': datos.get('AÑOCARRO'),
-                        'PLACA': datos.get('PLACA'),
-                        'fecha_ocurrencia': fecha_ocurrencia.strftime("%Y-%m-%d"),
-                        'SUMA ASEGURADA': datos.get('VALOR ASEGURADO'),
-                        'VALOR SINIESTRO': "",
-                        'DEDUCIBLE': "",
-                        'RASA': "",
-                        'LIQUIDACION': "",
-                        'CAUSA': "ASISTENCIA",
-                        'Grua': necesita_grua,
-                        'Asistencia_Legal': asistencia_legal,
-                        'Ubicacion': ubicacion_actual,
-                        'Foto_URL': foto_url if foto_url else None
-                    }
-    
-                    # Serializar y guardar
-                    nuevo_reclamos_serializable = {k: str(v) for k, v in nuevo_reclamos.items()}
-                    sheet = cargar_worksheet_sin_cache("hoja")
-                    sheet.append_row(list(nuevo_reclamos_serializable.values()))
-                    st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente")
-                    # --- Enviar correo de notificación ---
-                    correo_destinatario = "reclamosinsuratlan@outlook.com"
-                    asunto = f"Nuevo Reclamo #{nuevo_numero} de {st.session_state.usuario_actual}"
-                    cuerpo = f"""
-                    Se ha creado un nuevo reclamo por parte del cliente {st.session_state.usuario_actual}.
-                    
-                    Título: {titulo}
-                    Descripción: {descripcion}
-                    Ciudad de Ocurrencia: {ciudad_ocurrencia}
-                    Fecha de Ocurrencia: {fecha_ocurrencia.strftime("%Y-%m-%d")}
-                    Área: {area}
-                    Aseguradora: {datos.get('ASEGURADORA')}
-                    Placa: {datos.get('PLACA')}
-                    
-                    Puedes revisar el reclamo en la plataforma.
-                    """
-                    
-                    enviar_correo_reclamo(correo_destinatario, asunto, cuerpo)
+                # Subir imagen a S3 si existe
+                foto_url = None
+                if foto_siniestro:
+                    s3 = boto3.client(
+                        's3',
+                        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+                        region_name='us-east-1'
+                    )
+                    extension = foto_siniestro.name.split('.')[-1]
+                    unique_filename = f"reclamos/{str(uuid.uuid4())}.{extension}"
+                    bucket_name = 'insurapp-fotos'
+                    buffer = io.BytesIO()
+                    # Ajusta el formato según tu extensión (jpg, png…)
+                    overlay_final.save(buffer, format="JPEG")
+                    buffer.seek(0)
+                
+                    # Sube el buffer, en lugar de overlay_final directamente
+                    s3.upload_fileobj(
+                        buffer,
+                        bucket_name,
+                        unique_filename,
+                        ExtraArgs={'ContentType': 'image/jpeg', 'ACL': 'public-read'}
+                    )
+                    foto_url = f"https://{bucket_name}.s3.us-east-1.amazonaws.com/{unique_filename}"
+
+                # Calcular número de ticket nuevo
+                df = cargar_datos()
+                ultimo_ticket = df['Número'].max() if not df.empty else 0
+                nuevo_numero = int(ultimo_ticket) + 1
+
+                # Crear diccionario del reclamo
+                nuevo_reclamos = {
+                    'Número': nuevo_numero,
+                    'Título': titulo,
+                    'Área': area,
+                    'Estado': 'creado por usuario',
+                    'Descripción': descripcion,
+                    'Fecha_Creación': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    'Usuario_Creación': st.session_state.usuario_actual,
+                    'Fecha_Modificacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    'Usuario_Modificacion': 'cliente',
+                    'Tiempo_Cambio': '0d',
+                    'Cliente': st.session_state.usuario_actual,
+                    'Cedula': datos.get('CÉDULA'),
+                    'CONCESIONARIO': datos.get('CONCESIONARIO'),
+                    'ID': datos.get('ID'),
+                    'ASEGURADORA': datos.get('ASEGURADORA'),
+                    'CIUDAD OCURRENCIA': ciudad_ocurrencia,
+                    'TALLER': "SIN TALLER DEFINIDO",
+                    'MARCA': datos.get('MARCA'),
+                    'MODELO': datos.get('MODELO'),
+                    'AÑOCARRO': datos.get('AÑOCARRO'),
+                    'PLACA': datos.get('PLACA'),
+                    'fecha_ocurrencia': fecha_ocurrencia.strftime("%Y-%m-%d"),
+                    'SUMA ASEGURADA': datos.get('VALOR ASEGURADO'),
+                    'VALOR SINIESTRO': "",
+                    'DEDUCIBLE': "",
+                    'RASA': "",
+                    'LIQUIDACION': "",
+                    'CAUSA': "ASISTENCIA",
+                    'Grua': necesita_grua,
+                    'Asistencia_Legal': asistencia_legal,
+                    'Ubicacion': ubicacion_actual,
+                    'Foto_URL': foto_url if foto_url else None
+                }
+
+                # Serializar y guardar
+                nuevo_reclamos_serializable = {k: str(v) for k, v in nuevo_reclamos.items()}
+                sheet = cargar_worksheet_sin_cache("hoja")
+                sheet.append_row(list(nuevo_reclamos_serializable.values()))
+                st.success(f"✅ Reclamo #{nuevo_numero} creado exitosamente")
+                # --- Enviar correo de notificación ---
+                correo_destinatario = "reclamosinsuratlan@outlook.com"
+                asunto = f"Nuevo Reclamo #{nuevo_numero} de {st.session_state.usuario_actual}"
+                cuerpo = f"""
+                Se ha creado un nuevo reclamo por parte del cliente {st.session_state.usuario_actual}.
+                
+                Título: {titulo}
+                Descripción: {descripcion}
+                Ciudad de Ocurrencia: {ciudad_ocurrencia}
+                Fecha de Ocurrencia: {fecha_ocurrencia.strftime("%Y-%m-%d")}
+                Área: {area}
+                Aseguradora: {datos.get('ASEGURADORA')}
+                Placa: {datos.get('PLACA')}
+                
+                Puedes revisar el reclamo en la plataforma.
+                """
+                
+                enviar_correo_reclamo(correo_destinatario, asunto, cuerpo)
                 
     elif tab_seleccionado == "Subir Archivos Adicionales a un Reclamo":
         
