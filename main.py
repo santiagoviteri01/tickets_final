@@ -1134,7 +1134,7 @@ def obtener_ubicacion():
         """
         coords = streamlit_js_eval(js_expressions=js, key="get_geo")
         if not coords or "lat" not in coords:
-            st.warning("Para continuar, **permite** el acceso a tu ubicación.")
+            st.warning("espere un momento... confirmando permiso y cargando mapa")
             return ""
         st.session_state.ubicacion_coords = {"lat": coords["lat"], "lon": coords["lon"]}
         st.success("Permiso concedido y ubicación obtenida.")
@@ -1181,10 +1181,6 @@ def obtener_ubicacion():
         f"**Enlace Web:** {web_uri}",
         unsafe_allow_html=True
     )
-
-    # 8) Confirmar ubicación
-    if st.button("confirmar ubicación"):
-        pass
 
     web_uri = f"https://maps.google.com/maps?q={lat},{lon}"
     return web_uri
@@ -1515,31 +1511,71 @@ def portal_cliente():
         unsafe_allow_html=True
     )
 
-    # ——— Header fijo arriba ———
+    st.markdown("""
+    <style>
+    .header-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        background-color: white;
+        padding: 10px 20px;
+        border-bottom: 1px solid #ccc;
+    }
+    .header-bar img {
+        height: 50px;
+    }
+    .header-title {
+        flex-grow: 1;
+        text-align: center;
+        color: #7F7F7F;
+        font-family: Calibri, sans-serif;
+        font-size: 1.3rem;
+        margin: 0;
+    }
+    .header-button {
+        display: flex;
+        justify-content: flex-end;
+    }
+    .header-button button {
+        background-color: #D62828;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 0.4rem 0.8rem;
+        cursor: pointer;
+    }
+    @media (max-width: 600px) {
+        .header-bar {
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+        }
+        .header-button {
+            justify-content: center;
+            width: 100%;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Header fijo con estructura estable (sin st.columns)
     with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
-        col1, col2, col3 = st.columns([3, 6, 1], gap="small")
-        with col1:
-            b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode()
-            st.markdown(
-                f"<img src='data:image/jpeg;base64,{b64}' style='height:60px;' />",
-                unsafe_allow_html=True
-            )
-        with col2:
-            st.markdown(
-                """
-                <h5 style='margin:0; color:#7F7F7F; 
-                    font-family:Calibri,sans-serif;'>
-                  Portal del Cliente
-                </h5>
-                """,
-                unsafe_allow_html=True
-            )
-        with col3:
-            st.write("")
-                
-    st.markdown("<div style='height:120px;'></div>", unsafe_allow_html=True)
+        b64 = base64.b64encode(Path("logo.png").read_bytes()).decode() if Path("logo.png").exists() else ""
+        st.markdown(f"""
+        <div class="header-bar">
+            <img src="data:image/jpeg;base64,{b64}" />
+            <h5 class="header-title">Portal del Cliente</h5>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Cerrar Sesión"):
+            st.session_state.autenticado = False
+            st.success("Sesión cerrada exitosamente")
+            time.sleep(1)
+            st.rerun()
 
-
+    # Espaciador obligatorio (altura del header)
+    st.markdown("<div style='height:100px;'></div>", unsafe_allow_html=True)
                 
     # Cuadro visual con borde
     with st.container():
@@ -1555,7 +1591,7 @@ def portal_cliente():
     
         # Contenido: título
         st.markdown(
-            f"<h2 style='color:#D62828; font-family:Calibri, sans-serif;'>Portal del Cliente - {st.session_state.usuario_actual}</h2>",
+            f"<h3 style='color:#D62828; font-family:Calibri, sans-serif;'>Portal del Cliente - {st.session_state.usuario_actual}</h2>",
             unsafe_allow_html=True
         )
         # Cierre visual del bloque
