@@ -1561,7 +1561,7 @@ def portal_cliente():
 
     # Header fijo con estructura estable (sin st.columns)
     with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
-        b64 = base64.b64encode(Path("logo.png").read_bytes()).decode() if Path("logo.png").exists() else ""
+        b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode() if Path("images/atlantida_logo.jpg").exists() else ""
         st.markdown(f"""
         <div class="header-bar">
             <img src="data:image/jpeg;base64,{b64}" />
@@ -1575,7 +1575,7 @@ def portal_cliente():
             st.rerun()
 
     # Espaciador obligatorio (altura del header)
-    st.markdown("<div style='height:100px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:80px;'></div>", unsafe_allow_html=True)
                 
     # Cuadro visual con borde
     with st.container():
