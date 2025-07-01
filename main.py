@@ -622,7 +622,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(div.not-fixed-container):not
 """.strip()
 
 MARGINS = {
-    "top": "-110px",
+    "top": "-80px",
     "bottom": "0",
 }
 
@@ -1525,7 +1525,15 @@ def portal_cliente():
                 unsafe_allow_html=True
             )
         with col2:
-            st.write("")
+            st.markdown(
+                """
+                <h5 style='margin:0; color:#7F7F7F; 
+                    font-family:Calibri,sans-serif;'>
+                  Portal del Cliente
+                </h5>
+                """,
+                unsafe_allow_html=True
+            )
         with col3:
             st.write("")
                 
@@ -1840,7 +1848,6 @@ def portal_cliente():
 
 
         if necesita_grua == "Sí" or asistencia_legal == "Sí":
-            permiso_ubicacion = st.button("Permitir Ubicación")
             with ubicacion_container:
                 ubicacion_actual = obtener_ubicacion()
 
