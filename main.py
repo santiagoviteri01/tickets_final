@@ -1499,25 +1499,14 @@ def portal_cliente():
         st.success("Sesión cerrada exitosamente")
         time.sleep(1)
         st.rerun()
-    
-    st.markdown(
-        """
-        <style>
-          @media (max-width: 600px) {
-            .header-text { display: none !important; }
-          }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
 
+    # CSS base
     st.markdown("""
     <style>
     .header-bar {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
+        justify-content: center;
         background-color: white;
         padding: 10px 20px;
         border-bottom: 1px solid #ccc;
@@ -1525,56 +1514,19 @@ def portal_cliente():
     .header-bar img {
         height: 50px;
     }
-    .header-title {
-        flex-grow: 1;
-        text-align: center;
-        color: #7F7F7F;
-        font-family: Calibri, sans-serif;
-        font-size: 1.3rem;
-        margin: 0;
-    }
-    .header-button {
-        display: flex;
-        justify-content: flex-end;
-    }
-    .header-button button {
-        background-color: #D62828;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        padding: 0.4rem 0.8rem;
-        cursor: pointer;
-    }
-    @media (max-width: 600px) {
-        .header-bar {
-            flex-direction: column;
-            gap: 10px;
-            text-align: center;
-        }
-        .header-button {
-            justify-content: center;
-            width: 100%;
-        }
-    }
     </style>
     """, unsafe_allow_html=True)
-
-    # Header fijo con estructura estable (sin st.columns)
+    
+    # Header fijo solo con logo
     with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
         b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode() if Path("images/atlantida_logo.jpg").exists() else ""
         st.markdown(f"""
         <div class="header-bar">
             <img src="data:image/jpeg;base64,{b64}" />
-            <h5 class="header-title">Portal del Cliente</h5>
         </div>
         """, unsafe_allow_html=True)
-        if st.button("Cerrar Sesión"):
-            st.session_state.autenticado = False
-            st.success("Sesión cerrada exitosamente")
-            time.sleep(1)
-            st.rerun()
-
-    # Espaciador obligatorio (altura del header)
+    
+    # Espaciador por el header fijo
     st.markdown("<div style='height:80px;'></div>", unsafe_allow_html=True)
                 
     # Cuadro visual con borde
