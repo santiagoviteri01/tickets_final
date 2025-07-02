@@ -1500,38 +1500,37 @@ def portal_cliente():
         time.sleep(1)
         st.rerun()
 
-    # CSS base
-    st.markdown("""
-    <style>
-    .header-bar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        z-index: 999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: white;
-        padding: 10px 20px;
-        border-bottom: 1px solid #ccc;
-    }
-    .header-bar img {
-        height: 50px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Header fijo solo con logo
     with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
         b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode() if Path("images/atlantida_logo.jpg").exists() else ""
+    
+        st.markdown("""
+        <style>
+        .header-bar {
+            width: 100%;
+            max-width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: white;
+            padding: 10px 0;
+            border-bottom: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+    
+        .header-bar img {
+            height: 50px;
+            max-width: 100%;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    
         st.markdown(f"""
         <div class="header-bar">
             <img src="data:image/jpeg;base64,{b64}" />
         </div>
         """, unsafe_allow_html=True)
     
-    # Espaciador por el header fijo
+    # Compensar espacio por el header fijo
     st.markdown("<div style='height:80px;'></div>", unsafe_allow_html=True)
                 
     # Cuadro visual con borde
