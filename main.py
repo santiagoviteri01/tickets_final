@@ -1519,6 +1519,7 @@ def portal_cliente():
     
         .header-bar img {
             height: 50px;
+            margin-top: 10px;  /* Aquí lo empujas hacia abajo */
             max-width: 100%;
         }
         </style>
