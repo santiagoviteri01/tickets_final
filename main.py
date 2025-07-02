@@ -1504,6 +1504,11 @@ def portal_cliente():
     st.markdown("""
     <style>
     .header-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        z-index: 999;
         display: flex;
         align-items: center;
         justify-content: center;
