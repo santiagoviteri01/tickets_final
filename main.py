@@ -2167,30 +2167,39 @@ def mostrar_conversaciones_bot():
 
 # Portal de Administración (Usuarios)
 def portal_administracion():
-    with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_admin"):
-        col1, col2, col3 = st.columns([3, 6, 1], gap="small")
-        with col1:
-            b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode()
-            st.markdown(
-                f"<img src='data:image/jpeg;base64,{b64}' "
-                "style='height:60px; margin:10px;'/>",
-                unsafe_allow_html=True
-            )
-        with col2:
-            st.markdown(
-                """
-                <h5 style='margin:0; color:#7F7F7F; 
-                    font-family:Calibri,sans-serif;'>
-                  Portal Administrativo
-                </h5>
-                """,
-                unsafe_allow_html=True
-            )
-        with col3:
-            st.write("")
-
-    # 3) Espaciador de exactamente la altura del header (80px)
-    st.markdown("<div style='height:120px;'></div>", unsafe_allow_html=True)
+    with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
+        b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode() if Path("images/atlantida_logo.jpg").exists() else ""
+    
+        st.markdown("""
+        <style>
+        .header-bar {
+            width: 100%;
+            max-width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: white;
+            padding: 10px 0;
+            border-bottom: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+    
+        .header-bar img {
+            height: 50px;
+            margin-top: 10px;  /* Aquí lo empujas hacia abajo */
+            max-width: 100%;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    
+        st.markdown(f"""
+        <div class="header-bar">
+            <img src="data:image/jpeg;base64,{b64}" />
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Compensar espacio por el header fijo
+    st.markdown("<div style='height:80px;'></div>", unsafe_allow_html=True)
 
     st.sidebar.title("Menú Admin")
     opciones = [
