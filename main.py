@@ -2647,12 +2647,12 @@ def manejar_tickets():
                 causa = st.selectbox("Causa*", ["ROBO TOTAL", "CHOQUE PARCIAL + RC", "PERDIDA TOTAL", "DAÑOS MALICIOSOS", "CHOQUE PARCIAL", "ROBO PARCIAL", "ROTURA DE PARABRISAS", "SOLO RC", "DESGRAVAMEN","ASISTENCIA"])
                 talleres_df = cargar_df_sin_cache("talleres")  # o como corresponda según tu sistema
                 talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
-                taller_opcion = st.selectbox("Selecciona el taller de reparación*", talleres_unicos + ["Otro..."], 
-                                     index=talleres_unicos.index(ticket_actual.get("TALLER")) if ticket_actual.get("TALLER") in talleres_unicos else len(talleres_unicos))
+                taller_opcion = st.selectbox("Selecciona el taller de reparación*", talleres_unicos + ["Otro..."])
+
                 if taller_opcion == "Otro...":
                     nuevo_taller = st.text_input("Escribe el nombre del nuevo taller")
                     if nuevo_taller and nuevo_taller not in talleres_unicos:
-                        if st.button("Guardar nuevo taller"):
+                        if  st.form_submit_button("Guardar nuevo taller"):
                             talleres_ws = cargar_worksheet_sin_cache("talleres")
                             talleres_ws.append_row([nuevo_taller])
                             st.success(f"Taller '{nuevo_taller}' guardado exitosamente.")
