@@ -1740,95 +1740,7 @@ def portal_cliente():
             )
     
             ciudad_ocurrencia = st.text_input("Ciudad de ocurrencia*")
-            encabezado_sin_icono("Información sobre el Siniestro",nivel="h2")
-            siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
-            enviar_vehiculos = st.form_submit_button("Enviar Foto")
 
-            auto_detectado = False
-            foto_siniestro = None
-            
-            if siniestro_vehicular == "Sí":
-                foto_siniestro = st.camera_input("Toma una foto del siniestro (opcional)")
-                if foto_siniestro is None:
-                    foto_siniestro = st.file_uploader("O bien, sube una imagen", type=["jpg","jpeg","png"])
-            
-                # ——— Detección de auto ———
-                if foto_siniestro is not None:
-                    img = Image.open(foto_siniestro).convert("RGB")
-                    if not contiene_auto(img):
-                        st.error("No detecté un automóvil en la imagen. Por favor, sube otra foto.")
-                        foto_siniestro = None
-                    else:
-                        st.success("Automóvil detectado correctamente 👍")
-                        auto_detectado = True
-            
-                # ——— Segmentación y visualización sólo si el auto fue detectado ———
-                if auto_detectado:
-                    from ultralytics import YOLO
-                    seg_model = cargar_modelo_yolo()
-                    img_path = "temp_img.jpg"
-                    img.save(img_path)
-                
-                    results = seg_model(img_path)[0]
-                
-                    img_np = np.array(img)
-                    overlay_img = img_np.copy()
-                    mask_canvas = np.zeros_like(img_np)
-                
-                    names = seg_model.names  # Diccionario de clases
-                    overlay_final = img                    
-                    if results.masks is not None and results.masks.data is not None:
-                        mask_canvas = np.zeros((img.height, img.width, 3), dtype=np.uint8)
-                        overlay_img = np.array(img).copy()
-                    
-                        for i, mask in enumerate(results.masks.data):
-                            # Procesar la máscara
-                            mask_resized = cv2.resize(mask.cpu().numpy(), (img.width, img.height))
-                            mask_binary = (mask_resized > 0.5).astype(np.uint8) * 255
-                    
-                            # Añadir la máscara al canvas
-                            contours, _ = cv2.findContours(mask_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                            cv2.drawContours(mask_canvas, contours, -1, (255, 0, 0), -1)
-                    
-                            # Dibujar bounding box + clase
-                            if results.boxes is not None and i < len(results.boxes):
-                                box = results.boxes.xyxy[i].cpu().numpy().astype(int)
-                                cls = int(results.boxes.cls[i].item())
-                                label = names[cls] if cls in names else f"Clase {cls}"
-                    
-                                x1, y1, x2, y2 = box
-                                cv2.rectangle(overlay_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                                cv2.putText(overlay_img, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
-                                            0.6, (0, 255, 0), 2, cv2.LINE_AA)
-                    
-                        # Convertir a PIL
-                        pil_original = img.convert("RGBA")
-                        pil_mask = Image.fromarray(mask_canvas).convert("RGBA")
-                    
-                        # Canal alfa a partir de la máscara
-                        alpha = Image.fromarray((mask_canvas[:, :, 0] > 0).astype(np.uint8) * 100)
-                        pil_mask.putalpha(alpha)
-                    
-                        # Combinar imagen original + máscara
-                        overlay_masked_img = Image.alpha_composite(pil_original, pil_mask)
-                    
-                        # Añadir bounding boxes y etiquetas
-                        overlay_final = overlay_masked_img.convert("RGB").copy()
-                        draw = ImageDraw.Draw(overlay_final)
-                        for i, box in enumerate(results.boxes.xyxy):
-                            x1, y1, x2, y2 = box.int().tolist()
-                            cls = int(results.boxes.cls[i].item())
-                            label = names[cls] if cls in names else f"Clase {cls}"
-                            draw.rectangle([x1, y1, x2, y2], outline="green", width=2)
-                            draw.text((x1, y1 - 10), label, fill="green")
-                    
-                        # Mostrar
-                        col1, = st.columns(1)
-                        col1.image(img, caption="Imagen Capturada", use_container_width=True)
-                        #col2.image(mask_canvas, caption="🟥 Máscara", use_container_width=True)
-                        #col3.image(overlay_final, caption="🎯 Imagen Final", use_container_width=True)
-                    else:
-                        st.warning("No se detectaron daños en la imagen.")
             
             encabezado_sin_icono("Asistencia Adicional",nivel="h2")
             necesita_grua = st.selectbox("¿Necesitas grúa?", ["No", "Sí"])
@@ -1844,6 +1756,96 @@ def portal_cliente():
             with ubicacion_container:
                 ubicacion_actual = obtener_ubicacion()
 
+        encabezado_sin_icono("Información sobre el Siniestro",nivel="h2")
+        siniestro_vehicular = st.selectbox("¿Fue un siniestro vehicular?", ["No", "Sí"])
+        enviar_vehiculos = st.button("Enviar Foto")
+
+        auto_detectado = False
+        foto_siniestro = None
+        overlay_final = None  # <-- Para subirlo si se detecta
+        
+        if siniestro_vehicular == "Sí":
+            foto_siniestro = st.camera_input("Toma una foto del siniestro (opcional)")
+            if foto_siniestro is None:
+                foto_siniestro = st.file_uploader("O bien, sube una imagen", type=["jpg","jpeg","png"])
+        
+            # ——— Detección de auto ———
+            if foto_siniestro is not None:
+                img = Image.open(foto_siniestro).convert("RGB")
+                if not contiene_auto(img):
+                    st.error("No detecté un automóvil en la imagen. Por favor, sube otra foto.")
+                    foto_siniestro = None
+                else:
+                    st.success("Automóvil detectado correctamente")
+                    auto_detectado = True
+        
+            # ——— Segmentación y visualización sólo si el auto fue detectado ———
+            if auto_detectado:
+                from ultralytics import YOLO
+                seg_model = cargar_modelo_yolo()
+                img_path = "temp_img.jpg"
+                img.save(img_path)
+            
+                results = seg_model(img_path)[0]
+            
+                img_np = np.array(img)
+                overlay_img = img_np.copy()
+                mask_canvas = np.zeros_like(img_np)
+            
+                names = seg_model.names  # Diccionario de clases
+                overlay_final = img                    
+                if results.masks is not None and results.masks.data is not None:
+                    mask_canvas = np.zeros((img.height, img.width, 3), dtype=np.uint8)
+                    overlay_img = np.array(img).copy()
+                
+                    for i, mask in enumerate(results.masks.data):
+                        # Procesar la máscara
+                        mask_resized = cv2.resize(mask.cpu().numpy(), (img.width, img.height))
+                        mask_binary = (mask_resized > 0.5).astype(np.uint8) * 255
+                
+                        # Añadir la máscara al canvas
+                        contours, _ = cv2.findContours(mask_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                        cv2.drawContours(mask_canvas, contours, -1, (255, 0, 0), -1)
+                
+                        # Dibujar bounding box + clase
+                        if results.boxes is not None and i < len(results.boxes):
+                            box = results.boxes.xyxy[i].cpu().numpy().astype(int)
+                            cls = int(results.boxes.cls[i].item())
+                            label = names[cls] if cls in names else f"Clase {cls}"
+                
+                            x1, y1, x2, y2 = box
+                            cv2.rectangle(overlay_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                            cv2.putText(overlay_img, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                                        0.6, (0, 255, 0), 2, cv2.LINE_AA)
+                
+                    # Convertir a PIL
+                    pil_original = img.convert("RGBA")
+                    pil_mask = Image.fromarray(mask_canvas).convert("RGBA")
+                
+                    # Canal alfa a partir de la máscara
+                    alpha = Image.fromarray((mask_canvas[:, :, 0] > 0).astype(np.uint8) * 100)
+                    pil_mask.putalpha(alpha)
+                
+                    # Combinar imagen original + máscara
+                    overlay_masked_img = Image.alpha_composite(pil_original, pil_mask)
+                
+                    # Añadir bounding boxes y etiquetas
+                    overlay_final = overlay_masked_img.convert("RGB").copy()
+                    draw = ImageDraw.Draw(overlay_final)
+                    for i, box in enumerate(results.boxes.xyxy):
+                        x1, y1, x2, y2 = box.int().tolist()
+                        cls = int(results.boxes.cls[i].item())
+                        label = names[cls] if cls in names else f"Clase {cls}"
+                        draw.rectangle([x1, y1, x2, y2], outline="green", width=2)
+                        draw.text((x1, y1 - 10), label, fill="green")
+                
+                    # Mostrar
+                    col1, = st.columns(1)
+                    col1.image(img, caption="Imagen Capturada", use_container_width=True)
+                    #col2.image(mask_canvas, caption="🟥 Máscara", use_container_width=True)
+                    #col3.image(overlay_final, caption="🎯 Imagen Final", use_container_width=True)
+                else:
+                    st.warning("No se detectaron daños en la imagen.")
             
         if siniestro_vehicular == "No" or auto_detectado:
             enviar_reclamo = st.button("Enviar Reclamo")
@@ -1852,8 +1854,18 @@ def portal_cliente():
             st.info("Para enviar el reclamo debes subir primero una foto con un automóvil.")
     
         if enviar_reclamo:
-            if not all([titulo, descripcion, ciudad_ocurrencia, fecha_ocurrencia]):
-                st.error("❌ Por favor completa todos los campos obligatorios.")
+            campos_faltantes = []
+            if not titulo:
+                campos_faltantes.append("Título del Reclamo")
+            if not descripcion:
+                campos_faltantes.append("Descripción detallada")
+            if not ciudad_ocurrencia:
+                campos_faltantes.append("Ciudad de ocurrencia")
+            if not fecha_ocurrencia:
+                campos_faltantes.append("Fecha de ocurrencia")  # Fecha siempre tendrá valor, pero puedes validar si es muy antigua, opcional
+            
+            if campos_faltantes:
+                st.error(f"❌ Por favor completa los siguientes campos obligatorios:\n\n- " + "\n- ".join(campos_faltantes))
             else:
                 # Subir imagen a S3 si existe
                 foto_url = None
@@ -1880,12 +1892,12 @@ def portal_cliente():
                         ExtraArgs={'ContentType': 'image/jpeg', 'ACL': 'public-read'}
                     )
                     foto_url = f"https://{bucket_name}.s3.us-east-1.amazonaws.com/{unique_filename}"
-
+    
                 # Calcular número de ticket nuevo
                 df = cargar_datos()
                 ultimo_ticket = df['Número'].max() if not df.empty else 0
                 nuevo_numero = int(ultimo_ticket) + 1
-
+    
                 # Crear diccionario del reclamo
                 nuevo_reclamos = {
                     'Número': nuevo_numero,
@@ -1921,7 +1933,7 @@ def portal_cliente():
                     'Ubicacion': ubicacion_actual,
                     'Foto_URL': foto_url if foto_url else None
                 }
-
+    
                 # Serializar y guardar
                 nuevo_reclamos_serializable = {k: str(v) for k, v in nuevo_reclamos.items()}
                 sheet = cargar_worksheet_sin_cache("hoja")
