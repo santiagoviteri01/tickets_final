@@ -1117,7 +1117,7 @@ def obtener_ubicacion():
     # 1) Detecto si es móvil
     mobile    = st.session_state.get("mobile", False)
     zoom      = 14 if mobile else 16
-    map_h     = 300 if mobile else 450
+    map_h     = 200 if mobile else 300
 
     # 1) Pedir permiso la primera vez
     if "ubicacion_coords" not in st.session_state:
@@ -1145,7 +1145,7 @@ def obtener_ubicacion():
 
     # Construyo el mapa (fija ancho y alto en px o %)
     map_width  = 600    # ó "80%" / "100%"
-    map_height = 450    # ó "60vh"
+    map_height = 300    # ó "60vh"
     m = folium.Map(
         location=[lat, lon],
         zoom_start=16,
