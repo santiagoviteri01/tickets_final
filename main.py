@@ -2594,14 +2594,14 @@ def manejar_tickets():
             encabezado_con_icono("iconos/reclamos.png","Crear nuevo reclamo con datos del asegurado", "h2")
             # Paso 1: Buscar cliente por cédula o póliza
             asegurados_data = asegurados_df.copy()
-            tipo_busqueda = st.radio("Buscar por:", ["Cédula", "Número de Póliza","Placa/RAMV"])
+            tipo_busqueda = st.radio("Buscar por:", ["Cédula","Placa/RAMV","Número de Póliza"])
             if tipo_busqueda == "Cédula":
                 cedula = st.text_input("Ingrese el número:")
                 coincidencias = asegurados_data[asegurados_data["NÚMERO IDENTIFICACIÓN"].astype(str) == cedula]
-            if tipo_busqueda == "Placa/RAMV":
+            elif tipo_busqueda == "Placa/RAMV":
                 placa = st.text_input("Ingrese el número de placa/ramv")
                 coincidencias = asegurados_data[asegurados_data["PLACA"].astype(str) == placa]
-            else:
+            elif tipo_busqueda == "Número de Póliza":
                 poliza = st.text_input("Ingrese número de póliza:")
                 coincidencias = asegurados_data[asegurados_data["NÚMERO PÓLIZA VEHÍCULOS"].astype(str) == poliza]
                 # Validación de la columna
