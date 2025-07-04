@@ -2590,22 +2590,21 @@ def manejar_tickets():
         else:
             st.info("Selecciona un número válido de la tabla anterior")
     elif opcion_ticket == "Registrar nuevo reclamo":
-        with st.form("nuevo_reclamos"):
-            encabezado_con_icono("iconos/reclamos.png","Crear nuevo reclamo con datos del asegurado", "h2")
-            # Paso 1: Buscar cliente por cédula o póliza
-            asegurados_data = asegurados_df.copy()
-            tipo_busqueda = st.radio("Buscar por:", ["Cédula","Placa/RAMV","Número de Póliza"])
-            if tipo_busqueda == "Cédula":
-                cedula = st.text_input("Ingrese el número:")
-                coincidencias = asegurados_data[asegurados_data["NÚMERO IDENTIFICACIÓN"].astype(str) == cedula]
-            elif tipo_busqueda == "Placa/RAMV":
-                placa = st.text_input("Ingrese el número de placa/ramv")
-                coincidencias = asegurados_data[asegurados_data["PLACA"].astype(str) == placa]
-            elif tipo_busqueda == "Número de Póliza":
-                poliza = st.text_input("Ingrese número de póliza:")
-                coincidencias = asegurados_data[asegurados_data["NÚMERO PÓLIZA VEHÍCULOS"].astype(str) == poliza]
-                # Validación de la columna
-            buscar = st.form_submit_button("Buscar")
+        encabezado_con_icono("iconos/reclamos.png","Crear nuevo reclamo con datos del asegurado", "h2")
+        # Paso 1: Buscar cliente por cédula o póliza
+        asegurados_data = asegurados_df.copy()
+        tipo_busqueda = st.radio("Buscar por:", ["Cédula","Placa/RAMV","Número de Póliza"])
+        if tipo_busqueda == "Cédula":
+            cedula = st.text_input("Ingrese el número:")
+            coincidencias = asegurados_data[asegurados_data["NÚMERO IDENTIFICACIÓN"].astype(str) == cedula]
+        elif tipo_busqueda == "Placa/RAMV":
+            placa = st.text_input("Ingrese el número de placa/ramv")
+            coincidencias = asegurados_data[asegurados_data["PLACA"].astype(str) == placa]
+        elif tipo_busqueda == "Número de Póliza":
+            poliza = st.text_input("Ingrese número de póliza:")
+            coincidencias = asegurados_data[asegurados_data["NÚMERO PÓLIZA VEHÍCULOS"].astype(str) == poliza]
+            # Validación de la columna
+        buscar = st.button("Buscar")
         if buscar:
             if not coincidencias.empty:
                 st.session_state.coincidencias = coincidencias
@@ -2617,39 +2616,37 @@ def manejar_tickets():
         # Paso 2: Mostrar formulario solo si hubo coincidencia
         if st.session_state.get("busqueda_exitosa"):
             coincidencias = st.session_state.coincidencias
-        
-            with st.form("form_registro_reclamo"):
-                vehiculo = st.selectbox(
-                    "Selecciona el vehículo asegurado:",
-                    coincidencias.apply(lambda row: f"{row['MARCA']} {row['MODELO']} ({row['PLACA']})", axis=1)
-                )
-                vehiculo_info = coincidencias.iloc[
-                    list(coincidencias.apply(lambda row: f"{row['MARCA']} {row['MODELO']} ({row['PLACA']})", axis=1)).index(vehiculo)
-                ]
-        
-                # Relleno automático
-                cliente = vehiculo_info["NOMBRE COMPLETO"]
-                cedula = vehiculo_info["NÚMERO IDENTIFICACIÓN"]
-                concesionario = vehiculo_info.get("CONCESIONARIO", "")
-                id_liderseg = vehiculo_info.get("ID", "")
-                aseguradora = vehiculo_info["ASEGURADORA"]
-                ciudad = vehiculo_info["CIUDAD CLIENTE"]
-                marca = vehiculo_info["MARCA"]
-                modelo = vehiculo_info["MODELO"]
-                anio = vehiculo_info["AÑOCARRO"]
-                placa = vehiculo_info["PLACA"]
-                suma_asegurada = vehiculo_info["VALOR ASEGURADO"]
-        
-                # Formulario restante
-                titulo = st.text_input("Título del Reclamo*")
-                area = st.selectbox("Área*", ["CREDIPRIME", "GENERALES"])
-                estado = st.selectbox("Estado*", ["INICIAL","INSPECCION","DOCUMENTACION PENDIENTE" ,"DOCUMENTACION ENVIADA","EN LIQUIDACION","POR INGRESO VEHICULO A TALLER","POR PROFORMA","EN IMPORTACION","EN REPARACION"])
-                descripcion = st.text_area("Descripción detallada*")
-                ciudad_ocurrencia = st.text_input("Ciudad donde ocurrió el siniestro*")
-                fecha_ocurrencia = st.date_input("Fecha de ocurrencia")
-                causa = st.selectbox("Causa*", ["ROBO TOTAL", "CHOQUE PARCIAL + RC", "PERDIDA TOTAL", "DAÑOS MALICIOSOS", "CHOQUE PARCIAL", "ROBO PARCIAL", "ROTURA DE PARABRISAS", "SOLO RC", "DESGRAVAMEN","ASISTENCIA"])
-                necesita_grua = st.selectbox("¿Necesita grúa?", ["No", "Sí"])
-                asistencia_legal = st.selectbox("¿Requiere asistencia legal?", ["No", "Sí"])
+            vehiculo = st.selectbox(
+                "Selecciona el vehículo asegurado:",
+                coincidencias.apply(lambda row: f"{row['MARCA']} {row['MODELO']} ({row['PLACA']})", axis=1)
+            )
+            vehiculo_info = coincidencias.iloc[
+                list(coincidencias.apply(lambda row: f"{row['MARCA']} {row['MODELO']} ({row['PLACA']})", axis=1)).index(vehiculo)
+            ]
+    
+            # Relleno automático
+            cliente = vehiculo_info["NOMBRE COMPLETO"]
+            cedula = vehiculo_info["NÚMERO IDENTIFICACIÓN"]
+            concesionario = vehiculo_info.get("CONCESIONARIO", "")
+            id_liderseg = vehiculo_info.get("ID", "")
+            aseguradora = vehiculo_info["ASEGURADORA"]
+            ciudad = vehiculo_info["CIUDAD CLIENTE"]
+            marca = vehiculo_info["MARCA"]
+            modelo = vehiculo_info["MODELO"]
+            anio = vehiculo_info["AÑOCARRO"]
+            placa = vehiculo_info["PLACA"]
+            suma_asegurada = vehiculo_info["VALOR ASEGURADO"]
+    
+            # Formulario restante
+            titulo = st.text_input("Título del Reclamo*")
+            area = st.selectbox("Área*", ["CREDIPRIME", "GENERALES"])
+            estado = st.selectbox("Estado*", ["INICIAL","INSPECCION","DOCUMENTACION PENDIENTE" ,"DOCUMENTACION ENVIADA","EN LIQUIDACION","POR INGRESO VEHICULO A TALLER","POR PROFORMA","EN IMPORTACION","EN REPARACION"])
+            descripcion = st.text_area("Descripción detallada*")
+            ciudad_ocurrencia = st.text_input("Ciudad donde ocurrió el siniestro*")
+            fecha_ocurrencia = st.date_input("Fecha de ocurrencia")
+            causa = st.selectbox("Causa*", ["ROBO TOTAL", "CHOQUE PARCIAL + RC", "PERDIDA TOTAL", "DAÑOS MALICIOSOS", "CHOQUE PARCIAL", "ROBO PARCIAL", "ROTURA DE PARABRISAS", "SOLO RC", "DESGRAVAMEN","ASISTENCIA"])
+            necesita_grua = st.selectbox("¿Necesita grúa?", ["No", "Sí"])
+            asistencia_legal = st.selectbox("¿Requiere asistencia legal?", ["No", "Sí"])
                 
             talleres_df = cargar_df_sin_cache("talleres")  # o como corresponda según tu sistema
             talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
