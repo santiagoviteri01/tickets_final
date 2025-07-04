@@ -2654,16 +2654,10 @@ def manejar_tickets():
 
             if taller_opcion == "Otro...":
                 nuevo_taller = st.text_input("Escribe el nombre del nuevo taller")
-                if nuevo_taller and nuevo_taller not in talleres_unicos:
-                    if  st.button("Guardar nuevo taller"):
-                        talleres_ws = cargar_worksheet_sin_cache("talleres")
-                        talleres_ws.append_row([nuevo_taller])
-                        st.success(f"Taller '{nuevo_taller}' guardado exitosamente.")
-                        taller_seleccionado = nuevo_taller
-                    else:
-                        taller_seleccionado = None
-                else:
-                    taller_seleccionado = nuevo_taller
+                talleres_ws = cargar_worksheet_sin_cache("talleres")
+                talleres_ws.append_row([nuevo_taller])
+                st.success(f"Taller '{nuevo_taller}' guardado exitosamente.")
+                taller_seleccionado = nuevo_taller
             else:
                 taller_seleccionado = taller_opcion
     
@@ -2809,16 +2803,10 @@ def manejar_tickets():
                 
                 if taller_opcion == "Otro...":
                     nuevo_taller = st.text_input("Escribe el nombre del nuevo taller")
-                    if nuevo_taller and nuevo_taller not in talleres_unicos:
-                        if st.button("Guardar nuevo taller"):
-                            talleres_ws = cargar_worksheet_sin_cache("talleres")
-                            talleres_ws.append_row([nuevo_taller])
-                            st.success(f"Taller '{nuevo_taller}' guardado exitosamente.")
-                            taller_seleccionado = nuevo_taller
-                        else:
-                            taller_seleccionado = None
-                    else:
-                        taller_seleccionado = nuevo_taller
+                    talleres_ws = cargar_worksheet_sin_cache("talleres")
+                    talleres_ws.append_row([nuevo_taller])
+                    st.success(f"Taller '{nuevo_taller}' guardado exitosamente.")
+                    taller_seleccionado = nuevo_taller
                 else:
                     taller_seleccionado = taller_opcion
         
