@@ -2594,10 +2594,13 @@ def manejar_tickets():
             encabezado_con_icono("iconos/reclamos.png","Crear nuevo reclamo con datos del asegurado", "h2")
             # Paso 1: Buscar cliente por cédula o póliza
             asegurados_data = asegurados_df.copy()
-            tipo_busqueda = st.radio("Buscar por:", ["Cédula", "Número de Póliza"])
+            tipo_busqueda = st.radio("Buscar por:", ["Cédula", "Número de Póliza","Placa/RAMV"])
             if tipo_busqueda == "Cédula":
                 cedula = st.text_input("Ingrese el número:")
                 coincidencias = asegurados_data[asegurados_data["NÚMERO IDENTIFICACIÓN"].astype(str) == cedula]
+            if tipo_busqueda == "Placa/RAMV":
+                placa = st.text_input("Ingrese el número de placa/ramv")
+                coincidencias = asegurados_data[asegurados_data["PLACA"].astype(str) == placa]
             else:
                 poliza = st.text_input("Ingrese número de póliza:")
                 coincidencias = asegurados_data[asegurados_data["NÚMERO PÓLIZA VEHÍCULOS"].astype(str) == poliza]
@@ -2645,78 +2648,78 @@ def manejar_tickets():
                 ciudad_ocurrencia = st.text_input("Ciudad donde ocurrió el siniestro*")
                 fecha_ocurrencia = st.date_input("Fecha de ocurrencia")
                 causa = st.selectbox("Causa*", ["ROBO TOTAL", "CHOQUE PARCIAL + RC", "PERDIDA TOTAL", "DAÑOS MALICIOSOS", "CHOQUE PARCIAL", "ROBO PARCIAL", "ROTURA DE PARABRISAS", "SOLO RC", "DESGRAVAMEN","ASISTENCIA"])
-                talleres_df = cargar_df_sin_cache("talleres")  # o como corresponda según tu sistema
-                talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
-                taller_opcion = st.selectbox("Selecciona el taller de reparación*", talleres_unicos + ["Otro..."])
-
-                if taller_opcion == "Otro...":
-                    nuevo_taller = st.text_input("Escribe el nombre del nuevo taller")
-                    if nuevo_taller and nuevo_taller not in talleres_unicos:
-                        if  st.form_submit_button("Guardar nuevo taller"):
-                            talleres_ws = cargar_worksheet_sin_cache("talleres")
-                            talleres_ws.append_row([nuevo_taller])
-                            st.success(f"Taller '{nuevo_taller}' guardado exitosamente.")
-                            taller_seleccionado = nuevo_taller
-                        else:
-                            taller_seleccionado = None
-                    else:
-                        taller_seleccionado = nuevo_taller
-                else:
-                    taller_seleccionado = taller_opcion
-        
                 necesita_grua = st.selectbox("¿Necesita grúa?", ["No", "Sí"])
                 asistencia_legal = st.selectbox("¿Requiere asistencia legal?", ["No", "Sí"])
-        
-                guardar = st.form_submit_button("Guardar Reclamo")
-                if guardar:
-                    fecha_modificacion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    ultimo_ticket = df["Número"].max() if not df.empty else 0
-                    nuevo_numero = int(ultimo_ticket) + 1
-        
-                    nuevo_reclamos = {
-                        'Número': nuevo_numero,
-                        'Título': titulo,
-                        'Área': area,
-                        'Estado': estado,
-                        'Descripción': descripcion,
-                        'Fecha_Creación': fecha_modificacion,
-                        'Usuario_Creación': st.session_state.usuario_actual,
-                        'Fecha_Modificacion': fecha_modificacion,
-                        'Usuario_Modificacion': st.session_state.usuario_actual,
-                        'Tiempo_Cambio': '0d',
-                        'Cliente': cliente,
-                        'Cedula': cedula,
-                        'CONCESIONARIO': concesionario,
-                        'ID_LIDERSEG': id_liderseg,
-                        'ASEGURADORA': aseguradora,
-                        'CIUDAD OCURRENCIA': ciudad_ocurrencia,
-                        'TALLER': taller_seleccionado,
-                        'MARCA': marca,
-                        'MODELO': modelo,
-                        'AÑOCARRO': anio,
-                        'PLACA': placa,
-                        'fecha_ocurrencia': fecha_ocurrencia.strftime("%Y-%m-%d"),
-                        'SUMA ASEGURADA': suma_asegurada,
-                        'VALOR SINIESTRO': None,
-                        'DEDUCIBLE': None,
-                        'RASA': None,
-                        'LIQUIDACION': None,
-                        'CAUSA': causa,
-                        'Necesita Grua': necesita_grua,
-                        'Asistencia Legal': asistencia_legal,
-                        'Ubicacion': None,
-                        'Foto_URL': None
-                    }
-                    sheet = cargar_worksheet_sin_cache("hoja")
-                    sheet.append_row([str(v) for v in nuevo_reclamos.values()])
-                    st.success(f"✅ Reclamo #{nuevo_numero} guardado exitosamente.")
-                    pendientes_ws =cargar_worksheet("pendientes")
-                    pagados_ws = cargar_worksheet("pagados")
-                    todos_df =cargar_df_sin_cache("hoja")
-                    actualizar_bases_reclamos(todos_df, spreadsheet_sin_cache)
-                    del st.session_state.coincidencias
-                    del st.session_state.busqueda_exitosa
-                    st.rerun()
+                
+            talleres_df = cargar_df_sin_cache("talleres")  # o como corresponda según tu sistema
+            talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
+            taller_opcion = st.selectbox("Selecciona el taller de reparación*", talleres_unicos + ["Otro..."])
+
+            if taller_opcion == "Otro...":
+                nuevo_taller = st.text_input("Escribe el nombre del nuevo taller")
+                if nuevo_taller and nuevo_taller not in talleres_unicos:
+                    if  st.button("Guardar nuevo taller"):
+                        talleres_ws = cargar_worksheet_sin_cache("talleres")
+                        talleres_ws.append_row([nuevo_taller])
+                        st.success(f"Taller '{nuevo_taller}' guardado exitosamente.")
+                        taller_seleccionado = nuevo_taller
+                    else:
+                        taller_seleccionado = None
+                else:
+                    taller_seleccionado = nuevo_taller
+            else:
+                taller_seleccionado = taller_opcion
+    
+            guardar = st.button("Guardar Reclamo")
+            if guardar:
+                fecha_modificacion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                ultimo_ticket = df["Número"].max() if not df.empty else 0
+                nuevo_numero = int(ultimo_ticket) + 1
+    
+                nuevo_reclamos = {
+                    'Número': nuevo_numero,
+                    'Título': titulo,
+                    'Área': area,
+                    'Estado': estado,
+                    'Descripción': descripcion,
+                    'Fecha_Creación': fecha_modificacion,
+                    'Usuario_Creación': st.session_state.usuario_actual,
+                    'Fecha_Modificacion': fecha_modificacion,
+                    'Usuario_Modificacion': st.session_state.usuario_actual,
+                    'Tiempo_Cambio': '0d',
+                    'Cliente': cliente,
+                    'Cedula': cedula,
+                    'CONCESIONARIO': concesionario,
+                    'ID_LIDERSEG': id_liderseg,
+                    'ASEGURADORA': aseguradora,
+                    'CIUDAD OCURRENCIA': ciudad_ocurrencia,
+                    'TALLER': taller_seleccionado,
+                    'MARCA': marca,
+                    'MODELO': modelo,
+                    'AÑOCARRO': anio,
+                    'PLACA': placa,
+                    'fecha_ocurrencia': fecha_ocurrencia.strftime("%Y-%m-%d"),
+                    'SUMA ASEGURADA': suma_asegurada,
+                    'VALOR SINIESTRO': None,
+                    'DEDUCIBLE': None,
+                    'RASA': None,
+                    'LIQUIDACION': None,
+                    'CAUSA': causa,
+                    'Necesita Grua': necesita_grua,
+                    'Asistencia Legal': asistencia_legal,
+                    'Ubicacion': None,
+                    'Foto_URL': None
+                }
+                sheet = cargar_worksheet_sin_cache("hoja")
+                sheet.append_row([str(v) for v in nuevo_reclamos.values()])
+                st.success(f"✅ Reclamo #{nuevo_numero} guardado exitosamente.")
+                pendientes_ws =cargar_worksheet("pendientes")
+                pagados_ws = cargar_worksheet("pagados")
+                todos_df =cargar_df_sin_cache("hoja")
+                actualizar_bases_reclamos(todos_df, spreadsheet_sin_cache)
+                del st.session_state.coincidencias
+                del st.session_state.busqueda_exitosa
+                st.rerun()
 
 
     elif opcion_ticket == "Modificar reclamo existente":
