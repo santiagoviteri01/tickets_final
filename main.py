@@ -2686,7 +2686,7 @@ def manejar_tickets():
                     'Cliente': cliente,
                     'Cedula': cedula,
                     'CONCESIONARIO': concesionario,
-                    'ID_LIDERSEG': id_liderseg,
+                    'ID': id_liderseg,
                     'ASEGURADORA': aseguradora,
                     'CIUDAD OCURRENCIA': ciudad_ocurrencia,
                     'TALLER': taller_seleccionado,
