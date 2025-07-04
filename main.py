@@ -2654,9 +2654,6 @@ def manejar_tickets():
 
             if taller_opcion == "Otro...":
                 nuevo_taller = st.text_input("Escribe el nombre del nuevo taller")
-                talleres_ws = cargar_worksheet_sin_cache("talleres")
-                talleres_ws.append_row([nuevo_taller])
-                st.success(f"Taller '{nuevo_taller}' guardado exitosamente.")
                 taller_seleccionado = nuevo_taller
             else:
                 taller_seleccionado = taller_opcion
@@ -2664,8 +2661,16 @@ def manejar_tickets():
             guardar = st.button("Guardar Reclamo")
             if guardar:
                 fecha_modificacion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                df = cargar_df_sin_cache("hoja")
                 ultimo_ticket = df["Número"].max() if not df.empty else 0
                 nuevo_numero = int(ultimo_ticket) + 1
+                if taller_opcion == "Otro..." and nuevo_taller:
+                    talleres_df = cargar_df_sin_cache("talleres")
+                    talleres_existentes = talleres_df["Taller"].dropna().astype(str).tolist()
+                    if nuevo_taller not in talleres_existentes:
+                        talleres_ws = cargar_worksheet_sin_cache("talleres")
+                        talleres_ws.append_row([nuevo_taller])
+                        st.success(f"🛠️ Taller '{nuevo_taller}' guardado exitosamente.")
     
                 nuevo_reclamos = {
                     'Número': nuevo_numero,
@@ -2745,9 +2750,9 @@ def manejar_tickets():
         # Validación final
         if ticket_seleccionado is not None:
             if ticket_seleccionado['Estado'] == "cerrado":
-                st.error("❌ No se puede modificar un reclamo cerrado.")
+                st.error("No se puede modificar un reclamo cerrado.")
             else:
-                st.success(f"✅ Reclamo #{ticket_id} seleccionado para modificación")
+                st.success(f"Reclamo #{ticket_id} seleccionado para modificación")
                 st.session_state.ticket_actual = ticket_seleccionado.to_dict()
         
         if 'ticket_actual' in st.session_state:
@@ -2794,7 +2799,7 @@ def manejar_tickets():
                 if "Taller" in talleres_df.columns:
                     talleres_unicos = sorted(talleres_df["Taller"].dropna().unique().tolist())
                 else:
-                    st.error("❌ No se encontró la columna 'Taller' en la hoja 'talleres'")
+                    st.error("No se encontró la columna 'Taller' en la hoja 'talleres'")
                     st.stop()
                 
                 # === Selección del taller de reparación ===
@@ -2803,9 +2808,6 @@ def manejar_tickets():
                 
                 if taller_opcion == "Otro...":
                     nuevo_taller = st.text_input("Escribe el nombre del nuevo taller")
-                    talleres_ws = cargar_worksheet_sin_cache("talleres")
-                    talleres_ws.append_row([nuevo_taller])
-                    st.success(f"Taller '{nuevo_taller}' guardado exitosamente.")
                     taller_seleccionado = nuevo_taller
                 else:
                     taller_seleccionado = taller_opcion
@@ -2827,6 +2829,13 @@ def manejar_tickets():
                     fecha_modificacion = datetime.now()
                     ultima_fecha = datetime.strptime(st.session_state.ticket_actual['Fecha_Creación'], "%Y-%m-%d %H:%M:%S")
                     dias_transcurridos = (fecha_modificacion - ultima_fecha).days
+                    if taller_opcion == "Otro..." and nuevo_taller:
+                        talleres_df = cargar_df_sin_cache("talleres")
+                        talleres_existentes = talleres_df["Taller"].dropna().astype(str).tolist()
+                        if nuevo_taller not in talleres_existentes:
+                            talleres_ws = cargar_worksheet_sin_cache("talleres")
+                            talleres_ws.append_row([nuevo_taller])
+                            st.success(f"Taller '{nuevo_taller}' guardado exitosamente.")
         
                     if estado_final != st.session_state.ticket_actual['Estado']:
                         registro_dias = f"{dias_transcurridos}d ({st.session_state.ticket_actual['Estado']} -> {estado_final})"
