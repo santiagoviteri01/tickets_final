@@ -625,7 +625,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(div.not-fixed-container):not
 """.strip()
 
 MARGINS = {
-    "top": "-100px",
+    "top": "-110px",
     "bottom": "0",
 }
 
@@ -1522,7 +1522,7 @@ def portal_cliente():
     
         .header-bar img {
             height: 50px;
-            margin-top: 30px;  /* Aquí lo empujas hacia abajo */
+            margin-top: 40px;  /* Aquí lo empujas hacia abajo */
             max-width: 100%;
         }
         </style>
@@ -2201,7 +2201,7 @@ def portal_administracion():
     
         .header-bar img {
             height: 50px;
-            margin-top: 30px;  /* Aquí lo empujas hacia abajo */
+            margin-top: 40px;  /* Aquí lo empujas hacia abajo */
             max-width: 100%;
         }
         </style>
