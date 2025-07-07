@@ -368,8 +368,10 @@ asegurados_df=cargar_df("aseguradosfiltrados")
 for _, row in asegurados_df.iterrows():
     client_id = str(row["CORREO ELECTRÓNICO"])
     placa=str(row["PLACA"])
+    name=str(row["NOMBRE COMPLETO"])
     USUARIOS[client_id] = {
-        "password": placa,  # Contraseña = ID en texto plano
+        "password": placa,
+        "nombre": name,# Contraseña = ID en texto plano
         "rol": "cliente"
     }
     
@@ -1022,7 +1024,7 @@ def autenticacion():
                     user_data = USUARIOS.get(usuario)
                     if user_data and user_data['password'] == contraseña:
                         st.session_state.autenticado = True
-                        st.session_state.usuario_actual = usuario
+                        st.session_state.usuario_actual = user_data['nombre']
                         st.session_state.rol = user_data['rol']
                         st.rerun()
                     else:
@@ -1050,7 +1052,7 @@ def autenticacion():
                         user_data = USUARIOS.get(usuario)
                         if user_data and user_data['password'] == contraseña:
                             st.session_state.autenticado = True
-                            st.session_state.usuario_actual = usuario
+                            st.session_state.usuario_actual = user_data['nombre']
                             st.session_state.rol = user_data['rol']
                             st.rerun()
                         else:
