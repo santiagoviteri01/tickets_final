@@ -366,9 +366,10 @@ USUARIOS = {
 #defino asegurados df
 asegurados_df=cargar_df("aseguradosfiltrados")
 for _, row in asegurados_df.iterrows():
-    client_id = str(row["NOMBRE COMPLETO"])
+    client_id = str(row["CORREO ELECTRÓNICO"])
+    placa=str(row["PLACA"])
     USUARIOS[client_id] = {
-        "password": client_id,  # Contraseña = ID en texto plano
+        "password": placa,  # Contraseña = ID en texto plano
         "rol": "cliente"
     }
     
@@ -622,7 +623,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(div.not-fixed-container):not
 """.strip()
 
 MARGINS = {
-    "top": "-90px",
+    "top": "-100px",
     "bottom": "0",
 }
 
@@ -1519,7 +1520,7 @@ def portal_cliente():
     
         .header-bar img {
             height: 50px;
-            margin-top: 10px;  /* Aquí lo empujas hacia abajo */
+            margin-top: 30px;  /* Aquí lo empujas hacia abajo */
             max-width: 100%;
         }
         </style>
@@ -2198,7 +2199,7 @@ def portal_administracion():
     
         .header-bar img {
             height: 50px;
-            margin-top: 10px;  /* Aquí lo empujas hacia abajo */
+            margin-top: 30px;  /* Aquí lo empujas hacia abajo */
             max-width: 100%;
         }
         </style>
