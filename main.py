@@ -356,11 +356,9 @@ def cargar_df_sin_cache(nombre_hoja):
 
 # Configuración de usuarios y contraseñas
 USUARIOS = {
-    "cliente1": {"password": "pass1", "rol": "cliente"},
-    "cliente2": {"password": "pass2", "rol": "cliente"},
-    "carlosserrano": {"password": "crediprime2", "rol": "admin"},
-    "mauriciodavila": {"password": "insuratlan1", "rol": "admin"},
-    "santiagoviteri": {"password": "insuratlan2", "rol": "admin"},
+    "carlosserrano": {"password": "crediprime2","nombre":"carlosserrano","rol": "admin"},
+    "mauriciodavila": {"password": "insuratlan1","nombre":"mauriciodavila","rol": "admin"},
+    "santiagoviteri": {"password": "insuratlan2","nombre":"santiagoviteri","rol": "admin"},
 }
 # Mantienes el acceso al worksheet
 #defino asegurados df
