@@ -359,6 +359,8 @@ USUARIOS = {
     "carlosserrano": {"password": "crediprime2","nombre":"carlosserrano","rol": "admin"},
     "mauriciodavila": {"password": "insuratlan1","nombre":"mauriciodavila","rol": "admin"},
     "santiagoviteri": {"password": "insuratlan2","nombre":"santiagoviteri","rol": "admin"},
+    "camiladalgo": {"password": "insuratlan3","nombre":"camilabueno","rol": "admin"},
+    "alvaroordonez": {"password": "insuratlan4","nombre":"alvaroordonez","rol": "admin"},
 }
 # Mantienes el acceso al worksheet
 #defino asegurados df
