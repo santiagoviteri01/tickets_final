@@ -333,6 +333,10 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     
         # — Iterar sobre cada subconjunto y mostrar métricas, gráficos y tablas —
         for titulo, dfi in subconjuntos.items():
+            if dfi.empty:
+                st.warning(f"No hay datos para «{titulo}» con los filtros actuales.")
+                continue
+                
             encabezado_sin_icono(f"{titulo}", nivel="h2")
     
             # Métricas clave
