@@ -604,7 +604,7 @@ def mostrar_encabezado(texto_derecha=""):
 
     # 1) Inyecta el header fijo + spacer
     with st_fixed_container_header(key="hdr"):
-        cols = st.columns([3, 6, 1])
+        cols = st.columns([3, 6])
         with cols[0]:
             st.image(f"data:image/jpeg;base64,{b64}", width=40)
         with cols[1]:
@@ -614,10 +614,7 @@ def mostrar_encabezado(texto_derecha=""):
                 f"{texto_derecha}</h3>",
                 unsafe_allow_html=True
             )
-        with cols[2]:
-            if st.button("Cerrar Sesión", use_container_width=True):
-                st.session_state.autenticado = False
-                st.session_state.mostrar_login = False
+
     
 def encabezado_sin_icono(texto, nivel="h2"):
     estilo = {
