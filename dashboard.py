@@ -456,8 +456,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 st.pyplot(fig)
     
             # — Tablas Resumen —
-            encabezado_sin_icono("Tablas Resumen", nivel="h2")
-            encabezado_sin_icono("Análisis por Concesionario", nivel="h2")
+            encabezado_sin_icono("Análisis por Suma Asegurada", nivel="h2")
 
             # 1) Suma Asegurada por Aseguradora
             encabezado_sin_icono("Tabla: Suma Asegurada por Aseguradora (US$) por Mes y Año", nivel="h3")
@@ -507,7 +506,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             )
             part = (part.div(part.loc['Total'], axis=1) * 100).round(2).astype(str) + '%'
             render_tabla_html(part.reset_index(), height=200)
-            encabezado_sin_icono("Tabla: Crecimiento Año a Año de Valor Asegurado", nivel="h4")
+            encabezado_sin_icono("Tabla: Crecimiento Año a Año de Valor Asegurado", nivel="h3")
 
             # 4) Crecimiento Año a Año
             tot_ano = dfi.groupby('AÑO')['VALOR ASEGURADO'].sum().sort_index()
@@ -563,7 +562,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             encabezado_sin_icono("Análisis por Concesionario", nivel="h2")
             
             # 1) Suma Asegurada por Concesionario (US$) por Mes y Año
-            df_conc = df_filtrado.copy()
+            df_conc = dfi.copy()
             df_conc['MES_NOMBRE'] = pd.Categorical(
                 df_conc['MES'].apply(lambda x: meses_orden[x-1]),
                 categories=meses_orden,
@@ -595,7 +594,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             
             
             # 2) # de Unidades por Concesionario y Año
-            df_conc_unid = df_filtrado.groupby(
+            df_conc_unid = dfi.groupby(
                 ['CONCESIONARIO','AÑO']
             )['VALOR ASEGURADO'].count().reset_index(name='Unidades')
             
@@ -616,7 +615,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             
             
             # 3) Participación Concesionario (%) por Año
-            pivot_conc_part = df_filtrado.pivot_table(
+            pivot_conc_part = dfi.pivot_table(
                 index='CONCESIONARIO',
                 columns='AÑO',
                 values='VALOR ASEGURADO',
@@ -639,7 +638,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             encabezado_sin_icono("Análisis por Marca", nivel="h2")
             
             # 1) Valor Asegurado por Marca (US$) por Mes y Año
-            df_mar = df_filtrado.copy()
+            df_mar = dfi.copy()
             df_mar['MES_NOMBRE'] = pd.Categorical(
                 df_mar['MES'].apply(lambda x: meses_orden[x-1]),
                 categories=meses_orden,
@@ -670,7 +669,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             
             
             # 2) # de Unidades por Marca y Año
-            df_mar_unid = df_filtrado.groupby(
+            df_mar_unid = dfi.groupby(
                 ['MARCA','AÑO']
             )['VALOR ASEGURADO'].count().reset_index(name='Unidades')
             
@@ -691,7 +690,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             
             
             # 3) Participación Marca (%) por Año
-            pivot_mar_part = df_filtrado.pivot_table(
+            pivot_mar_part = dfi.pivot_table(
                 index='MARCA',
                 columns='AÑO',
                 values='VALOR ASEGURADO',
