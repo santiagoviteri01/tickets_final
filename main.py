@@ -562,7 +562,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(div.not-fixed-container):not
 """.strip()
 
 MARGINS = {
-    "top": "-110px",
+    "top": "-50px",
     "bottom": "0",
 }
 
