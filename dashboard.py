@@ -333,7 +333,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
     
         # — Iterar sobre cada subconjunto y mostrar métricas, gráficos y tablas —
         for titulo, dfi in subconjuntos.items():
-            encabezado_sin_icono(f"**{titulo}**", nivel="h2")
+            encabezado_sin_icono(f"{titulo}", nivel="h2")
     
             # Métricas clave
             col1, col2, col3 = st.columns(3)
@@ -456,9 +456,12 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 st.pyplot(fig)
     
             # — Tablas Resumen —
-            encabezado_sin_icono("Tablas Resumen", nivel="h3")
-    
+            encabezado_sin_icono("Tablas Resumen", nivel="h2")
+            encabezado_sin_icono("Análisis por Concesionario", nivel="h2")
+
             # 1) Suma Asegurada por Aseguradora
+            encabezado_sin_icono("Tabla: Suma Asegurada por Aseguradora (US$) por Mes y Año", nivel="h3")
+
             df_pri = (
                 dfi.groupby(['ASEGURADORA', 'MES_NOMBRE', 'AÑO'])['VALOR ASEGURADO']
                 .sum().reset_index()
@@ -475,7 +478,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 pivot_pri['ASEGURADORA'].duplicated(), ''
             )
             render_tabla_html(pivot_pri, height=300)
-    
+            encabezado_sin_icono("Tabla: # de Unidades por Aseguradora y Año", nivel="h3")
+
             # 2) Unidades por Aseguradora
             df_uni = (
                 dfi.groupby(['ASEGURADORA', 'AÑO'])['VALOR ASEGURADO']
@@ -490,7 +494,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 margins_name='Total'
             ).fillna(0).astype(int).reset_index()
             render_tabla_html(pivot_uni, height=200)
-    
+            encabezado_sin_icono("Tabla: Participación Aseguradora (%) por Año", nivel="h3")
+
             # 3) Participación %
             part = dfi.pivot_table(
                 index='ASEGURADORA',
@@ -502,7 +507,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             )
             part = (part.div(part.loc['Total'], axis=1) * 100).round(2).astype(str) + '%'
             render_tabla_html(part.reset_index(), height=200)
-    
+            encabezado_sin_icono("Tabla: Crecimiento Año a Año de Valor Asegurado", nivel="h4")
+
             # 4) Crecimiento Año a Año
             tot_ano = dfi.groupby('AÑO')['VALOR ASEGURADO'].sum().sort_index()
             df_crec = pd.DataFrame({
@@ -514,6 +520,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 / df_crec['T. Valor LY'] * 100
             ).round(2)
             df_crec = df_crec.dropna().reset_index()
+            
             render_tabla_html(df_crec, height=200)
     
             # — Otras métricas por Mes y Año —
@@ -532,6 +539,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 margins=True,
                 margins_name='Total'
             ).fillna(0).astype(int).reset_index()
+            encabezado_sin_icono("Tabla: # de Unidades por Mes y Año", nivel="h3")
+
             render_tabla_html(pivot_unid, height=300)
     
             # Promedio Valor Asegurado / Mes y Año
@@ -547,7 +556,158 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
                 margins=True,
                 margins_name='Total'
             ).round(2).fillna(0).reset_index()
+            encabezado_sin_icono("Tabla: Promedio Valor Asegurado (US$) por Mes y Año", nivel="h3")
+
             render_tabla_html(pivot_val, height=300)
+            # — Análisis por Concesionario —
+            encabezado_sin_icono("Análisis por Concesionario", nivel="h2")
+            
+            # 1) Suma Asegurada por Concesionario (US$) por Mes y Año
+            df_conc = df_filtrado.copy()
+            df_conc['MES_NOMBRE'] = pd.Categorical(
+                df_conc['MES'].apply(lambda x: meses_orden[x-1]),
+                categories=meses_orden,
+                ordered=True
+            )
+            df_conc = df_conc.groupby(
+                ['CONCESIONARIO','MES_NOMBRE','AÑO']
+            )['VALOR ASEGURADO'].sum().reset_index()
+            
+            pivot_conc_pri = df_conc.pivot_table(
+                index=['CONCESIONARIO','MES_NOMBRE'],
+                columns='AÑO',
+                values='VALOR ASEGURADO',
+                aggfunc='sum',
+                margins=True,
+                margins_name='Total'
+            ).fillna(0).round(2).reset_index()
+            
+            # Ocultar duplicados en la columna CONCESIONARIO
+            pivot_conc_pri['CONCESIONARIO'] = pivot_conc_pri['CONCESIONARIO'].mask(
+                pivot_conc_pri['CONCESIONARIO'].duplicated(), ''
+            )
+            
+            encabezado_sin_icono(
+                "Tabla: Suma Asegurada por Concesionario (US$) por Mes y Año",
+                nivel="h3"
+            )
+            render_tabla_html(pivot_conc_pri, height=300)
+            
+            
+            # 2) # de Unidades por Concesionario y Año
+            df_conc_unid = df_filtrado.groupby(
+                ['CONCESIONARIO','AÑO']
+            )['VALOR ASEGURADO'].count().reset_index(name='Unidades')
+            
+            pivot_conc_unid = df_conc_unid.pivot_table(
+                index='CONCESIONARIO',
+                columns='AÑO',
+                values='Unidades',
+                aggfunc='sum',
+                margins=True,
+                margins_name='Total'
+            ).fillna(0).astype(int).reset_index()
+            
+            encabezado_sin_icono(
+                "Tabla: # de Unidades por Concesionario y Año",
+                nivel="h3"
+            )
+            render_tabla_html(pivot_conc_unid, height=200)
+            
+            
+            # 3) Participación Concesionario (%) por Año
+            pivot_conc_part = df_filtrado.pivot_table(
+                index='CONCESIONARIO',
+                columns='AÑO',
+                values='VALOR ASEGURADO',
+                aggfunc='sum',
+                margins=True,
+                margins_name='Total'
+            )
+            pivot_conc_part = (
+                pivot_conc_part.div(pivot_conc_part.loc['Total'], axis=1) * 100
+            ).round(2).astype(str) + '%'
+            
+            encabezado_sin_icono(
+                "Tabla: Participación Concesionario (%) por Año",
+                nivel="h3"
+            )
+            render_tabla_html(pivot_conc_part.reset_index(), height=200)
+            
+            
+            # — Análisis por Marca —
+            encabezado_sin_icono("Análisis por Marca", nivel="h2")
+            
+            # 1) Valor Asegurado por Marca (US$) por Mes y Año
+            df_mar = df_filtrado.copy()
+            df_mar['MES_NOMBRE'] = pd.Categorical(
+                df_mar['MES'].apply(lambda x: meses_orden[x-1]),
+                categories=meses_orden,
+                ordered=True
+            )
+            df_mar = df_mar.groupby(
+                ['MARCA','MES_NOMBRE','AÑO']
+            )['VALOR ASEGURADO'].sum().reset_index()
+            
+            pivot_mar_pri = df_mar.pivot_table(
+                index=['MARCA','MES_NOMBRE'],
+                columns='AÑO',
+                values='VALOR ASEGURADO',
+                aggfunc='sum',
+                margins=True,
+                margins_name='Total'
+            ).fillna(0).round(2).reset_index()
+            
+            pivot_mar_pri['MARCA'] = pivot_mar_pri['MARCA'].mask(
+                pivot_mar_pri['MARCA'].duplicated(), ''
+            )
+            
+            encabezado_sin_icono(
+                "Tabla: Valor Asegurado por Marca (US$) por Mes y Año",
+                nivel="h3"
+            )
+            render_tabla_html(pivot_mar_pri, height=300)
+            
+            
+            # 2) # de Unidades por Marca y Año
+            df_mar_unid = df_filtrado.groupby(
+                ['MARCA','AÑO']
+            )['VALOR ASEGURADO'].count().reset_index(name='Unidades')
+            
+            pivot_mar_unid = df_mar_unid.pivot_table(
+                index='MARCA',
+                columns='AÑO',
+                values='Unidades',
+                aggfunc='sum',
+                margins=True,
+                margins_name='Total'
+            ).fillna(0).astype(int).reset_index()
+            
+            encabezado_sin_icono(
+                "Tabla: # de Unidades por Marca y Año",
+                nivel="h3"
+            )
+            render_tabla_html(pivot_mar_unid, height=200)
+            
+            
+            # 3) Participación Marca (%) por Año
+            pivot_mar_part = df_filtrado.pivot_table(
+                index='MARCA',
+                columns='AÑO',
+                values='VALOR ASEGURADO',
+                aggfunc='sum',
+                margins=True,
+                margins_name='Total'
+            )
+            pivot_mar_part = (
+                pivot_mar_part.div(pivot_mar_part.loc['Total'], axis=1) * 100
+            ).round(2).astype(str) + '%'
+            
+            encabezado_sin_icono(
+                "Tabla: Participación Marca (%) por Año",
+                nivel="h3"
+            )
+            render_tabla_html(pivot_mar_part.reset_index(), height=200)
 
     
     elif seccion == "Reclamos":
