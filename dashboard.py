@@ -327,8 +327,8 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
         # — Definir subconjuntos: Todos, Nuevos, Renovados —
         subconjuntos = {
             "Todos":    df_base,
-            "Nuevos":   df_base[df_base['RENOVACION'] == 0],
-            "Renovados":df_base[df_base['RENOVACION'] == 1],
+            "Nuevos":   df_base[df_base['NÚMERO RENOVACIÓN'] == 0],
+            "Renovados":df_base[df_base['NÚMERO RENOVACIÓN'] == 1],
         }
     
         # — Iterar sobre cada subconjunto y mostrar métricas, gráficos y tablas —
