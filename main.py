@@ -1436,14 +1436,14 @@ def portal_cliente():
         time.sleep(1)
         st.rerun()
 
-    with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
+    with st_fixed_container(mode="sticky", position="top", transparent=False, key="header_top"):
         b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode() if Path("images/atlantida_logo.jpg").exists() else ""
     
         st.markdown("""
         <style>
         .header-bar {
             width: 100%;
-            max-width: 100%;
+            height: 150px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1456,7 +1456,6 @@ def portal_cliente():
         .header-bar img {
             height: 50px;
             margin-top: 40px;  /* Aquí lo empujas hacia abajo */
-            max-width: 100%;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -1468,9 +1467,8 @@ def portal_cliente():
         """, unsafe_allow_html=True)
     
     # Compensar espacio por el header fijo
-    st.markdown("<div style='height:80px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:30px;'></div>", unsafe_allow_html=True)
     
-    # Compensar espacio por el header fijo                
     # Cuadro visual con borde
     with st.container():
         # Fondo y borde simulados mediante un markdown antes y después
@@ -2116,14 +2114,14 @@ def mostrar_conversaciones_bot():
 
 # Portal de Administración (Usuarios)
 def portal_administracion():
-    with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
+    with st_fixed_container(mode="sticky", position="top", transparent=False, key="header_top"):
         b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode() if Path("images/atlantida_logo.jpg").exists() else ""
     
         st.markdown("""
         <style>
         .header-bar {
             width: 100%;
-            max-width: 100%;
+            height: 150px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -2136,7 +2134,6 @@ def portal_administracion():
         .header-bar img {
             height: 50px;
             margin-top: 40px;  /* Aquí lo empujas hacia abajo */
-            max-width: 100%;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -2148,7 +2145,7 @@ def portal_administracion():
         """, unsafe_allow_html=True)
     
     # Compensar espacio por el header fijo
-    st.markdown("<div style='height:80px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:30px;'></div>", unsafe_allow_html=True)
     # Compensar espacio por el header fijo
     st.sidebar.title("Menú Admin")
     opciones = [
