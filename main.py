@@ -42,7 +42,7 @@ from folium import Element
 st.set_page_config(
     page_title="Insurapp",
     page_icon="",
-    layout="wide"
+    layout="centered"
 )
 st.markdown(
     """
@@ -572,7 +572,7 @@ def st_fixed_container(
     *,
     height: Optional[int] = None,
     border: Optional[bool] = None,
-    mode: Literal["fixed", "sticky"] = "fixed",
+    mode: Literal["fixed", "sticky", "normal"] = "fixed",  # ← AGREGADO "normal"
     position: Literal["top", "bottom"] = "top",
     margin: Optional[str] = None,
     transparent: bool = False,
@@ -580,18 +580,25 @@ def st_fixed_container(
 ):
     if margin is None:
         margin = MARGINS[position]
+
     fixed = st.container()
     non_fixed = st.container()
-    css = FIXED_CONTAINER_CSS.format(id=key, mode=mode, position=position, margin=margin)
-    with fixed:
-        st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-        st.markdown(f"<div class='fixed-container-{key}'></div>", unsafe_allow_html=True)
+
+    # SOLO aplicar CSS si NO está en modo normal
+    if mode != "normal":
+        css = FIXED_CONTAINER_CSS.format(id=key, mode=mode, position=position, margin=margin)
+        with fixed:
+            st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+            st.markdown(f"<div class='fixed-container-{key}'></div>", unsafe_allow_html=True)
+
     with non_fixed:
         st.markdown("<div class='not-fixed-container'></div>", unsafe_allow_html=True)
+
     with fixed:
         if transparent:
             return st.container(height=height, border=border)
         return st_opaque_container(height=height, border=border, key=f"opaque_{key}")
+
 
 
 # ————— TU HEADER USANDO st_fixed_container_header —————
@@ -1437,7 +1444,7 @@ def portal_cliente():
         time.sleep(1)
         st.rerun()
 
-    with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
+    with st_fixed_container(mode="normal", position="top", transparent=False, key="header_top"):
         b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode() if Path("images/atlantida_logo.jpg").exists() else ""
     
         st.markdown("""
@@ -1468,9 +1475,7 @@ def portal_cliente():
         </div>
         """, unsafe_allow_html=True)
     
-    # Compensar espacio por el header fijo
-    st.markdown("<div style='height:80px;'></div>", unsafe_allow_html=True)
-                
+    # Compensar espacio por el header fijo                
     # Cuadro visual con borde
     with st.container():
         # Fondo y borde simulados mediante un markdown antes y después
@@ -2116,7 +2121,7 @@ def mostrar_conversaciones_bot():
 
 # Portal de Administración (Usuarios)
 def portal_administracion():
-    with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
+    with st_fixed_container(mode="normal", position="top", transparent=False, key="header_top"):
         b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode() if Path("images/atlantida_logo.jpg").exists() else ""
     
         st.markdown("""
@@ -2148,8 +2153,6 @@ def portal_administracion():
         """, unsafe_allow_html=True)
     
     # Compensar espacio por el header fijo
-    st.markdown("<div style='height:80px;'></div>", unsafe_allow_html=True)
-
     st.sidebar.title("Menú Admin")
     opciones = [
         "Inicio", 
