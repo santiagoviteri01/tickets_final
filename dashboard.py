@@ -308,6 +308,11 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             años_sel = st.multiselect(
                 "Seleccionar Años", años_disponibles, default=años_disponibles
             )
+            tipo_poliza = st.radio(
+                "Tipo de Póliza",
+                options=["Todos", "Nuevos", "Renovados"],
+                index=0
+            )
     
             mostrar_graficos = st.multiselect(
                 "Gráficos a mostrar",
@@ -325,392 +330,392 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.stop()
     
         # — Definir subconjuntos: Todos, Nuevos, Renovados —
-        subconjuntos = {
-            "Todos":    df_base,
-            "Nuevos":   df_base[df_base['NÚMERO RENOVACIÓN'] == 0],
-            "Renovados":df_base[df_base['NÚMERO RENOVACIÓN'] == 1],
-        }
-    
-        # — Iterar sobre cada subconjunto y mostrar métricas, gráficos y tablas —
-        for titulo, dfi in subconjuntos.items():
-            if dfi.empty:
-                st.warning(f"No hay datos para «{titulo}» con los filtros actuales.")
-                continue
+        if tipo_poliza == "Nuevos":
+            dfi = df_base[df_base['NÚMERO RENOVACIÓN'] == 0]
+        elif tipo_poliza == "Renovados":
+            dfi = df_base[df_base['NÚMERO RENOVACIÓN'] == 1]
+        else:
+            dfi = df_base
+        
+        # Verifica si hay datos
+        if dfi.empty:
+            st.warning(f"No hay datos para «{tipo_poliza}» con los filtros actuales.")
+            st.stop()
                 
-            encabezado_sin_icono(f"{titulo}", nivel="h2")
-    
-            # Métricas clave
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric(
-                    "Suma Asegurada Total",
-                    f"${dfi['VALOR ASEGURADO'].sum():,.2f}"
-                )
-            with col2:
-                st.metric(
-                    "Prima Total",
-                    f"${dfi['PRIMA TOTAL VEHÍCULOS'].sum():,.2f}"
-                )
-            with col3:
-                st.metric(
-                    "Valor Promedio Asegurado",
-                    f"${dfi['VALOR ASEGURADO'].mean():,.2f}"
-                )
-    
-            # — Distribuciones —
-            if "Distribuciones" in mostrar_graficos:
-                encabezado_sin_icono("Distribuciones", "h3")
-                c4, c5 = st.columns(2)
-                with c4:
-                    fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
-                    sns.histplot(dfi['PRIMA TOTAL VEHÍCULOS'], kde=True, bins=30, ax=ax, color=rosa_s)
-                    ax.set_title("Distribución de Prima Total")
-                    ax.set_xlabel("Prima Total ($)")
-                    ax.set_ylabel("Frecuencia")
-                    st.pyplot(fig)
-                with c5:
-                    fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
-                    sns.histplot(dfi['VALOR ASEGURADO'], kde=True, bins=30, ax=ax, color=rosa_s)
-                    ax.set_title("Distribución de Valor Asegurado")
-                    ax.set_xlabel("Valor Asegurado ($)")
-                    ax.set_ylabel("Frecuencia")
-                    st.pyplot(fig)
-    
-            # — Evolución Anual —
-            if "Evolución Anual" in mostrar_graficos:
-                encabezado_sin_icono("Evolución Anual", "h3")
-                df_temp = dfi.pivot_table(
-                    values='VALOR ASEGURADO',
-                    index='MES',
-                    columns='AÑO',
-                    aggfunc='sum'
-                ).reindex(range(1, 13))
-                df_temp.index = pd.Categorical(
-                    [meses_orden[m-1] for m in df_temp.index],
-                    categories=meses_orden, ordered=True
-                )
-                for col in df_temp.columns:
-                    mask = df_temp[col] != 0
-                    if mask.any():
-                        last = mask[mask].index[-1]
-                        pos = df_temp.index.get_loc(last)
-                        for i in range(pos+1, len(df_temp)):
-                            if df_temp.iloc[i][col] == 0:
-                                df_temp.iat[i, df_temp.columns.get_loc(col)] = np.nan
+        encabezado_sin_icono(f"{titulo}", nivel="h2")
+
+        # Métricas clave
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric(
+                "Suma Asegurada Total",
+                f"${dfi['VALOR ASEGURADO'].sum():,.2f}"
+            )
+        with col2:
+            st.metric(
+                "Prima Total",
+                f"${dfi['PRIMA TOTAL VEHÍCULOS'].sum():,.2f}"
+            )
+        with col3:
+            st.metric(
+                "Valor Promedio Asegurado",
+                f"${dfi['VALOR ASEGURADO'].mean():,.2f}"
+            )
+
+        # — Distribuciones —
+        if "Distribuciones" in mostrar_graficos:
+            encabezado_sin_icono("Distribuciones", "h3")
+            c4, c5 = st.columns(2)
+            with c4:
                 fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
-                df_temp.plot(ax=ax, marker='o')
-                ax.set_title("Evolución Anual de la Suma Asegurada")
-                ax.set_xlabel("Mes")
-                ax.set_ylabel("Suma Asegurada")
-                plt.xticks(rotation=45)
+                sns.histplot(dfi['PRIMA TOTAL VEHÍCULOS'], kde=True, bins=30, ax=ax, color=rosa_s)
+                ax.set_title("Distribución de Prima Total")
+                ax.set_xlabel("Prima Total ($)")
+                ax.set_ylabel("Frecuencia")
                 st.pyplot(fig)
-    
-            # — Evolución Continua —
-            if "Evolución Continua" in mostrar_graficos:
-                encabezado_sin_icono("Evolución Continua", "h3")
-                df_cont = dfi.copy()
-                df_cont['Periodo'] = (
-                    df_cont['MES'].apply(lambda x: meses_orden[x-1][:3])
-                    + "-" + df_cont['AÑO'].astype(str)
-                )
-                orden = df_cont.sort_values(['AÑO', 'MES'])['Periodo'].unique()
-                df_cont['Periodo'] = pd.Categorical(
-                    df_cont['Periodo'], categories=orden, ordered=True
-                )
-                evo = df_cont.groupby('Periodo')['VALOR ASEGURADO'].sum().fillna(0)
+            with c5:
                 fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
-                evo.plot(ax=ax, marker='o', legend=False, color=gris_o)
-                ax.set_title("Evolución de la Suma Asegurada")
-                ax.set_xlabel("Periodo")
-                ax.set_ylabel("Suma Asegurada")
-                plt.xticks(rotation=45)
+                sns.histplot(dfi['VALOR ASEGURADO'], kde=True, bins=30, ax=ax, color=rosa_s)
+                ax.set_title("Distribución de Valor Asegurado")
+                ax.set_xlabel("Valor Asegurado ($)")
+                ax.set_ylabel("Frecuencia")
                 st.pyplot(fig)
-    
-            # — Tasa Mensual —
-            if "Tasa Mensual" in mostrar_graficos:
-                encabezado_sin_icono("Tasa Mensual", "h3")
-                tasa = dfi.groupby(['AÑO', 'MES']).agg(
-                    Prima_Total=('PRIMA TOTAL VEHÍCULOS', 'sum'),
-                    Suma_Total=('VALOR ASEGURADO', 'sum')
-                ).reset_index()
-                tasa['Tasa'] = tasa['Prima_Total'] / tasa['Suma_Total'] * 100
-                tasa['Periodo'] = (
-                    tasa['MES'].apply(lambda x: meses_orden[x-1])
-                    + "-" + tasa['AÑO'].astype(str)
-                )
-                tasa = tasa.sort_values(['AÑO', 'MES'])
-                fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
-                ax.plot(tasa['Periodo'], tasa['Tasa'], marker='o', color=gris_o)
-                ax.set_title("Tasa Mensual de Prima vs. Suma Asegurada")
-                ax.set_xlabel("Periodo")
-                ax.set_ylabel("Tasa (%)")
-                plt.xticks(rotation=45)
-                st.pyplot(fig)
-    
-            # — Top Marcas —
-            if "Top Marcas" in mostrar_graficos:
-                encabezado_sin_icono("Top Marcas", "h3")
-                top = dfi['MARCA'].value_counts().nlargest(10)
-                fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
-                top.plot(kind='barh', ax=ax, color=gris_o)
-                ax.set_title("Top 10 Marcas Más Aseguradas")
-                ax.set_xlabel("Cantidad")
-                ax.set_ylabel("Marca")
-                plt.xticks(rotation=45)
-                st.pyplot(fig)
-    
-            # — Tablas Resumen —
-            encabezado_sin_icono("Análisis por Suma Asegurada", nivel="h2")
 
-            # 1) Suma Asegurada por Aseguradora
-            encabezado_sin_icono("Tabla: Suma Asegurada por Aseguradora (US$) por Mes y Año", nivel="h3")
+        # — Evolución Anual —
+        if "Evolución Anual" in mostrar_graficos:
+            encabezado_sin_icono("Evolución Anual", "h3")
+            df_temp = dfi.pivot_table(
+                values='VALOR ASEGURADO',
+                index='MES',
+                columns='AÑO',
+                aggfunc='sum'
+            ).reindex(range(1, 13))
+            df_temp.index = pd.Categorical(
+                [meses_orden[m-1] for m in df_temp.index],
+                categories=meses_orden, ordered=True
+            )
+            for col in df_temp.columns:
+                mask = df_temp[col] != 0
+                if mask.any():
+                    last = mask[mask].index[-1]
+                    pos = df_temp.index.get_loc(last)
+                    for i in range(pos+1, len(df_temp)):
+                        if df_temp.iloc[i][col] == 0:
+                            df_temp.iat[i, df_temp.columns.get_loc(col)] = np.nan
+            fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
+            df_temp.plot(ax=ax, marker='o')
+            ax.set_title("Evolución Anual de la Suma Asegurada")
+            ax.set_xlabel("Mes")
+            ax.set_ylabel("Suma Asegurada")
+            plt.xticks(rotation=45)
+            st.pyplot(fig)
 
-            df_pri = (
-                dfi.groupby(['ASEGURADORA', 'MES_NOMBRE', 'AÑO'])['VALOR ASEGURADO']
-                .sum().reset_index()
+        # — Evolución Continua —
+        if "Evolución Continua" in mostrar_graficos:
+            encabezado_sin_icono("Evolución Continua", "h3")
+            df_cont = dfi.copy()
+            df_cont['Periodo'] = (
+                df_cont['MES'].apply(lambda x: meses_orden[x-1][:3])
+                + "-" + df_cont['AÑO'].astype(str)
             )
-            pivot_pri = df_pri.pivot_table(
-                index=['ASEGURADORA','MES_NOMBRE'],
-                columns='AÑO',
-                values='VALOR ASEGURADO',
-                aggfunc='sum',
-                margins=True,
-                margins_name='Total'
-            ).fillna(0).round(2).reset_index()
-            pivot_pri['ASEGURADORA'] = pivot_pri['ASEGURADORA'].mask(
-                pivot_pri['ASEGURADORA'].duplicated(), ''
+            orden = df_cont.sort_values(['AÑO', 'MES'])['Periodo'].unique()
+            df_cont['Periodo'] = pd.Categorical(
+                df_cont['Periodo'], categories=orden, ordered=True
             )
-            render_tabla_html(pivot_pri, height=300)
-            encabezado_sin_icono("Tabla: # de Unidades por Aseguradora y Año", nivel="h3")
+            evo = df_cont.groupby('Periodo')['VALOR ASEGURADO'].sum().fillna(0)
+            fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
+            evo.plot(ax=ax, marker='o', legend=False, color=gris_o)
+            ax.set_title("Evolución de la Suma Asegurada")
+            ax.set_xlabel("Periodo")
+            ax.set_ylabel("Suma Asegurada")
+            plt.xticks(rotation=45)
+            st.pyplot(fig)
 
-            # 2) Unidades por Aseguradora
-            df_uni = (
-                dfi.groupby(['ASEGURADORA', 'AÑO'])['VALOR ASEGURADO']
-                .count().reset_index(name='Unidades')
+        # — Tasa Mensual —
+        if "Tasa Mensual" in mostrar_graficos:
+            encabezado_sin_icono("Tasa Mensual", "h3")
+            tasa = dfi.groupby(['AÑO', 'MES']).agg(
+                Prima_Total=('PRIMA TOTAL VEHÍCULOS', 'sum'),
+                Suma_Total=('VALOR ASEGURADO', 'sum')
+            ).reset_index()
+            tasa['Tasa'] = tasa['Prima_Total'] / tasa['Suma_Total'] * 100
+            tasa['Periodo'] = (
+                tasa['MES'].apply(lambda x: meses_orden[x-1])
+                + "-" + tasa['AÑO'].astype(str)
             )
-            pivot_uni = df_uni.pivot_table(
-                index='ASEGURADORA',
-                columns='AÑO',
-                values='Unidades',
-                aggfunc='sum',
-                margins=True,
-                margins_name='Total'
-            ).fillna(0).astype(int).reset_index()
-            render_tabla_html(pivot_uni, height=200)
-            encabezado_sin_icono("Tabla: Participación Aseguradora (%) por Año", nivel="h3")
+            tasa = tasa.sort_values(['AÑO', 'MES'])
+            fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
+            ax.plot(tasa['Periodo'], tasa['Tasa'], marker='o', color=gris_o)
+            ax.set_title("Tasa Mensual de Prima vs. Suma Asegurada")
+            ax.set_xlabel("Periodo")
+            ax.set_ylabel("Tasa (%)")
+            plt.xticks(rotation=45)
+            st.pyplot(fig)
 
-            # 3) Participación %
-            part = dfi.pivot_table(
-                index='ASEGURADORA',
-                columns='AÑO',
-                values='VALOR ASEGURADO',
-                aggfunc='sum',
-                margins=True,
-                margins_name='Total'
-            )
-            part = (part.div(part.loc['Total'], axis=1) * 100).round(2).astype(str) + '%'
-            render_tabla_html(part.reset_index(), height=200)
-            encabezado_sin_icono("Tabla: Crecimiento Año a Año de Valor Asegurado", nivel="h3")
+        # — Top Marcas —
+        if "Top Marcas" in mostrar_graficos:
+            encabezado_sin_icono("Top Marcas", "h3")
+            top = dfi['MARCA'].value_counts().nlargest(10)
+            fig, ax = plt.subplots(figsize=TAMANO_GRAFICO)
+            top.plot(kind='barh', ax=ax, color=gris_o)
+            ax.set_title("Top 10 Marcas Más Aseguradas")
+            ax.set_xlabel("Cantidad")
+            ax.set_ylabel("Marca")
+            plt.xticks(rotation=45)
+            st.pyplot(fig)
 
-            # 4) Crecimiento Año a Año
-            tot_ano = dfi.groupby('AÑO')['VALOR ASEGURADO'].sum().sort_index()
-            df_crec = pd.DataFrame({
-                'T. Valor Asegurado': tot_ano,
-                'T. Valor LY': tot_ano.shift(1)
-            })
-            df_crec['%Crecimiento'] = (
-                (df_crec['T. Valor Asegurado'] - df_crec['T. Valor LY'])
-                / df_crec['T. Valor LY'] * 100
-            ).round(2)
-            df_crec = df_crec.dropna().reset_index()
-            
-            render_tabla_html(df_crec, height=200)
-    
-            # — Otras métricas por Mes y Año —
-            df_extra = dfi.copy()
-    
-            # Unidades / Mes y Año
-            df_unid = (
-                df_extra.groupby(['MES_NOMBRE', 'AÑO'])
-                .size().reset_index(name='Unidades')
-            )
-            pivot_unid = df_unid.pivot_table(
-                index='MES_NOMBRE',
-                columns='AÑO',
-                values='Unidades',
-                aggfunc='sum',
-                margins=True,
-                margins_name='Total'
-            ).fillna(0).astype(int).reset_index()
-            encabezado_sin_icono("Tabla: # de Unidades por Mes y Año", nivel="h3")
+        # — Tablas Resumen —
+        encabezado_sin_icono("Análisis por Suma Asegurada", nivel="h2")
 
-            render_tabla_html(pivot_unid, height=300)
-    
-            # Promedio Valor Asegurado / Mes y Año
-            df_val = (
-                df_extra.groupby(['MES_NOMBRE', 'AÑO'])['VALOR ASEGURADO']
-                .mean().reset_index()
-            )
-            pivot_val = df_val.pivot_table(
-                index='MES_NOMBRE',
-                columns='AÑO',
-                values='VALOR ASEGURADO',
-                aggfunc='mean',
-                margins=True,
-                margins_name='Total'
-            ).round(2).fillna(0).reset_index()
-            encabezado_sin_icono("Tabla: Promedio Valor Asegurado (US$) por Mes y Año", nivel="h3")
+        # 1) Suma Asegurada por Aseguradora
+        encabezado_sin_icono("Tabla: Suma Asegurada por Aseguradora (US$) por Mes y Año", nivel="h3")
 
-            render_tabla_html(pivot_val, height=300)
-            # — Análisis por Concesionario —
-            encabezado_sin_icono("Análisis por Concesionario", nivel="h2")
-            
-            # 1) Suma Asegurada por Concesionario (US$) por Mes y Año
-            df_conc = dfi.copy()
-            df_conc['MES_NOMBRE'] = pd.Categorical(
-                df_conc['MES'].apply(lambda x: meses_orden[x-1]),
-                categories=meses_orden,
-                ordered=True
-            )
-            df_conc = df_conc.groupby(
-                ['CONCESIONARIO','MES_NOMBRE','AÑO']
-            )['VALOR ASEGURADO'].sum().reset_index()
-            
-            pivot_conc_pri = df_conc.pivot_table(
-                index=['CONCESIONARIO','MES_NOMBRE'],
-                columns='AÑO',
-                values='VALOR ASEGURADO',
-                aggfunc='sum',
-                margins=True,
-                margins_name='Total'
-            ).fillna(0).round(2).reset_index()
-            
-            # Ocultar duplicados en la columna CONCESIONARIO
-            pivot_conc_pri['CONCESIONARIO'] = pivot_conc_pri['CONCESIONARIO'].mask(
-                pivot_conc_pri['CONCESIONARIO'].duplicated(), ''
-            )
-            
-            encabezado_sin_icono(
-                "Tabla: Suma Asegurada por Concesionario (US$) por Mes y Año",
-                nivel="h3"
-            )
-            render_tabla_html(pivot_conc_pri, height=300)
-            
-            
-            # 2) # de Unidades por Concesionario y Año
-            df_conc_unid = dfi.groupby(
-                ['CONCESIONARIO','AÑO']
-            )['VALOR ASEGURADO'].count().reset_index(name='Unidades')
-            
-            pivot_conc_unid = df_conc_unid.pivot_table(
-                index='CONCESIONARIO',
-                columns='AÑO',
-                values='Unidades',
-                aggfunc='sum',
-                margins=True,
-                margins_name='Total'
-            ).fillna(0).astype(int).reset_index()
-            
-            encabezado_sin_icono(
-                "Tabla: # de Unidades por Concesionario y Año",
-                nivel="h3"
-            )
-            render_tabla_html(pivot_conc_unid, height=200)
-            
-            
-            # 3) Participación Concesionario (%) por Año
-            pivot_conc_part = dfi.pivot_table(
-                index='CONCESIONARIO',
-                columns='AÑO',
-                values='VALOR ASEGURADO',
-                aggfunc='sum',
-                margins=True,
-                margins_name='Total'
-            )
-            pivot_conc_part = (
-                pivot_conc_part.div(pivot_conc_part.loc['Total'], axis=1) * 100
-            ).round(2).astype(str) + '%'
-            
-            encabezado_sin_icono(
-                "Tabla: Participación Concesionario (%) por Año",
-                nivel="h3"
-            )
-            render_tabla_html(pivot_conc_part.reset_index(), height=200)
-            
-            
-            # — Análisis por Marca —
-            encabezado_sin_icono("Análisis por Marca", nivel="h2")
-            
-            # 1) Valor Asegurado por Marca (US$) por Mes y Año
-            df_mar = dfi.copy()
-            df_mar['MES_NOMBRE'] = pd.Categorical(
-                df_mar['MES'].apply(lambda x: meses_orden[x-1]),
-                categories=meses_orden,
-                ordered=True
-            )
-            df_mar = df_mar.groupby(
-                ['MARCA','MES_NOMBRE','AÑO']
-            )['VALOR ASEGURADO'].sum().reset_index()
-            
-            pivot_mar_pri = df_mar.pivot_table(
-                index=['MARCA','MES_NOMBRE'],
-                columns='AÑO',
-                values='VALOR ASEGURADO',
-                aggfunc='sum',
-                margins=True,
-                margins_name='Total'
-            ).fillna(0).round(2).reset_index()
-            
-            pivot_mar_pri['MARCA'] = pivot_mar_pri['MARCA'].mask(
-                pivot_mar_pri['MARCA'].duplicated(), ''
-            )
-            
-            encabezado_sin_icono(
-                "Tabla: Valor Asegurado por Marca (US$) por Mes y Año",
-                nivel="h3"
-            )
-            render_tabla_html(pivot_mar_pri, height=300)
-            
-            
-            # 2) # de Unidades por Marca y Año
-            df_mar_unid = dfi.groupby(
-                ['MARCA','AÑO']
-            )['VALOR ASEGURADO'].count().reset_index(name='Unidades')
-            
-            pivot_mar_unid = df_mar_unid.pivot_table(
-                index='MARCA',
-                columns='AÑO',
-                values='Unidades',
-                aggfunc='sum',
-                margins=True,
-                margins_name='Total'
-            ).fillna(0).astype(int).reset_index()
-            
-            encabezado_sin_icono(
-                "Tabla: # de Unidades por Marca y Año",
-                nivel="h3"
-            )
-            render_tabla_html(pivot_mar_unid, height=200)
-            
-            
-            # 3) Participación Marca (%) por Año
-            pivot_mar_part = dfi.pivot_table(
-                index='MARCA',
-                columns='AÑO',
-                values='VALOR ASEGURADO',
-                aggfunc='sum',
-                margins=True,
-                margins_name='Total'
-            )
-            pivot_mar_part = (
-                pivot_mar_part.div(pivot_mar_part.loc['Total'], axis=1) * 100
-            ).round(2).astype(str) + '%'
-            
-            encabezado_sin_icono(
-                "Tabla: Participación Marca (%) por Año",
-                nivel="h3"
-            )
-            render_tabla_html(pivot_mar_part.reset_index(), height=200)
+        df_pri = (
+            dfi.groupby(['ASEGURADORA', 'MES_NOMBRE', 'AÑO'])['VALOR ASEGURADO']
+            .sum().reset_index()
+        )
+        pivot_pri = df_pri.pivot_table(
+            index=['ASEGURADORA','MES_NOMBRE'],
+            columns='AÑO',
+            values='VALOR ASEGURADO',
+            aggfunc='sum',
+            margins=True,
+            margins_name='Total'
+        ).fillna(0).round(2).reset_index()
+        pivot_pri['ASEGURADORA'] = pivot_pri['ASEGURADORA'].mask(
+            pivot_pri['ASEGURADORA'].duplicated(), ''
+        )
+        render_tabla_html(pivot_pri, height=300)
+        encabezado_sin_icono("Tabla: # de Unidades por Aseguradora y Año", nivel="h3")
+
+        # 2) Unidades por Aseguradora
+        df_uni = (
+            dfi.groupby(['ASEGURADORA', 'AÑO'])['VALOR ASEGURADO']
+            .count().reset_index(name='Unidades')
+        )
+        pivot_uni = df_uni.pivot_table(
+            index='ASEGURADORA',
+            columns='AÑO',
+            values='Unidades',
+            aggfunc='sum',
+            margins=True,
+            margins_name='Total'
+        ).fillna(0).astype(int).reset_index()
+        render_tabla_html(pivot_uni, height=200)
+        encabezado_sin_icono("Tabla: Participación Aseguradora (%) por Año", nivel="h3")
+
+        # 3) Participación %
+        part = dfi.pivot_table(
+            index='ASEGURADORA',
+            columns='AÑO',
+            values='VALOR ASEGURADO',
+            aggfunc='sum',
+            margins=True,
+            margins_name='Total'
+        )
+        part = (part.div(part.loc['Total'], axis=1) * 100).round(2).astype(str) + '%'
+        render_tabla_html(part.reset_index(), height=200)
+        encabezado_sin_icono("Tabla: Crecimiento Año a Año de Valor Asegurado", nivel="h3")
+
+        # 4) Crecimiento Año a Año
+        tot_ano = dfi.groupby('AÑO')['VALOR ASEGURADO'].sum().sort_index()
+        df_crec = pd.DataFrame({
+            'T. Valor Asegurado': tot_ano,
+            'T. Valor LY': tot_ano.shift(1)
+        })
+        df_crec['%Crecimiento'] = (
+            (df_crec['T. Valor Asegurado'] - df_crec['T. Valor LY'])
+            / df_crec['T. Valor LY'] * 100
+        ).round(2)
+        df_crec = df_crec.dropna().reset_index()
+        
+        render_tabla_html(df_crec, height=200)
+
+        # — Otras métricas por Mes y Año —
+        df_extra = dfi.copy()
+
+        # Unidades / Mes y Año
+        df_unid = (
+            df_extra.groupby(['MES_NOMBRE', 'AÑO'])
+            .size().reset_index(name='Unidades')
+        )
+        pivot_unid = df_unid.pivot_table(
+            index='MES_NOMBRE',
+            columns='AÑO',
+            values='Unidades',
+            aggfunc='sum',
+            margins=True,
+            margins_name='Total'
+        ).fillna(0).astype(int).reset_index()
+        encabezado_sin_icono("Tabla: # de Unidades por Mes y Año", nivel="h3")
+
+        render_tabla_html(pivot_unid, height=300)
+
+        # Promedio Valor Asegurado / Mes y Año
+        df_val = (
+            df_extra.groupby(['MES_NOMBRE', 'AÑO'])['VALOR ASEGURADO']
+            .mean().reset_index()
+        )
+        pivot_val = df_val.pivot_table(
+            index='MES_NOMBRE',
+            columns='AÑO',
+            values='VALOR ASEGURADO',
+            aggfunc='mean',
+            margins=True,
+            margins_name='Total'
+        ).round(2).fillna(0).reset_index()
+        encabezado_sin_icono("Tabla: Promedio Valor Asegurado (US$) por Mes y Año", nivel="h3")
+
+        render_tabla_html(pivot_val, height=300)
+        # — Análisis por Concesionario —
+        encabezado_sin_icono("Análisis por Concesionario", nivel="h2")
+        
+        # 1) Suma Asegurada por Concesionario (US$) por Mes y Año
+        df_conc = dfi.copy()
+        df_conc['MES_NOMBRE'] = pd.Categorical(
+            df_conc['MES'].apply(lambda x: meses_orden[x-1]),
+            categories=meses_orden,
+            ordered=True
+        )
+        df_conc = df_conc.groupby(
+            ['CONCESIONARIO','MES_NOMBRE','AÑO']
+        )['VALOR ASEGURADO'].sum().reset_index()
+        
+        pivot_conc_pri = df_conc.pivot_table(
+            index=['CONCESIONARIO','MES_NOMBRE'],
+            columns='AÑO',
+            values='VALOR ASEGURADO',
+            aggfunc='sum',
+            margins=True,
+            margins_name='Total'
+        ).fillna(0).round(2).reset_index()
+        
+        # Ocultar duplicados en la columna CONCESIONARIO
+        pivot_conc_pri['CONCESIONARIO'] = pivot_conc_pri['CONCESIONARIO'].mask(
+            pivot_conc_pri['CONCESIONARIO'].duplicated(), ''
+        )
+        
+        encabezado_sin_icono(
+            "Tabla: Suma Asegurada por Concesionario (US$) por Mes y Año",
+            nivel="h3"
+        )
+        render_tabla_html(pivot_conc_pri, height=300)
+        
+        
+        # 2) # de Unidades por Concesionario y Año
+        df_conc_unid = dfi.groupby(
+            ['CONCESIONARIO','AÑO']
+        )['VALOR ASEGURADO'].count().reset_index(name='Unidades')
+        
+        pivot_conc_unid = df_conc_unid.pivot_table(
+            index='CONCESIONARIO',
+            columns='AÑO',
+            values='Unidades',
+            aggfunc='sum',
+            margins=True,
+            margins_name='Total'
+        ).fillna(0).astype(int).reset_index()
+        
+        encabezado_sin_icono(
+            "Tabla: # de Unidades por Concesionario y Año",
+            nivel="h3"
+        )
+        render_tabla_html(pivot_conc_unid, height=200)
+        
+        
+        # 3) Participación Concesionario (%) por Año
+        pivot_conc_part = dfi.pivot_table(
+            index='CONCESIONARIO',
+            columns='AÑO',
+            values='VALOR ASEGURADO',
+            aggfunc='sum',
+            margins=True,
+            margins_name='Total'
+        )
+        pivot_conc_part = (
+            pivot_conc_part.div(pivot_conc_part.loc['Total'], axis=1) * 100
+        ).round(2).astype(str) + '%'
+        
+        encabezado_sin_icono(
+            "Tabla: Participación Concesionario (%) por Año",
+            nivel="h3"
+        )
+        render_tabla_html(pivot_conc_part.reset_index(), height=200)
+        
+        
+        # — Análisis por Marca —
+        encabezado_sin_icono("Análisis por Marca", nivel="h2")
+        
+        # 1) Valor Asegurado por Marca (US$) por Mes y Año
+        df_mar = dfi.copy()
+        df_mar['MES_NOMBRE'] = pd.Categorical(
+            df_mar['MES'].apply(lambda x: meses_orden[x-1]),
+            categories=meses_orden,
+            ordered=True
+        )
+        df_mar = df_mar.groupby(
+            ['MARCA','MES_NOMBRE','AÑO']
+        )['VALOR ASEGURADO'].sum().reset_index()
+        
+        pivot_mar_pri = df_mar.pivot_table(
+            index=['MARCA','MES_NOMBRE'],
+            columns='AÑO',
+            values='VALOR ASEGURADO',
+            aggfunc='sum',
+            margins=True,
+            margins_name='Total'
+        ).fillna(0).round(2).reset_index()
+        
+        pivot_mar_pri['MARCA'] = pivot_mar_pri['MARCA'].mask(
+            pivot_mar_pri['MARCA'].duplicated(), ''
+        )
+        
+        encabezado_sin_icono(
+            "Tabla: Valor Asegurado por Marca (US$) por Mes y Año",
+            nivel="h3"
+        )
+        render_tabla_html(pivot_mar_pri, height=300)
+        
+        
+        # 2) # de Unidades por Marca y Año
+        df_mar_unid = dfi.groupby(
+            ['MARCA','AÑO']
+        )['VALOR ASEGURADO'].count().reset_index(name='Unidades')
+        
+        pivot_mar_unid = df_mar_unid.pivot_table(
+            index='MARCA',
+            columns='AÑO',
+            values='Unidades',
+            aggfunc='sum',
+            margins=True,
+            margins_name='Total'
+        ).fillna(0).astype(int).reset_index()
+        
+        encabezado_sin_icono(
+            "Tabla: # de Unidades por Marca y Año",
+            nivel="h3"
+        )
+        render_tabla_html(pivot_mar_unid, height=200)
+        
+        
+        # 3) Participación Marca (%) por Año
+        pivot_mar_part = dfi.pivot_table(
+            index='MARCA',
+            columns='AÑO',
+            values='VALOR ASEGURADO',
+            aggfunc='sum',
+            margins=True,
+            margins_name='Total'
+        )
+        pivot_mar_part = (
+            pivot_mar_part.div(pivot_mar_part.loc['Total'], axis=1) * 100
+        ).round(2).astype(str) + '%'
+        
+        encabezado_sin_icono(
+            "Tabla: Participación Marca (%) por Año",
+            nivel="h3"
+        )
+        render_tabla_html(pivot_mar_part.reset_index(), height=200)
 
     
     elif seccion == "Reclamos":
