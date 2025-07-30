@@ -342,7 +342,7 @@ def mostrar_dashboard_analisis(pagados, pendientes, asegurados):
             st.warning(f"No hay datos para «{tipo_poliza}» con los filtros actuales.")
             st.stop()
                 
-        encabezado_sin_icono(f"{titulo}", nivel="h2")
+        encabezado_sin_icono(f"{tipo_poliza}", nivel="h2")
 
         # Métricas clave
         col1, col2, col3 = st.columns(3)
