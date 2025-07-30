@@ -475,8 +475,6 @@ def imagen_base64(ruta_img, ancho="100%"):
         img_b64 = base64.b64encode(f.read()).decode()
     return f"<img src='data:image/png;base64,{img_b64}' style='width:{ancho}; border-radius:10px;'/>"
 
-
-
 OPAQUE_CONTAINER_CSS = """
 :root {{
     --background-color: #ffffff; /* Default background color */
@@ -562,7 +560,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(div.not-fixed-container):not
 """.strip()
 
 MARGINS = {
-    "top": "-200px",
+    "top": "-110px",
     "bottom": "0",
 }
 
@@ -572,7 +570,7 @@ def st_fixed_container(
     *,
     height: Optional[int] = None,
     border: Optional[bool] = None,
-    mode: Literal["fixed", "sticky", "normal"] = "fixed",  # ← AGREGADO "normal"
+    mode: Literal["fixed", "sticky"] = "fixed",
     position: Literal["top", "bottom"] = "top",
     margin: Optional[str] = None,
     transparent: bool = False,
@@ -580,20 +578,14 @@ def st_fixed_container(
 ):
     if margin is None:
         margin = MARGINS[position]
-
     fixed = st.container()
     non_fixed = st.container()
-
-    # SOLO aplicar CSS si NO está en modo normal
-    if mode != "normal":
-        css = FIXED_CONTAINER_CSS.format(id=key, mode=mode, position=position, margin=margin)
-        with fixed:
-            st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-            st.markdown(f"<div class='fixed-container-{key}'></div>", unsafe_allow_html=True)
-
+    css = FIXED_CONTAINER_CSS.format(id=key, mode=mode, position=position, margin=margin)
+    with fixed:
+        st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+        st.markdown(f"<div class='fixed-container-{key}'></div>", unsafe_allow_html=True)
     with non_fixed:
         st.markdown("<div class='not-fixed-container'></div>", unsafe_allow_html=True)
-
     with fixed:
         if transparent:
             return st.container(height=height, border=border)
@@ -1444,7 +1436,7 @@ def portal_cliente():
         time.sleep(1)
         st.rerun()
 
-    with st_fixed_container(mode="normal", position="top", transparent=False, key="header_top"):
+    with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
         b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode() if Path("images/atlantida_logo.jpg").exists() else ""
     
         st.markdown("""
@@ -1474,6 +1466,9 @@ def portal_cliente():
             <img src="data:image/jpeg;base64,{b64}" />
         </div>
         """, unsafe_allow_html=True)
+    
+    # Compensar espacio por el header fijo
+    st.markdown("<div style='height:80px;'></div>", unsafe_allow_html=True)
     
     # Compensar espacio por el header fijo                
     # Cuadro visual con borde
@@ -2121,7 +2116,7 @@ def mostrar_conversaciones_bot():
 
 # Portal de Administración (Usuarios)
 def portal_administracion():
-    with st_fixed_container(mode="normal", position="top", transparent=False, key="header_top"):
+    with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
         b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode() if Path("images/atlantida_logo.jpg").exists() else ""
     
         st.markdown("""
@@ -2152,6 +2147,8 @@ def portal_administracion():
         </div>
         """, unsafe_allow_html=True)
     
+    # Compensar espacio por el header fijo
+    st.markdown("<div style='height:80px;'></div>", unsafe_allow_html=True)
     # Compensar espacio por el header fijo
     st.sidebar.title("Menú Admin")
     opciones = [
