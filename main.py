@@ -1440,8 +1440,8 @@ def agregar_header_fijo_atlantida():
     st.markdown(f"""
     <div id="logo-atlantida" style="
         position: fixed;
-        top: 80px;
-        right: 80px;
+        top: 60px;
+        right: 60px;
         z-index: 1;
         background: #FFFFFF;
         padding: 10px 20px;
@@ -1474,7 +1474,7 @@ def agregar_header_fijo_atlantida():
     /* Responsive: mover el header lejos del botón del menú */
     @media (max-width: 768px) {{
         #logo-atlantida {{
-            top: 120px !important;  /* MUY abajo */
+            top: 60px !important;  /* MUY abajo */
             right: 20px !important;
             padding: 8px 15px !important;
             transform: scale(0.9);
@@ -1491,7 +1491,7 @@ def agregar_header_fijo_atlantida():
     
     @media (max-width: 480px) {{
         #logo-atlantida {{
-            top: 140px !important;
+            top: 80px !important;
             right: 10px !important;
             padding: 6px 12px !important;
             transform: scale(0.8);
