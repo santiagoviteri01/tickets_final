@@ -1427,7 +1427,7 @@ def gestionar_asegurados():
 
 def agregar_header_fijo_atlantida():
     """
-    Header fijo con tu logo real de Atlántida desde images/atlantida_logo.jpg
+    Header fijo que NO bloquea el sidebar en móviles
     """
     # Cargar el logo real
     try:
@@ -1439,15 +1439,15 @@ def agregar_header_fijo_atlantida():
         logo_html = '<span style="font-size: 18px;">🏛️ ATLÁNTIDA</span>'
     
     st.markdown(f"""
-    <div style="
+    <div id="header-fijo" style="
         position: fixed;
-        top: 70px;
+        top: 15px;
         right: 20px;
-        z-index: 999999;
+        z-index: 50;
         background: #FFFFFF;
         padding: 15px 25px;
-        border-radius: 0 0 0 20px;
-        border: 1px solid #C5C5C5;  /* Borde gris claro */
+        border-radius: 15px;
+        border: 1px solid #C5C5C5;
         box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         display: flex;
         align-items: center;
@@ -1458,82 +1458,99 @@ def agregar_header_fijo_atlantida():
             font-family: 'Arial', sans-serif;
             font-weight: bold;
             font-size: 16px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         ">Insurapp</span>
         {logo_html}
     </div>
     
     <style>
+    /* Espaciado principal */
     .main .block-container {{
         padding-top: 90px;
     }}
     
+    /* Ocultar header de Streamlit */
     header[data-testid="stHeader"] {{
         display: none;
     }}
     
-    /* Animación sutil de entrada */
-    div[style*="position: fixed"] {{
-        animation: slideInRight 0.6s ease-out;
+    /* ASEGURAR que el sidebar siempre tenga prioridad máxima */
+    section[data-testid="stSidebar"] {{
+        z-index: 999999 !important;
     }}
     
-    @keyframes slideInRight {{
-        from {{
-            transform: translateX(100%);
-            opacity: 0;
-        }}
-        to {{
-            transform: translateX(0);
-            opacity: 1;
-        }}
+    /* Botón del sidebar con prioridad absoluta */
+    button[data-testid="baseButton-header"],
+    button[kind="header"] {{
+        z-index: 9999999 !important;
+        position: relative !important;
     }}
     
-    /* Efecto hover sutil */
-    div[style*="position: fixed"]:hover {{
-        transform: scale(1.02);
-        transition: transform 0.2s ease;
+    /* Área completa del sidebar sin interferencias */
+    .css-1d391kg, .css-1y4p8pa, .e1fqkh3o9 {{
+        z-index: 999999 !important;
     }}
     
-    /* Responsive para móviles */
-    @media (max-width: 768px) {{
-        div[style*="position: fixed"] {{
-            padding: 8px 12px;
-            border-radius: 0 0 0 12px;
-            top: 70px;  /* Mover más abajo para no bloquear el menú */
-            right: 15px;
-        }}
-        
-        div[style*="position: fixed"] span {{
-            font-size: 12px;
-        }}
-        
-        div[style*="position: fixed"] img {{
-            height: 35px !important;
-        }}
-        
-        /* Asegurar que el sidebar funcione bien */
-        .main .block-container {{
-            padding-top: 70px !important;
-        }}
-        
-        /* Dar más espacio al botón del sidebar en móviles */
-        section[data-testid="stSidebar"] > div {{
-            padding-top: 1rem;
-        }}
+    /* Header con z-index BAJO para no interferir NUNCA */
+    #header-fijo {{
+        z-index: 10 !important;  /* MUY bajo */
     }}
     
-    /* Para pantallas muy pequeñas */
-    @media (max-width: 480px) {{
-        div[style*="position: fixed"] {{
-            top: 70px;
+    /* Desktop - header normal */
+    @media (min-width: 769px) {{
+        #header-fijo {{
+            top: 15px;
             right: 20px;
-            padding: 6px 10px;
-            font-size: 11px;
+        }}
+    }}
+    
+    /* Móviles - header más abajo y pequeño */
+    @media (max-width: 768px) {{
+        #header-fijo {{
+            top: 80px !important;
+            right: 10px !important;
+            padding: 8px 15px !important;
+            transform: scale(0.8) !important;
         }}
         
-        div[style*="position: fixed"] img {{
+        #header-fijo span {{
+            font-size: 12px !important;
+        }}
+        
+        #header-fijo img {{
             height: 30px !important;
         }}
+        
+        .main .block-container {{
+            padding-top: 60px !important;
+        }}
+    }}
+    
+    /* Pantallas muy pequeñas */
+    @media (max-width: 480px) {{
+        #header-fijo {{
+            top: 100px !important;
+            right: 5px !important;
+            padding: 5px 10px !important;
+            transform: scale(0.7) !important;
+        }}
+        
+        #header-fijo span {{
+            font-size: 10px !important;
+        }}
+        
+        #header-fijo img {{
+            height: 25px !important;
+        }}
+    }}
+    
+    /* Animación suave */
+    #header-fijo {{
+        animation: fadeIn 0.5s ease-out;
+    }}
+    
+    @keyframes fadeIn {{
+        from {{ opacity: 0; transform: translateY(-20px); }}
+        to {{ opacity: 1; transform: translateY(0); }}
     }}
     </style>
     """, unsafe_allow_html=True)
