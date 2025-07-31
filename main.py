@@ -1423,9 +1423,96 @@ def gestionar_asegurados():
         except Exception as e:
             st.error(f"❌ No se pudo generar el certificado: {e}")
 
+def agregar_header_fijo_atlantida():
+    """
+    Header fijo con tu logo real de Atlántida desde images/atlantida_logo.jpg
+    """
+    # Cargar el logo real
+    try:
+        with open("images/atlantida_logo.jpg", "rb") as img_file:
+            logo_base64 = base64.b64encode(img_file.read()).decode()
+        logo_html = f'<img src="data:image/jpeg;base64,{logo_base64}" alt="Atlántida" style="height: 50px; width: auto; filter: brightness(1.1);">'
+    except:
+        # Fallback si no encuentra el archivo
+        logo_html = '<span style="font-size: 18px;"> ATLÁNTIDA</span>'
+    
+    st.markdown(f"""
+    <div style="
+        position: fixed;
+        top: 0;
+        right: 0;
+        z-index: 999999;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        padding: 15px 25px;
+        border-radius: 0 0 0 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    ">
+        <span style="
+            color: white;
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
+            font-size: 16px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        ">SEGUROS</span>
+        {logo_html}
+    </div>
+    
+    <style>
+    .main .block-container {{
+        padding-top: 90px;
+    }}
+    
+    header[data-testid="stHeader"] {{
+        display: none;
+    }}
+    
+    /* Animación sutil de entrada */
+    div[style*="position: fixed"] {{
+        animation: slideInRight 0.6s ease-out;
+    }}
+    
+    @keyframes slideInRight {{
+        from {{
+            transform: translateX(100%);
+            opacity: 0;
+        }}
+        to {{
+            transform: translateX(0);
+            opacity: 1;
+        }}
+    }}
+    
+    /* Efecto hover sutil */
+    div[style*="position: fixed"]:hover {{
+        transform: scale(1.02);
+        transition: transform 0.2s ease;
+    }}
+    
+    /* Responsive para móviles */
+    @media (max-width: 768px) {{
+        div[style*="position: fixed"] {{
+            padding: 10px 15px;
+            border-radius: 0 0 0 15px;
+        }}
+        
+        div[style*="position: fixed"] span {{
+            font-size: 14px;
+        }}
+        
+        div[style*="position: fixed"] img {{
+            height: 40px !important;
+        }}
+    }}
+    </style>
+    """, unsafe_allow_html=True)
             
-# Portal del Cliente
+
 def portal_cliente():
+    agregar_header_fijo_atlantida()
+
     st.sidebar.title("Menú Cliente")
     tab_seleccionado = ["Mis Datos Personales", "Mis Tickets", "Nuevo Reclamo", "Subir Archivos Adicionales a un Reclamo"]
     tab_seleccionado = st.sidebar.radio("Opciones", tab_seleccionado)
@@ -2082,6 +2169,7 @@ def mostrar_conversaciones_bot():
 
 # Portal de Administración (Usuarios)
 def portal_administracion():
+    agregar_header_fijo_atlantida()
     # Compensar espacio por el header fijo
     st.sidebar.title("Menú Admin")
     opciones = [
