@@ -1434,7 +1434,7 @@ def agregar_header_fijo_atlantida():
         logo_html = f'<img src="data:image/jpeg;base64,{logo_base64}" alt="Atlántida" style="height: 50px; width: auto; filter: brightness(1.1);">'
     except:
         # Fallback si no encuentra el archivo
-        logo_html = '<span style="font-size: 18px;"> ATLÁNTIDA</span>'
+        logo_html = '<span style="font-size: 18px;">🏛️ ATLÁNTIDA</span>'
     
     st.markdown(f"""
     <div style="
@@ -1442,21 +1442,22 @@ def agregar_header_fijo_atlantida():
         top: 0;
         right: 0;
         z-index: 999999;
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        background: #FFFFFF;
         padding: 15px 25px;
         border-radius: 0 0 0 20px;
+        border: 1px solid #C5C5C5;  /* Borde gris claro */
         box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         display: flex;
         align-items: center;
         gap: 15px;
     ">
         <span style="
-            color: white;
+            color: #D62828;
             font-family: 'Arial', sans-serif;
             font-weight: bold;
             font-size: 16px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        ">SEGUROS</span>
+        ">Insurapp</span>
         {logo_html}
     </div>
     
@@ -1494,16 +1495,41 @@ def agregar_header_fijo_atlantida():
     /* Responsive para móviles */
     @media (max-width: 768px) {{
         div[style*="position: fixed"] {{
-            padding: 10px 15px;
-            border-radius: 0 0 0 15px;
+            padding: 8px 12px;
+            border-radius: 0 0 0 12px;
+            top: 60px;  /* Mover más abajo para no bloquear el menú */
+            right: 5px;
         }}
         
         div[style*="position: fixed"] span {{
-            font-size: 14px;
+            font-size: 12px;
         }}
         
         div[style*="position: fixed"] img {{
-            height: 40px !important;
+            height: 35px !important;
+        }}
+        
+        /* Asegurar que el sidebar funcione bien */
+        .main .block-container {{
+            padding-top: 70px !important;
+        }}
+        
+        /* Dar más espacio al botón del sidebar en móviles */
+        section[data-testid="stSidebar"] > div {{
+            padding-top: 1rem;
+        }}
+    }}
+    
+    /* Para pantallas muy pequeñas */
+    @media (max-width: 480px) {{
+        div[style*="position: fixed"] {{
+            top: 70px;
+            padding: 6px 10px;
+            font-size: 11px;
+        }}
+        
+        div[style*="position: fixed"] img {{
+            height: 30px !important;
         }}
     }}
     </style>
