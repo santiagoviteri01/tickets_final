@@ -59,6 +59,8 @@ st.markdown(
       section[data-testid="stSidebar"] {
         background-color: #7F7F7F !important;
         color: white !important;
+        z-index: 1000000 !important;
+
       }
 
       section[data-testid="stSidebar"] .css-1v0mbdj,
@@ -1439,8 +1441,8 @@ def agregar_header_fijo_atlantida():
     st.markdown(f"""
     <div style="
         position: fixed;
-        top: 0;
-        right: 0;
+        top: 70px;
+        right: 20px;
         z-index: 999999;
         background: #FFFFFF;
         padding: 15px 25px;
@@ -1497,8 +1499,8 @@ def agregar_header_fijo_atlantida():
         div[style*="position: fixed"] {{
             padding: 8px 12px;
             border-radius: 0 0 0 12px;
-            top: 60px;  /* Mover más abajo para no bloquear el menú */
-            right: 5px;
+            top: 70px;  /* Mover más abajo para no bloquear el menú */
+            right: 15px;
         }}
         
         div[style*="position: fixed"] span {{
@@ -1524,6 +1526,7 @@ def agregar_header_fijo_atlantida():
     @media (max-width: 480px) {{
         div[style*="position: fixed"] {{
             top: 70px;
+            right: 20px;
             padding: 6px 10px;
             font-size: 11px;
         }}
