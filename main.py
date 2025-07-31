@@ -1440,7 +1440,7 @@ def agregar_header_fijo_atlantida():
     st.markdown(f"""
     <div id="logo-atlantida" style="
         position: fixed;
-        top: 20px;
+        top: 80px;
         right: 80px;
         z-index: 1;
         background: #FFFFFF;
