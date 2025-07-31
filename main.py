@@ -1427,130 +1427,159 @@ def gestionar_asegurados():
 
 def agregar_header_fijo_atlantida():
     """
-    Header fijo que NO bloquea el sidebar en móviles
+    Solución definitiva: Header que NUNCA bloquea el sidebar
     """
     # Cargar el logo real
     try:
         with open("images/atlantida_logo.jpg", "rb") as img_file:
             logo_base64 = base64.b64encode(img_file.read()).decode()
-        logo_html = f'<img src="data:image/jpeg;base64,{logo_base64}" alt="Atlántida" style="height: 50px; width: auto; filter: brightness(1.1);">'
+        logo_html = f'<img src="data:image/jpeg;base64,{logo_base64}" alt="Atlántida" style="height: 40px; width: auto;">'
     except:
-        # Fallback si no encuentra el archivo
-        logo_html = '<span style="font-size: 18px;">🏛️ ATLÁNTIDA</span>'
+        logo_html = '<span style="font-size: 16px;">🏛️ ATLÁNTIDA</span>'
     
     st.markdown(f"""
-    <div id="header-fijo" style="
+    <div id="logo-atlantida" style="
         position: fixed;
-        top: 15px;
-        right: 20px;
-        z-index: 50;
+        top: 20px;
+        right: 80px;
+        z-index: 1;
         background: #FFFFFF;
-        padding: 15px 25px;
-        border-radius: 15px;
+        padding: 10px 20px;
+        border-radius: 10px;
         border: 1px solid #C5C5C5;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 10px;
+        pointer-events: none;
     ">
         <span style="
             color: #D62828;
             font-family: 'Arial', sans-serif;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 14px;
         ">Insurapp</span>
         {logo_html}
     </div>
     
     <style>
-    /* Espaciado principal */
-    .main .block-container {{
-        padding-top: 90px;
+    /* NO tocar el z-index del sidebar - dejarlo como está */
+    
+    /* Header con z-index súper bajo y sin eventos */
+    #logo-atlantida {{
+        z-index: 1 !important;
+        pointer-events: none !important;  /* NO intercepta clics */
     }}
     
-    /* Ocultar header de Streamlit */
-    header[data-testid="stHeader"] {{
-        display: none;
-    }}
-    
-    /* ASEGURAR que el sidebar siempre tenga prioridad máxima */
-    section[data-testid="stSidebar"] {{
-        z-index: 999999 !important;
-    }}
-    
-    /* Botón del sidebar con prioridad absoluta */
-    button[data-testid="baseButton-header"],
-    button[kind="header"] {{
-        z-index: 9999999 !important;
-        position: relative !important;
-    }}
-    
-    /* Área completa del sidebar sin interferencias */
-    .css-1d391kg, .css-1y4p8pa, .e1fqkh3o9 {{
-        z-index: 999999 !important;
-    }}
-    
-    /* Header con z-index BAJO para no interferir NUNCA */
-    #header-fijo {{
-        z-index: 10 !important;  /* MUY bajo */
-    }}
-    
-    /* Desktop - header normal */
-    @media (min-width: 769px) {{
-        #header-fijo {{
-            top: 15px;
-            right: 20px;
-        }}
-    }}
-    
-    /* Móviles - header más abajo y pequeño */
+    /* Responsive: mover el header lejos del botón del menú */
     @media (max-width: 768px) {{
-        #header-fijo {{
-            top: 80px !important;
-            right: 10px !important;
+        #logo-atlantida {{
+            top: 120px !important;  /* MUY abajo */
+            right: 20px !important;
             padding: 8px 15px !important;
-            transform: scale(0.8) !important;
+            transform: scale(0.9);
         }}
         
-        #header-fijo span {{
+        #logo-atlantida span {{
             font-size: 12px !important;
         }}
         
-        #header-fijo img {{
+        #logo-atlantida img {{
             height: 30px !important;
-        }}
-        
-        .main .block-container {{
-            padding-top: 60px !important;
         }}
     }}
     
-    /* Pantallas muy pequeñas */
     @media (max-width: 480px) {{
-        #header-fijo {{
-            top: 100px !important;
-            right: 5px !important;
-            padding: 5px 10px !important;
-            transform: scale(0.7) !important;
+        #logo-atlantida {{
+            top: 140px !important;
+            right: 10px !important;
+            padding: 6px 12px !important;
+            transform: scale(0.8);
         }}
         
-        #header-fijo span {{
-            font-size: 10px !important;
+        #logo-atlantida span {{
+            font-size: 11px !important;
         }}
         
-        #header-fijo img {{
+        #logo-atlantida img {{
             height: 25px !important;
         }}
     }}
     
     /* Animación suave */
-    #header-fijo {{
-        animation: fadeIn 0.5s ease-out;
+    #logo-atlantida {{
+        animation: slideIn 0.8s ease-out;
     }}
     
-    @keyframes fadeIn {{
-        from {{ opacity: 0; transform: translateY(-20px); }}
-        to {{ opacity: 1; transform: translateY(0); }}
+    @keyframes slideIn {{
+        from {{ 
+            opacity: 0; 
+            transform: translateX(50px); 
+        }}
+        to {{ 
+            opacity: 1; 
+            transform: translateX(0); 
+        }}
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+# ALTERNATIVA: Header que se oculta cuando se abre el sidebar
+def header_inteligente():
+    """
+    Header que se oculta automáticamente cuando el sidebar está abierto
+    """
+    try:
+        with open("images/atlantida_logo.jpg", "rb") as img_file:
+            logo_base64 = base64.b64encode(img_file.read()).decode()
+        logo_html = f'<img src="data:image/jpeg;base64,{logo_base64}" alt="Atlántida" style="height: 40px; width: auto;">'
+    except:
+        logo_html = '<span style="font-size: 16px;">🏛️</span>'
+    
+    st.markdown(f"""
+    <div id="header-inteligente">
+        <span>Insurapp</span>
+        {logo_html}
+    </div>
+    
+    <style>
+    #header-inteligente {{
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1;
+        background: white;
+        padding: 10px 20px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        pointer-events: none;
+    }}
+    
+    #header-inteligente span {{
+        color: #D62828;
+        font-weight: bold;
+        font-size: 14px;
+    }}
+    
+    /* Ocultar cuando el sidebar está abierto */
+    .stApp[data-layout="wide"] #header-inteligente,
+    .css-1d391kg.e1fqkh3o1 ~ .main #header-inteligente {{
+        opacity: 0;
+        transform: translateX(100px);
+    }}
+    
+    /* Móviles: siempre más abajo */
+    @media (max-width: 768px) {{
+        #header-inteligente {{
+            top: 100px !important;
+            right: 15px !important;
+            transform: scale(0.9);
+        }}
     }}
     </style>
     """, unsafe_allow_html=True)
