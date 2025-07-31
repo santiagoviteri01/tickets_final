@@ -1443,7 +1443,7 @@ def portal_cliente():
         <style>
         .header-bar {
             width: 100%;
-            height: 150px;
+            height: 80px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -2114,14 +2114,14 @@ def mostrar_conversaciones_bot():
 
 # Portal de Administración (Usuarios)
 def portal_administracion():
-    with st_fixed_container(mode="sticky", position="top", transparent=False, key="header_top"):
+    with st_fixed_container(mode="fixed", position="top", transparent=False, key="header_top"):
         b64 = base64.b64encode(Path("images/atlantida_logo.jpg").read_bytes()).decode() if Path("images/atlantida_logo.jpg").exists() else ""
     
         st.markdown("""
         <style>
         .header-bar {
             width: 100%;
-            height: 150px;
+            height: 80px;
             display: flex;
             align-items: center;
             justify-content: center;
